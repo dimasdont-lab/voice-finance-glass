@@ -1,5 +1,14 @@
 var cv=document.getElementById('gl');
 var gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,powerPreference:'high-performance'})||cv.getContext('experimental-webgl');
+var GRID_CELL=30;   /* ≈5 мм на iPhone (CSS-пікселі) */
+var GLSL_BG=['vec3 blob(vec3 c,vec2 n,vec2 ce,vec2 r,vec3 col){float a=clamp(1.-length((n-ce)/r)/0.7,0.,1.);return mix(c,col,a);}',
+ 'float gridL(vec2 p){vec2 q=abs(fract(p/'+GRID_CELL+'.+.5)-.5)*'+GRID_CELL+'.;return 1.-smoothstep(.0,1.,min(q.x,q.y));}',
+ 'vec3 gradBg(vec2 p){',
+ ' vec2 n=p/u_vp;vec3 c=vec3(.0196,.0196,.0275);',
+ ' c=blob(c,n,vec2(.94,.92),vec2(.6,.38),vec3(.0588,.1882,.2118));',
+ ' c=blob(c,n,vec2(.04,.46),vec2(.7,.42),vec3(.0863,.1020,.2667));',
+ ' c=blob(c,n,vec2(.90,.04),vec2(.6,.38),vec3(.3020,.0863,.1333));',
+ ' return mix(c,vec3(.58),.2*gridL(p));}'].join('\n');
 var VS='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
 var FS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
 'uniform vec2 u_res;uniform vec2 u_org;uniform vec2 u_vp;uniform sampler2D u_t0;uniform sampler2D u_t1;uniform sampler2D u_t2;uniform vec4 u_p0;uniform vec4 u_p1;uniform vec4 u_p2;uniform vec3 u_w;uniform float u_scrim;uniform vec4 u_g;uniform float u_gr;uniform float u_gv;uniform vec4 u_a;uniform vec4 u_b;uniform vec4 u_c;uniform float u_cv;uniform float u_nk;uniform vec4 u_k;uniform float u_kv;uniform float u_bl;uniform float u_s;uniform vec4 u_rp;uniform vec4 u_rs;uniform float u_rb;uniform float u_gm;uniform float u_gd;uniform float u_gbl;uniform vec4 u_g2;uniform float u_gr2;uniform float u_gv2;uniform float u_sho;uniform vec4 u_rt;uniform float u_ord;',
@@ -8,13 +17,7 @@ var FS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','pr
 'float sdBar(vec2 x){float a=sdRB(x-u_a.xy,u_a.zw,min(u_a.z,u_a.w));if(u_kv<.01)return a;return smin(a,sdRB(x-u_k.xy,u_k.zw,min(u_k.z,u_k.w)),34.*u_s);}',
 'float sdInd(vec2 x){return sdRB(x-u_b.xy,u_b.zw,min(u_b.z,u_b.w));}',
 'float sdC(vec2 x){return sdRB(x-u_c.xy,u_c.zw,min(u_c.z,u_c.w));}',
-'vec3 blob(vec3 c,vec2 n,vec2 ce,vec2 r,vec3 col){float a=clamp(1.-length((n-ce)/r)/0.7,0.,1.);return mix(c,col,a);}',
-'vec3 gradBg(vec2 p){',
-' vec2 n=p/u_vp;vec3 c=vec3(.0196,.0196,.0275);',
-' c=blob(c,n,vec2(.94,.92),vec2(.6,.38),vec3(.0588,.1882,.2118));',
-' c=blob(c,n,vec2(.04,.46),vec2(.7,.42),vec3(.0863,.1020,.2667));',
-' c=blob(c,n,vec2(.90,.04),vec2(.6,.38),vec3(.3020,.0863,.1333));',
-' return c;}',
+GLSL_BG,
 'vec4 pageS(sampler2D tx,vec4 P,float W0,vec2 p){',
 ' vec2 uv=vec2((p.x-P.x)/W0,(p.y+P.y)/P.z);',
 ' float m=P.w*step(0.,uv.x)*step(uv.x,1.)*step(0.,uv.y)*step(uv.y,1.);',
@@ -201,7 +204,7 @@ function sheetStale(){SH.want=1;}
 var pendingSync=false;
 new MutationObserver(function(recs){recs.forEach(function(r){
  var n=r.target.nodeType===3?r.target.parentNode:r.target,p=n&&n.closest?n.closest('.page'):null,i=pg.indexOf(p);if(i<0)return;
- needSync[i]=1;var c=n;while(c&&c.parentNode!==inn[i])c=c.parentNode;
+ needSync[i]=1;tlStale[i]=1;var c=n;while(c&&c.parentNode!==inn[i])c=c.parentNode;
  if(c&&B[i]){var k=[].indexOf.call(inn[i].children,c);if(B[i][k])B[i][k].stale=1;}
 });}).observe(root,{childList:true,characterData:true,subtree:true});
 
@@ -485,6 +488,7 @@ function frame(t){
  var scrolling=stepScroll(dt);
  recStep(dt);
  refreshTabs(t);
+ if(tgOK)drawTiles();
  if(menu.s>0||menu.on)stepMenu(dt);
  if(sheetP.s>0||sheetP.on)stepSheet(dt);
  bootStep(t,dt);

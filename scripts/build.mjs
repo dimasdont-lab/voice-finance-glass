@@ -14,6 +14,8 @@ const logic = buildSync({
 }).outputFiles[0].text;
 
 const logo = 'data:image/jpeg;base64,' + fs.readFileSync(path.join(root, 'src/logo-256.jpg')).toString('base64');
+const SPLASH = [[440,956],[430,932],[420,912],[402,874],[393,852],[390,844],[428,926],[375,812]]
+  .map(([w, h]) => `<link rel="apple-touch-startup-image" href="assets/splash/s-${w * 3}x${h * 3}.jpg" media="(device-width: ${w}px) and (device-height: ${h}px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">`).join('\n');
 const body = r('src/body.html').replace('__LOGO__', logo);
 
 const html = `<!doctype html>
@@ -27,6 +29,7 @@ const html = `<!doctype html>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/icon-192.png">
+${SPLASH}
 <title>Voice Finance</title>
 <style>${r('src/style.css')}</style></head><body>
 ${body}
@@ -34,6 +37,7 @@ ${body}
 <script>(function(){'use strict';
 ${r('src/core.js')}
 ${r('src/engine.js')}
+${r('src/tiles.js')}
 ${r('src/ui.js')}
 })();</script></body></html>`;
 
