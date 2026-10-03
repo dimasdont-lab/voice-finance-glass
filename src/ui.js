@@ -1,6 +1,6 @@
 /* ===== 6. Інтерфейс: події, аркуші, скляні меню, синхронізація зі станом логіки ===== */
 var sheetsEl=document.getElementById('sheets'),scrimEl=document.getElementById('scrim'),toastEl=document.getElementById('toast');
-var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount'];
+var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets'];
 var CURS=['PLN','EUR','USD','GBP'],curSheet=null,lastScreen='',toastT=0;
 
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){toastEl.classList.remove('on');},2200);}
@@ -144,9 +144,20 @@ function sheetHtml(kind,ov){
   return'<div class="sh"><span style="min-width:70px"></span><h3>Налаштування</h3><button class="ok" data-s="cancel">Закрити</button></div>'+
    '<div class="fr"><label>Місячний ліміт, zł</label><input data-g="goal" inputmode="decimal" value="'+esc(g)+'" autocomplete="off"></div>'+
    '<button class="btnw" data-s="goal">Зберегти ліміт</button>'+
-   '<button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button>'+
+   '<button class="btnw" data-s="markets">Валюти в бігучій строці</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button>'+
    '<button class="btnw" data-s="export">Експорт JSON</button><button class="btnw" data-s="seed">Додати тестові дані для перегляду</button>'+
    '<button class="btnw dng" data-s="clear">Очистити операції та борги</button><div class="err" data-err></div>';
+ }
+ if(kind==='markets'){
+  var msel=MK.selection,mcat=VF.marketCatalog(),mby={};mcat.forEach(function(m){mby[m.id]=m;});
+  var mrow=function(m,on){return'<button class="mkr" data-mk="'+esc(m.id)+'" data-q="'+esc((m.label+' '+(m.name||'')).toLowerCase())+'"><span class="t">'+esc(m.label)+'</span><span class="d">'+esc(m.name||'')+'</span><i class="sw'+(on?' on':'')+'"></i></button>';};
+  var mon=msel.filter(function(id){return mby[id];}).map(function(id){return mrow(mby[id],true);}).join('');
+  var moff=mcat.filter(function(m){return msel.indexOf(m.id)<0;}).map(function(m){return mrow(m,false);}).join('');
+  var mst=mkLast?'Останнє оновлення: '+new Date(mkLast).toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'}):mkErr?'Останнє оновлення не вдалося: перевірте мережу.':'Ще не оновлювалось.';
+  return'<div class="sh"><span style="min-width:70px"></span><h3>Бігуча строка</h3><button class="ok" data-s="cancel">Закрити</button></div>'+
+   '<div class="mkinfo"><b>Звідки дані.</b> Валюти: Frankfurter (api.frankfurter.dev), офіційні курси ЄЦБ, оновлюються раз на робочий день. Крипто: Kraken (api.kraken.com), публічний API. Безкоштовно, без ключів і без ваших даних. Курси беруться з інтернету під час роботи застосунку (оновлення раз на 5 хв), останні значення зберігаються на пристрої. Зміна: для валют за ~14 днів, для крипто від відкриття доби. Це не порада щодо інвестицій.<br>'+esc(mst)+'</div>'+
+   '<div class="fr"><label>Пошук</label><input data-g="mksearch" placeholder="EUR, USD, BTC…" autocomplete="off" autocorrect="off" autocapitalize="off"></div>'+
+   '<div class="mkh">Вибрані: <span data-mkcount>'+msel.length+'</span> з 20</div>'+mon+'<div class="mkh">Усі пари</div>'+moff+'<div class="err" data-err></div>';
  }
  if(kind==='categories'){
   var cs=fin.getState().categories;
@@ -191,7 +202,7 @@ if(window.visualViewport)window.visualViewport.addEventListener('resize',functio
 function showSheet(top){
  var key=top?top.key:'';
  if(curSheet&&curSheet.key===key){
-  if(top&&!/^(transaction|debt|manualAccount)/.test(top.kind)){var html=sheetHtml(top.kind,top.ov);if(html!==curSheet.html){curSheet.html=html;curSheet.body.innerHTML=html;layoutSheet();sheetStale();}}
+  if(top&&!/^(transaction|debt|manualAccount|markets)/.test(top.kind)){var html=sheetHtml(top.kind,top.ov);if(html!==curSheet.html){curSheet.html=html;curSheet.body.innerHTML=html;layoutSheet();sheetStale();}}
   return;
  }
  SH.on=0;SH.ready=0;SH.el=null;clearTimeout(showSheet.t);
@@ -227,13 +238,15 @@ function setDDLabel(f,val){
 }
 var macur='PLN',delArm=0;
 sheetsEl.addEventListener('input',function(e){
- var el=e.target;if(el.dataset.f){var p={};p[el.dataset.f]=el.value;try{app.updateForm(p);}catch(err){}}
+ var el=e.target;
+ if(el.dataset.g==='mksearch'&&curSheet){var q=el.value.trim().toLowerCase();[].forEach.call(curSheet.body.querySelectorAll('.mkr'),function(r){r.style.display=(!q||r.dataset.q.indexOf(q)>=0)?'':'none';});}if(el.dataset.f){var p={};p[el.dataset.f]=el.value;try{app.updateForm(p);}catch(err){}}
  clearTimeout(sheetsEl._t);sheetsEl._t=setTimeout(sheetStale,260);
 });
 sheetsEl.addEventListener('click',function(e){
  var t=e.target.closest('button');if(!t||!curSheet)return;
  var s=t.dataset.s,ix=app.getState().interaction;
  try{
+  if(t.dataset.mk){mkToggle(t);return;}
   if(t.dataset.seg){var p={};p[t.dataset.seg]=t.dataset.v;app.updateForm(p);
    [].forEach.call(t.parentNode.children,function(b){b.classList.toggle('on',b===t);});
    if(t.dataset.seg==='type'){var cr=curSheet.body.querySelector('[data-row="client"]');if(cr)cr.style.display=t.dataset.v==='income'?'':'none';}
@@ -250,6 +263,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='edit')app.editParsedInput();
   else if(s==='tx'){var rid=t.dataset.id;app.editTransaction(rid);}
   else if(s==='goal'){var gv=parseFloat(String(curSheet.body.querySelector('[data-g="goal"]').value).replace(',','.'));if(!(gv>0))throw new Error('Вкажіть ліміт більший за нуль');fin.setGoal(gv);toast('Ліміт збережено');}
+  else if(s==='markets')nav.openOverlay('markets');
   else if(s==='cats')nav.openOverlay('categories');
   else if(s==='acc')app.openManualAccount('manual');
   else if(s==='cash')app.openManualAccount('cash');
@@ -412,3 +426,57 @@ function edgeEnd(e){
  }
 }
 document.addEventListener('touchend',edgeEnd);document.addEventListener('touchcancel',function(){if(EB.on&&EB.P)EB.P.tgt.x=0;EB.on=0;});
+
+/* ---------- бігуча строка: оновлення, вибір пар, авторух, перетягування, тап ---------- */
+var mkBusy=false,mkAgain=false,mkLast=0,mkT=0;
+function mkRefresh(){
+ if(mkBusy){mkAgain=true;return;}
+ mkBusy=true;mkErr=null;
+ MK.loadMarketData().then(function(){mkLast=Date.now();}).catch(function(e){mkErr=e;}).then(function(){
+  mkBusy=false;mkTried=true;renderPages();
+  if(mkAgain){mkAgain=false;mkRefresh();}
+ });
+}
+setInterval(function(){if(!document.hidden)mkRefresh();},300000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&Date.now()-mkLast>120000)mkRefresh();});
+function mkToggle(btn){
+ var id=btn.dataset.mk,sw=btn.querySelector('.sw'),on=sw.classList.contains('on');
+ if(!on&&MK.selection.length>=20){toast('Максимум 20 пар у строці');return;}
+ MK.toggleSelection(id,!on);
+ sw.classList.toggle('on',!on);
+ var c=curSheet&&curSheet.body.querySelector('[data-mkcount]');if(c)c.textContent=MK.selection.length;
+ renderPages();sheetStale();
+ clearTimeout(mkT);mkT=setTimeout(mkRefresh,700);
+}
+function mkTapInfo(id){var m=MK.data[id];if(!m)return;toast(m.label+' · '+mkSource(m)+(m.updated?' · '+mkWhen(m.updated):''));}
+var tkG=VF.createTickerGesture(),tkOff=0,tkEl=null,tkPress=null,tkPause=0,tkLast=0,
+    tkRM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
+function tkLoop(t){
+ requestAnimationFrame(tkLoop);
+ var dt=Math.min(.05,Math.max(0,(t-tkLast)/1000));tkLast=t;
+ if(!tkEl||!tkEl.isConnected)tkEl=root.querySelector('.tick .trk');
+ var el=tkEl;if(!el)return;
+ if(!el.dataset.loop){if(el._tx){el._tx='';el.style.transform='';}return;}
+ if(!tkPress&&!tkRM&&t>tkPause&&sel===2&&!document.hidden&&!boot.on)tkOff+=34*dt;
+ var w=el.scrollWidth/MK_COPIES;if(w<20)return;
+ var o=((tkOff%w)+w)%w,s='translate3d('+(-o).toFixed(1)+'px,0,0)';
+ if(el._tx!==s){el._tx=s;el.style.transform=s;}
+}
+requestAnimationFrame(tkLoop);
+function tkEnd(cancel){
+ if(!tkPress)return;var r=tkG.end({cancelled:cancel});tkPress=null;
+ if(r){tkPause=r.resumeAt;if(r.openMarketId)mkTapInfo(r.openMarketId);}
+}
+root.addEventListener('pointerdown',function(e){
+ var tk=e.target.closest&&e.target.closest('.tick');if(!tk)return;
+ var it=e.target.closest('[data-mk]');
+ tkG.start({x:e.clientX,marketId:it?it.dataset.mk:'',offset:tkOff});tkPress={id:e.pointerId,y:e.clientY};
+});
+root.addEventListener('pointermove',function(e){
+ if(!tkPress||e.pointerId!==tkPress.id)return;
+ if(Math.abs(e.clientY-tkPress.y)>7){tkEnd(true);return;}   /* вертикальний скрол сторінки — не тап і не перетягування */
+ var r=tkG.move({x:e.clientX});if(r)tkOff=r.offset;
+});
+root.addEventListener('pointerup',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(false);});
+root.addEventListener('pointercancel',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(true);});
+uiReady=true;mkRefresh();

@@ -3,8 +3,11 @@ function mkStore(kind){
  try{var s=window[kind];s.setItem('__vf','1');s.removeItem('__vf');return s;}
  catch(e){var m={};return{getItem:function(k){return k in m?m[k]:null},setItem:function(k,v){m[k]=String(v)},removeItem:function(k){delete m[k]}};}
 }
-var L=VF.createVoiceFinanceLogic({storage:mkStore('localStorage'),sessionStorage:mkStore('sessionStorage'),storageKey:'voice-finance-glass-v1',initialScreen:'home'});
-var app=L.application,fin=L.finance,nav=L.navigation;
+var mkErr=null,mkTried=false,uiReady=false;
+function mktChanged(){if(uiReady)renderPages();}
+var L=VF.createVoiceFinanceLogic({storage:mkStore('localStorage'),sessionStorage:mkStore('sessionStorage'),storageKey:'voice-finance-glass-v1',initialScreen:'home',
+ onMarketData:function(){mktChanged();},onMarketError:function(e){mkErr=e;}});
+var app=L.application,fin=L.finance,nav=L.navigation,MK=L.markets;
 window.__vf=L;
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]});}
@@ -60,6 +63,22 @@ function searchBlock(kind,ph){return B_('srch','<label style="display:contents">
 function hdr(title,sub,back){return B_('hdr',(back?'<button class="back" data-act="back">‹</button>':'')+'<div><h1>'+esc(title)+'</h1>'+(sub?'<div class="sub">'+esc(sub)+'</div>':'')+'</div>');}
 function pctTxt(p){return(Math.round(p*10)/10).toLocaleString('uk-UA')+'%';}
 
+/* ---- бігуча строка курсів (дані: Frankfurter для валют, Kraken для крипто; нічого не вигадується) ---- */
+var MK_COPIES=6;
+function mkFmt(v){v=Number(v);return v.toLocaleString('uk-UA',{minimumFractionDigits:v<10?2:0,maximumFractionDigits:v<10?4:2});}
+function mkPct(c){c=Number(c)||0;return(c>=0?'+':'−')+Math.abs(c).toFixed(2).replace('.',',')+'%';}
+function mkSource(m){return m&&m.kind==='crypto'?'Kraken':'Frankfurter (ЄЦБ)';}
+function mkWhen(u){if(!u)return'';return String(u).length>10?new Date(u).toLocaleString('uk-UA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):u;}
+function tickerBlock(){
+ var ids=MK.selection,d=MK.data,items=ids.filter(function(id){return d[id]&&isFinite(d[id].value);}).map(function(id){
+  var m=d[id];return'<span class="ti" data-mk="'+esc(id)+'"><b>'+esc(m.label)+'</b><span>'+esc(mkFmt(m.value))+'</span><i class="'+(m.change<0?'neg':'')+'">'+esc(mkPct(m.change))+'</i></span>';});
+ if(!items.length){
+  var msg=!ids.length?'Курси не вибрано: Додатково → Налаштування → Валюти в бігучій строці':mkErr&&mkTried?'Курси недоступні: немає зв’язку з джерелом':'Завантаження курсів…';
+  return B_('tick','<div class="trk"><div class="tmsg">'+esc(msg)+'</div></div>');
+ }
+ var one=items.join(''),all='';for(var i=0;i<MK_COPIES;i++)all+=one;
+ return B_('tick','<div class="trk" data-loop="1">'+all+'</div>');
+}
 /* ---- Дім ---- */
 function blocksHome(){
  var ix=app.getState().interaction,t=fin.totals(),g=fin.goals(),pts=fin.financialSeries('balance','1M');
@@ -67,6 +86,7 @@ function blocksHome(){
  var accs=fin.activeAccounts(),shown=ix.accountsExpanded?accs:accs.slice(0,3),tx=fin.recentTransactions(ix.homeQuery);
  var o=[];
  o.push(hdr('Гарного дня!',todayStr()));
+ o.push(tickerBlock());
  o.push(searchBlock('home','Пошук операцій'));
  o.push(B_('tile hot','<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>'+esc(pctTxt(pc))+' · 30 днів</span></div>'+spark(pts,'h')+'</div>'+
   '<div class="split"><button data-act="flow" data-v="income"><i class="dot up">↑</i><div><span class="lbl">Доходи</span><b>'+esc(money(t.income))+'</b></div></button><button data-act="flow" data-v="expense"><i class="dot dn">↓</i><div><span class="lbl">Витрати</span><b>'+esc(money(t.expense))+'</b></div></button></div>'));

@@ -160,3 +160,24 @@ input{font:inherit;color:inherit}
  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 90px 14px rgba(0,0,0,.28);
  -webkit-mask-image:linear-gradient(to right,#000,transparent 12%,transparent 88%,#000),linear-gradient(to bottom,#000,transparent 8%,transparent 92%,#000);
  mask-image:linear-gradient(to right,#000,transparent 12%,transparent 88%,#000),linear-gradient(to bottom,#000,transparent 8%,transparent 92%,#000)}
+
+/* ---------- безкінечна сторінка: легке розмиття під статус-баром ---------- */
+#topblur{position:fixed;left:0;right:0;top:0;height:max(76px,calc(env(safe-area-inset-top,0px) + 30px));z-index:21;pointer-events:none;
+ background:linear-gradient(to bottom,rgba(5,5,7,.34),rgba(5,5,7,0));
+ -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+ -webkit-mask-image:linear-gradient(to bottom,#000 35%,transparent);mask-image:linear-gradient(to bottom,#000 35%,transparent)}
+/* ---------- бігуча строка курсів ---------- */
+.tick{position:relative;overflow:hidden;height:46px;border-radius:23px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);touch-action:none;-webkit-user-select:none;user-select:none}
+.tick .trk{display:flex;align-items:center;width:max-content;height:100%;will-change:transform}
+.tick .ti{display:flex;align-items:baseline;gap:7px;padding:0 16px;white-space:nowrap;font-size:14px;border-left:1px solid var(--ln)}
+.tick .ti b{font-weight:650}
+.tick .ti i{font-style:normal;font-size:13px;font-weight:600;color:var(--gr)}.tick .ti i.neg{color:var(--ac)}
+.tick .tmsg{display:flex;align-items:center;height:100%;padding:0 18px;font-size:14px;color:var(--mu);white-space:nowrap}
+/* ---------- вибір курсів у налаштуваннях ---------- */
+.mkinfo{font-size:13px;line-height:1.45;color:var(--mu);padding:2px 2px 8px}
+.mkinfo b{color:#fff;font-weight:600}
+.mkh{font-size:12px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--mu);padding:12px 2px 2px}
+.mkr{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;border-bottom:1px solid var(--ln)}
+.mkr .t{flex:1;min-width:0;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mkr .d{font-size:13px;color:var(--mu);white-space:nowrap}
+.mkr .sw{display:block}

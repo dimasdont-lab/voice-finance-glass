@@ -41,7 +41,7 @@ var FS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','pr
 '  vec2 of=n*pow(1.-t,2.2)*0.6*m;float br=u_bl*wd;float ab=0.10*(0.35+pow(1.-t,1.5));',
 '  vec3 ci=vec3(bgS(x-of*(1.+ab),br).r,bgB(x-of,br).g,bgS(x-of*(1.-ab),br).b)*0.75;float rim=pow(1.-t,3.);',
 '  float sp=pow(max(dot(n,normalize(vec2(-0.6,-0.8))),0.),3.)+0.5*pow(max(dot(n,normalize(vec2(0.6,0.8))),0.),3.);',
-'  ci+=vec3(rim*(0.06+0.35*sp));col=mix(col,ci,clamp(-d/(1.5*u_s)+0.5,0.,1.));}',
+'  ci+=vec3(rim*(0.03+0.15*sp));col=mix(col,ci,clamp(-d/(1.5*u_s)+0.5,0.,1.));}',
 ' return col;}',
 'vec4 glassPx(vec2 px,vec4 G,float GR,float GV,float dg,float gd,float gbl,float ring){',
 ' float mm=(ring>.5?130.:36.)*u_s;float t=clamp(-dg/(0.6*mm),0.,1.);float e=1.5;',
@@ -49,7 +49,7 @@ var FS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','pr
 ' vec2 of=n*pow(1.-t,ring>.5?1.7:2.2)*(ring>.5?1.25:0.6)*mm;float ab=(ring>.5?.17:.10)*(0.35+pow(1.-t,1.5));float br=gbl*u_s*GV;',
 ' vec3 ci=vec3(bgS(px-of*(1.+ab),br).r,bgB(px-of,br).g,bgS(px-of*(1.-ab),br).b)*gd;float rim=pow(1.-t,3.);',
 ' float sp=pow(max(dot(n,normalize(vec2(-0.6,-0.8))),0.),3.)+0.5*pow(max(dot(n,normalize(vec2(0.6,0.8))),0.),3.);',
-' ci+=vec3(rim*(0.07+0.4*sp));float w=clamp(-dg/(1.5*u_s)+0.5,0.,1.)*clamp(GV*1.4,0.,1.);if(ring>.5)w*=1.-smoothstep(.7,1.,t);',
+' ci+=vec3(rim*(0.035+0.17*sp));float w=clamp(-dg/(1.5*u_s)+0.5,0.,1.)*clamp(GV*1.4,0.,1.);if(ring>.5)w*=1.-smoothstep(.7,1.,t);',
 ' return vec4(ci,w);}',
 'void main(){',
 ' vec2 px=vec2(gl_FragCoord.x,u_res.y-gl_FragCoord.y);',
@@ -62,7 +62,7 @@ var FS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','pr
 '  vec2 n=normalize(vec2(sdInd(px+vec2(e,0.))-sdInd(px-vec2(e,0.)),sdInd(px+vec2(0.,e))-sdInd(px-vec2(0.,e)))+1e-5);',
 '  vec3 ci=barColor(px-n*pow(1.-t,2.2)*0.6*m)*0.84;float rim=pow(1.-t,3.);',
 '  float sp=pow(max(dot(n,normalize(vec2(-0.6,-0.8))),0.),3.)+0.5*pow(max(dot(n,normalize(vec2(0.6,0.8))),0.),3.);',
-'  ci+=vec3(rim*(0.05+0.3*sp));float w=clamp(-di/(1.5*u_s)+0.5,0.,1.);rgb=rgb*(1.-w)+ci*w;a=a*(1.-w)+w;}',
+'  ci+=vec3(rim*(0.025+0.13*sp));float w=clamp(-di/(1.5*u_s)+0.5,0.,1.);rgb=rgb*(1.-w)+ci*w;a=a*(1.-w)+w;}',
 ' vec4 g1=vec4(0.),g2=vec4(0.);',
 ' if(dg<1.5*u_s){if(u_ord>.5)gNS=1.;g1=glassPx(px,u_g,u_gr,u_gv,dg,u_gd,u_gbl,u_gm);gNS=0.;}',
 ' if(dg2<1.5*u_s){gNS=1.;g2=glassPx(px,u_g2,u_gr2,u_gv2,dg2,.5,1.4,0.);gNS=0.;',
@@ -380,7 +380,9 @@ function recStep(dt){
  var dd=(menu.on&&menu.kind==='dd')?1:0,mo=(menu.on&&menu.kind==='more')?1:0,sh=sheetOn?1:0;
  var tg={pg:Math.min(2,dd+mo+sh),mn:sh,sh:dd&&sh?1:0};
  var top={ox:VW/2,oy:0,tx:0,ty:-.05*VH},ul={ox:0,oy:0,tx:-.045*VW,ty:-.04*VH},mv=false;
- var L={pg:(dd||sh)?top:ul,mn:top,sh:top};
+ /* налаштування над «Додатково»: шари розходяться — екран тягнеться до лівого краю, панель до правого кута */
+ var ulS={ox:0,oy:0,tx:-.07*VW,ty:-.05*VH},trc={ox:VW,oy:0,tx:.05*VW,ty:-.05*VH};
+ var L={pg:sh?ulS:dd?top:ul,mn:dd?top:trc,sh:top};   /* меню-випадайка (dd) ділить шар mn і мусить рухатись разом із аркушем */
  ['pg','mn','sh'].forEach(function(k){
   var o=rec[k],d=tg[k]-o.v;
   if(Math.abs(d)>.0015){o.v+=d*(1-Math.exp(-dt*5.5));mv=true;}else if(d!==0){o.v=tg[k];mv=true;}
