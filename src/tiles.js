@@ -3,7 +3,7 @@ var TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],tlStale=[],tgSig=''
 var tgAl=new Float32Array(TMAX),tgR=new Float32Array(TMAX*4),tgQ=new Float32Array(TMAX),tgHt=new Float32Array(TMAX);
 var TILE_R={tile:28,srch:24};
 var TFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
-'uniform vec2 u_res;uniform vec2 u_vp;uniform vec2 u_go;uniform float u_isl;uniform float u_s;uniform float u_n;uniform float u_br;uniform vec4 u_r[24];uniform float u_q[24];uniform float u_h[24];uniform float u_al[24];',
+'uniform vec2 u_res;uniform vec2 u_vp;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform float u_s;uniform float u_n;uniform float u_br;uniform vec4 u_r[24];uniform float u_q[24];uniform float u_h[24];uniform float u_al[24];',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
 GLSL_BG,
 'float edgeRim(vec2 p){vec2 c=u_vp*.5,q0=p-c;float d=sdRB(q0,c,62.);float r=0.;',
@@ -39,7 +39,7 @@ GLSL_BG,
  tgl.useProgram(p);
  var b=tgl.createBuffer();tgl.bindBuffer(tgl.ARRAY_BUFFER,b);tgl.bufferData(tgl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),tgl.STATIC_DRAW);
  tgl.enableVertexAttribArray(0);tgl.vertexAttribPointer(0,2,tgl.FLOAT,false,0,0);
- ['u_res','u_vp','u_go','u_isl','u_s','u_n','u_br','u_r','u_q','u_h','u_al'].forEach(function(n){TGU[n]=tgl.getUniformLocation(p,n);});
+ ['u_res','u_vp','u_go','u_cell','u_isl','u_s','u_n','u_br','u_r','u_q','u_h','u_al'].forEach(function(n){TGU[n]=tgl.getUniformLocation(p,n);});
  tgOK=true;
 })();
 function tileRadius(el){for(var k in TILE_R)if(el.classList.contains(k))return TILE_R[k];return 0;}
@@ -75,7 +75,7 @@ function drawTiles(){
  tgSig=key;
  var W=Math.round(VW*S),H=Math.round(VH*S);
  if(W!==tgW||H!==tgH||S!==tgS){tgW=W;tgH=H;tgS=S;TGC.width=W;TGC.height=H;tgl.viewport(0,0,W,H);}
- tgl.uniform2f(TGU.u_res,W,H);tgl.uniform2f(TGU.u_vp,VW,VH);tgl.uniform1f(TGU.u_s,S);tgl.uniform2f(TGU.u_go,gOX,gOY);tgl.uniform1f(TGU.u_isl,ISL);tgl.uniform1f(TGU.u_n,n);tgl.uniform1f(TGU.u_br,1-RD*v);
+ tgl.uniform2f(TGU.u_res,W,H);tgl.uniform2f(TGU.u_vp,VW,VH);tgl.uniform1f(TGU.u_s,S);tgl.uniform2f(TGU.u_go,gOX,gOY);tgl.uniform1f(TGU.u_isl,ISL);tgl.uniform1f(TGU.u_cell,gridCell());tgl.uniform1f(TGU.u_n,n);tgl.uniform1f(TGU.u_br,1-RD*v);
  tgl.uniform4fv(TGU.u_r,tgR);tgl.uniform1fv(TGU.u_q,tgQ);tgl.uniform1fv(TGU.u_h,tgHt);tgl.uniform1fv(TGU.u_al,tgAl);
  tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
  if(!tgShown){tgShown=true;TGC.style.display='block';document.documentElement.classList.add('gt');}

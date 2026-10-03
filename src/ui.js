@@ -501,21 +501,40 @@ function mkLoadSpark(){
 uiReady=true;renderTicker();
 (function w(){if(boot.on)setTimeout(w,200);else mkRefresh();})();   /* мережа й важкі операції — після екрана завантаження, щоб анімація не рвалась */
 
-/* ?debug у адресі: показує розміри вікна, екрана й безпечних зон (для діагностики смуг унизу/вгорі на iPhone) */
-if(/[?&]debug/.test(location.search)){
- var hud=document.createElement('pre');
+/* діагностика: ?debug у адресі або довге натискання (1,4 с) на тікер. Показує розміри вікна, екрана, безпечних зон і положення дока */
+var hud=null,hudT=0;
+function hudToggle(){
+ if(hud){clearInterval(hudT);hud.remove();hud=null;try{localStorage.removeItem('vf-debug');}catch(e){}return;}
+ try{localStorage.setItem('vf-debug','1');}catch(e){}
+ hudOn();
+}
+function hudOn(){
+ if(hud)return;
+ hud=document.createElement('pre');
  hud.style.cssText='position:fixed;left:6px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;margin:0;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,.78);color:#9f9;font:11px/1.35 ui-monospace,Menlo,monospace;pointer-events:none;white-space:pre';
  document.body.appendChild(hud);
  var probe=function(side){var q=document.createElement('div');q.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-'+side+',0px);visibility:hidden';document.body.appendChild(q);var h=q.offsetHeight;q.remove();return h;};
- setInterval(function(){
-  var vv=window.visualViewport,b=bgEl.getBoundingClientRect(),d=dock.getBoundingClientRect(),c=cv.getBoundingClientRect(),cs=getComputedStyle(document.documentElement);
+ hudT=setInterval(function(){
+  var vv=window.visualViewport,b=bgEl.getBoundingClientRect(),d=dock.getBoundingClientRect(),c=cv.getBoundingClientRect();
   hud.textContent=['standalone '+(navigator.standalone?'yes':'no')+' / dm '+(matchMedia('(display-mode: standalone)').matches?'sa':'br'),
    'inner '+innerWidth+'x'+innerHeight+'  outer '+outerWidth+'x'+outerHeight,'screen '+screen.width+'x'+screen.height+'  dpr '+devicePixelRatio,
    'vv '+(vv?Math.round(vv.width)+'x'+Math.round(vv.height)+' top '+Math.round(vv.offsetTop)+' sc '+vv.scale.toFixed(2):'-'),
-   'safe top '+probe('top')+' bottom '+probe('bottom')+'  appH '+(cs.getPropertyValue('--appH')||'-'),
+   'safe top '+probe('top')+' bottom '+probe('bottom'),
    'bg top '+Math.round(b.top)+' h '+Math.round(b.height)+'  VH '+Math.round(VH),
-   'dock top '+Math.round(d.top)+' bot '+Math.round(d.bottom)+' h '+Math.round(d.height),
-   'gl top '+Math.round(c.top)+' h '+Math.round(c.height)+'  island '+ISL,
+   'dock top '+Math.round(d.top)+' bot '+Math.round(d.bottom)+' | DR '+Math.round(DR.top),
+   'gl top '+Math.round(c.top)+' bot '+Math.round(c.bottom)+'  island '+ISL+' cell '+gridCell().toFixed(1),
    'html '+document.documentElement.clientHeight+' scrollY '+Math.round(scrollY)].join('\n');
- },500);
+ },400);
 }
+var lpT=0,lpP=null;
+tickerEl.addEventListener('pointerdown',function(e){clearTimeout(lpT);lpP=[e.clientX,e.clientY];lpT=setTimeout(hudToggle,1400);});
+tickerEl.addEventListener('pointermove',function(e){if(lpP&&Math.hypot(e.clientX-lpP[0],e.clientY-lpP[1])>12)clearTimeout(lpT);});
+['pointerup','pointercancel'].forEach(function(n){tickerEl.addEventListener(n,function(){clearTimeout(lpT);});});
+if(/[?&]debug/.test(location.search)||(function(){try{return localStorage.getItem('vf-debug');}catch(e){return null;}})())hudOn();
+/* якщо iOS віддав вікну застосунку меншу висоту, ніж екран, — підштовхуємо перерахунок розкладки (перевстановлення meta viewport) */
+setTimeout(function(){
+ if(navigator.standalone&&innerHeight<screen.height-1){
+  var m=document.querySelector('meta[name=viewport]');
+  if(m){var c=m.getAttribute('content');m.setAttribute('content',c+',maximum-scale=1');setTimeout(function(){m.setAttribute('content',c);},60);}
+ }
+},500);
