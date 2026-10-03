@@ -478,8 +478,14 @@ function applyRec(el,o){
  el.style.filter='blur('+(Math.min(1,o.v)*BLS).toFixed(1)+'px) brightness('+(1-RD*o.v).toFixed(3)+')';
 }
 /* ---- екран завантаження ---- */
-var boot={on:1,hold:1,phase:0,t0:0,t1:0,t2:0,p:0,cx:0,cy:0,rmax:0,r:0,r0:0,DUR:2.4,MIN:1.8,warm:0,
+var boot={on:1,hold:1,phase:0,t0:0,t1:0,t2:0,p:0,cx:0,cy:0,rmax:0,r:0,r0:0,DUR:(/[?&]slowboot/.test(location.search)?14:2.4),MIN:1.8,warm:0,
  el:document.getElementById('boot'),bar:document.querySelector('#boot .bbar i'),wrap:document.querySelector('#boot .bwrap'),logo:document.querySelector('#boot .blogo')};
+function rrPts(cx,cy,hw,hh,r,n){
+ var p=[],k,i,a,cs=[[cx+hw-r,cy-hh+r,-90],[cx+hw-r,cy+hh-r,0],[cx-hw+r,cy+hh-r,90],[cx-hw+r,cy-hh+r,180]];
+ for(k=0;k<4;k++)for(i=0;i<=n;i++){a=(cs[k][2]+90*i/n)*Math.PI/180;p.push((cs[k][0]+r*Math.cos(a)).toFixed(1)+'px '+(cs[k][1]+r*Math.sin(a)).toFixed(1)+'px');}
+ return p;
+}
+function smooth01(a,b,x){var t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);}
 function bootStep(t,dt){
  if(!boot.on)return;
  if(!boot.t0)boot.t0=t;
@@ -489,19 +495,24 @@ function bootStep(t,dt){
   if(h===-1&&el>2.5)real=1;
   var tgt=Math.min(real,el/boot.MIN);if(el>9)tgt=1;
   boot.p+=(tgt-boot.p)*(1-Math.exp(-dt*7));if(tgt>=1&&boot.p>.985)boot.p=1;
-  boot.bar.style.transform='scaleX('+boot.p.toFixed(3)+')';
+  var pp=Math.max(0,Math.min(1,boot.p)),sc=2.4*(1-Math.pow(pp,1.8));   /* логотип зменшується разом із завантаженням, наприкінці до нуля */
+  boot.logo.style.transform='scale('+sc.toFixed(4)+')';boot.wrap.style.setProperty('--gs',(.45+.55*sc/2.4).toFixed(3));
+  if(el>.25&&!boot.lit){boot.lit=1;boot.el.classList.add('lit');}
   if(boot.phase===0&&boot.p>=1){boot.phase=1;boot.t1=t;boot.wrap.classList.add('p1');boot.warm=1;dirty=true;}
   else if(boot.phase===1&&t-boot.t1>330){
    boot.phase=2;boot.t2=t;boot.wrap.classList.add('p2');
    var r=boot.logo.getBoundingClientRect();boot.cx=r.left+r.width/2;boot.cy=r.top+r.height/2;
-   boot.rmax=Math.hypot(Math.max(boot.cx,VW-boot.cx),Math.max(boot.cy,VH-boot.cy))+60;
-   boot.r0=r.width*.3;cv.style.opacity=1;dirty=true;
+   cv.style.opacity=1;dirty=true;
   }
  }
  if(boot.phase===2){
   var u=Math.min(1,(t-boot.t2)/1000/boot.DUR),e=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;   /* плавний старт і плавне завершення */
-  boot.r=boot.r0+(boot.rmax-boot.r0)*e;
-  var st=boot.el.style;st.setProperty('--bx',boot.cx+'px');st.setProperty('--by',boot.cy+'px');st.setProperty('--br',Math.max(0,boot.r-1.5)+'px');
+  var s0=2+15*Math.min(1,u/.08);                                                        /* квадрат «вилітає» з точки й одразу має розмір логотипа */
+  var hw=s0+(VW/2-s0)*e,hh=s0+(VH/2-s0)*e,cx=boot.cx+(VW/2-boot.cx)*e,cy=boot.cy+(VH/2-boot.cy)*e;
+  var rr=Math.max(.5,Math.min(62,.448*Math.min(hw,hh)));                                /* від пропорцій логотипа до радіуса екрана 62 pt */
+  boot.g={cx:cx,cy:cy,hw:hw,hh:hh,r:rr,v:1-smooth01(.9,1,u)};
+  var hp=rrPts(cx,cy,Math.max(.5,hw-1.5),Math.max(.5,hh-1.5),Math.max(.5,rr-1.5),12);
+  boot.el.style.clipPath='polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,'+hp.join(',')+','+hp[0]+')';
   if(u>=.55)boot.hold=0;
   if(u>=1){boot.on=0;boot.el.style.display='none';dirty=true;}
  }
@@ -653,7 +664,7 @@ function frame(t){
   gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,SH.tex||dummy);gl.activeTexture(gl.TEXTURE0);
   gl.uniform4f(U.u_p2,SH.x,-SH.y,SH.ch,(SH.on&&SH.ready)?1:0);gl.uniform1f(U.u_scrim,scrimV);
   var G=menu.g,G2=sheetP.g,gm=0,gdk=.5,gbl=2*BLS*Math.min(1,rec.pg.v);
-  if(boot.on&&boot.phase===2){G={cx:boot.cx,cy:boot.cy,hw:boot.r,hh:boot.r,r:boot.r,v:1};gm=1;gdk=.9;gbl=0;}
+  if(boot.on&&boot.phase===2){G=boot.g;gm=1;gdk=.9;gbl=0;}
   gl.uniform1f(U.u_gm,gm);gl.uniform1f(U.u_gd,gdk);gl.uniform1f(U.u_gbl,gbl);gl.uniform1f(U.u_gb2,2*BLS*Math.min(1,rec.pg.v));gl.uniform2f(U.u_go,gOX,gOY);gl.uniform1f(U.u_isl,ISL);
   gl.uniform4f(U.u_rp,rec.pg.ox,rec.pg.oy,kOf(rec.pg.v),1-RD*rec.pg.v);gl.uniform4f(U.u_rs,rec.sh.ox,rec.sh.oy,kOf(rec.sh.v),1-RD*rec.sh.v);
   gl.uniform4f(U.u_g2,(G2.cx-R.x)*S,(G2.cy-R.y)*S,G2.hw*S,G2.hh*S);gl.uniform1f(U.u_gr2,G2.r*S);gl.uniform1f(U.u_gv2,sheetA>0.002?G2.v:0);gl.uniform1f(U.u_sho,ghost);

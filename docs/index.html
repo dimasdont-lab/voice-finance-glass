@@ -147,26 +147,22 @@ input{font:inherit;color:inherit}
 #send.show.empty{opacity:.5;filter:saturate(.35)}
 #send:active{filter:brightness(.9)}
 /* ---------- екран завантаження ---------- */
-#boot{position:fixed;inset:0;width:var(--sw,auto);height:var(--sh,auto);z-index:15;background:#050507;--bx:50%;--by:50%;--br:0px;
- -webkit-mask-image:radial-gradient(circle at var(--bx) var(--by),transparent var(--br),#000 calc(var(--br) + .5px));mask-image:radial-gradient(circle at var(--bx) var(--by),transparent var(--br),#000 calc(var(--br) + .5px))}
+#boot{position:fixed;inset:0;width:var(--sw,auto);height:var(--sh,auto);z-index:15;background:#050507}
 #boot .bwrap{position:absolute;left:50%;top:46%;width:0;height:0}
-#boot .bglow{position:absolute;left:-170px;top:-170px;width:340px;height:340px;border-radius:50%;opacity:0;
+#boot .bglow{position:absolute;left:-170px;top:-170px;width:340px;height:340px;border-radius:50%;opacity:0;transform:scale(var(--gs,1));
  background:radial-gradient(closest-side,rgba(255,64,76,.7),rgba(255,50,64,.26) 48%,rgba(255,40,60,0) 76%);filter:blur(8px);
  animation:bGlowIn 1.2s ease-out .5s forwards;transition:transform .3s cubic-bezier(.3,0,.2,1),opacity .3s,filter .3s}
-#boot .blogo{position:absolute;left:-58px;top:-58px;width:116px;height:116px;border-radius:26px;overflow:hidden;opacity:1;transform:scale(1);
- animation:bShrink 1.2s cubic-bezier(.22,.78,.24,1) .3s both;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 36px rgba(255,70,80,.4);
- transition:transform .3s cubic-bezier(.3,0,.2,1),box-shadow .3s,opacity .3s}
+#boot .blogo{position:absolute;left:-58px;top:-58px;width:116px;height:116px;border-radius:26px;overflow:hidden;opacity:1;transform:scale(2.4);will-change:transform;
+ box-shadow:0 0 0 1px rgba(255,255,255,.1)}
+#boot.lit .blogo{box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 36px rgba(255,70,80,.4);transition:box-shadow .7s ease-out}
 #boot .blogo img{display:block;width:100%;height:100%}
-#boot .bbar{position:absolute;left:-70px;top:132px;width:140px;height:3px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden;opacity:0;animation:bBarIn .6s ease-out 1.2s forwards;transition:opacity .25s}
-#boot .bbar i{display:block;width:100%;height:100%;border-radius:2px;background:linear-gradient(90deg,#66d896,#ff7d83);transform-origin:0 50%;transform:scaleX(0);transition:transform .22s linear}
-#boot .bwrap.p1 .bglow{animation:none;opacity:.85;transform:scale(.62);filter:blur(8px) brightness(1.6)}
-#boot .bwrap.p1 .blogo{animation:none;opacity:1;transform:scale(.76);box-shadow:0 0 0 1px rgba(255,255,255,.14),0 0 70px rgba(255,60,70,.95),0 0 18px rgba(255,90,100,.8)}
+#boot .bbar{display:none}
+#boot .bwrap.p1 .bglow{animation:none;opacity:.95;transform:scale(.4);filter:blur(8px) brightness(1.8)}
 #boot .bwrap.p2 .bglow{animation:none;opacity:0;transform:scale(2.7);filter:blur(14px);transition:transform 1s cubic-bezier(.2,.7,.3,1),opacity .9s ease-out .1s,filter 1s}
-#boot .bwrap.p2 .blogo{animation:none;transform:scale(1.2);opacity:0;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 90px rgba(255,70,80,.8);transition:transform .7s cubic-bezier(.2,.8,.3,1),opacity .55s .08s,box-shadow .6s}
+#boot .bwrap.p1 .blogo,#boot .bwrap.p2 .blogo{opacity:0}
 #boot .bwrap.p1 .bbar,#boot .bwrap.p2 .bbar{opacity:0}
 /* перший кадр = заставка iOS (apple-touch-startup-image): логотип одразу великий, потім плавно зменшується до звичного розміру. Значення 2.4 має збігатися з tools/make-splash.ps1 */
-@keyframes bShrink{from{transform:scale(2.4)}to{transform:scale(1)}}
-@keyframes bGlowIn{from{opacity:0;transform:scale(1)}to{opacity:.85;transform:scale(1)}}
+@keyframes bGlowIn{from{opacity:0}to{opacity:.85}}
 @keyframes bBarIn{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){#boot .blogo,#boot .bglow,#boot .bbar{animation-duration:.01s}}
 /* ---------- скляні вікна (налаштування, форми, підтвердження) ---------- */
@@ -2921,8 +2917,14 @@ function applyRec(el,o){
  el.style.filter='blur('+(Math.min(1,o.v)*BLS).toFixed(1)+'px) brightness('+(1-RD*o.v).toFixed(3)+')';
 }
 /* ---- екран завантаження ---- */
-var boot={on:1,hold:1,phase:0,t0:0,t1:0,t2:0,p:0,cx:0,cy:0,rmax:0,r:0,r0:0,DUR:2.4,MIN:1.8,warm:0,
+var boot={on:1,hold:1,phase:0,t0:0,t1:0,t2:0,p:0,cx:0,cy:0,rmax:0,r:0,r0:0,DUR:(/[?&]slowboot/.test(location.search)?14:2.4),MIN:1.8,warm:0,
  el:document.getElementById('boot'),bar:document.querySelector('#boot .bbar i'),wrap:document.querySelector('#boot .bwrap'),logo:document.querySelector('#boot .blogo')};
+function rrPts(cx,cy,hw,hh,r,n){
+ var p=[],k,i,a,cs=[[cx+hw-r,cy-hh+r,-90],[cx+hw-r,cy+hh-r,0],[cx-hw+r,cy+hh-r,90],[cx-hw+r,cy-hh+r,180]];
+ for(k=0;k<4;k++)for(i=0;i<=n;i++){a=(cs[k][2]+90*i/n)*Math.PI/180;p.push((cs[k][0]+r*Math.cos(a)).toFixed(1)+'px '+(cs[k][1]+r*Math.sin(a)).toFixed(1)+'px');}
+ return p;
+}
+function smooth01(a,b,x){var t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);}
 function bootStep(t,dt){
  if(!boot.on)return;
  if(!boot.t0)boot.t0=t;
@@ -2932,19 +2934,24 @@ function bootStep(t,dt){
   if(h===-1&&el>2.5)real=1;
   var tgt=Math.min(real,el/boot.MIN);if(el>9)tgt=1;
   boot.p+=(tgt-boot.p)*(1-Math.exp(-dt*7));if(tgt>=1&&boot.p>.985)boot.p=1;
-  boot.bar.style.transform='scaleX('+boot.p.toFixed(3)+')';
+  var pp=Math.max(0,Math.min(1,boot.p)),sc=2.4*(1-Math.pow(pp,1.8));   /* логотип зменшується разом із завантаженням, наприкінці до нуля */
+  boot.logo.style.transform='scale('+sc.toFixed(4)+')';boot.wrap.style.setProperty('--gs',(.45+.55*sc/2.4).toFixed(3));
+  if(el>.25&&!boot.lit){boot.lit=1;boot.el.classList.add('lit');}
   if(boot.phase===0&&boot.p>=1){boot.phase=1;boot.t1=t;boot.wrap.classList.add('p1');boot.warm=1;dirty=true;}
   else if(boot.phase===1&&t-boot.t1>330){
    boot.phase=2;boot.t2=t;boot.wrap.classList.add('p2');
    var r=boot.logo.getBoundingClientRect();boot.cx=r.left+r.width/2;boot.cy=r.top+r.height/2;
-   boot.rmax=Math.hypot(Math.max(boot.cx,VW-boot.cx),Math.max(boot.cy,VH-boot.cy))+60;
-   boot.r0=r.width*.3;cv.style.opacity=1;dirty=true;
+   cv.style.opacity=1;dirty=true;
   }
  }
  if(boot.phase===2){
   var u=Math.min(1,(t-boot.t2)/1000/boot.DUR),e=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;   /* плавний старт і плавне завершення */
-  boot.r=boot.r0+(boot.rmax-boot.r0)*e;
-  var st=boot.el.style;st.setProperty('--bx',boot.cx+'px');st.setProperty('--by',boot.cy+'px');st.setProperty('--br',Math.max(0,boot.r-1.5)+'px');
+  var s0=2+15*Math.min(1,u/.08);                                                        /* квадрат «вилітає» з точки й одразу має розмір логотипа */
+  var hw=s0+(VW/2-s0)*e,hh=s0+(VH/2-s0)*e,cx=boot.cx+(VW/2-boot.cx)*e,cy=boot.cy+(VH/2-boot.cy)*e;
+  var rr=Math.max(.5,Math.min(62,.448*Math.min(hw,hh)));                                /* від пропорцій логотипа до радіуса екрана 62 pt */
+  boot.g={cx:cx,cy:cy,hw:hw,hh:hh,r:rr,v:1-smooth01(.9,1,u)};
+  var hp=rrPts(cx,cy,Math.max(.5,hw-1.5),Math.max(.5,hh-1.5),Math.max(.5,rr-1.5),12);
+  boot.el.style.clipPath='polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,'+hp.join(',')+','+hp[0]+')';
   if(u>=.55)boot.hold=0;
   if(u>=1){boot.on=0;boot.el.style.display='none';dirty=true;}
  }
@@ -3096,7 +3103,7 @@ function frame(t){
   gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,SH.tex||dummy);gl.activeTexture(gl.TEXTURE0);
   gl.uniform4f(U.u_p2,SH.x,-SH.y,SH.ch,(SH.on&&SH.ready)?1:0);gl.uniform1f(U.u_scrim,scrimV);
   var G=menu.g,G2=sheetP.g,gm=0,gdk=.5,gbl=2*BLS*Math.min(1,rec.pg.v);
-  if(boot.on&&boot.phase===2){G={cx:boot.cx,cy:boot.cy,hw:boot.r,hh:boot.r,r:boot.r,v:1};gm=1;gdk=.9;gbl=0;}
+  if(boot.on&&boot.phase===2){G=boot.g;gm=1;gdk=.9;gbl=0;}
   gl.uniform1f(U.u_gm,gm);gl.uniform1f(U.u_gd,gdk);gl.uniform1f(U.u_gbl,gbl);gl.uniform1f(U.u_gb2,2*BLS*Math.min(1,rec.pg.v));gl.uniform2f(U.u_go,gOX,gOY);gl.uniform1f(U.u_isl,ISL);
   gl.uniform4f(U.u_rp,rec.pg.ox,rec.pg.oy,kOf(rec.pg.v),1-RD*rec.pg.v);gl.uniform4f(U.u_rs,rec.sh.ox,rec.sh.oy,kOf(rec.sh.v),1-RD*rec.sh.v);
   gl.uniform4f(U.u_g2,(G2.cx-R.x)*S,(G2.cy-R.y)*S,G2.hw*S,G2.hh*S);gl.uniform1f(U.u_gr2,G2.r*S);gl.uniform1f(U.u_gv2,sheetA>0.002?G2.v:0);gl.uniform1f(U.u_sho,ghost);
