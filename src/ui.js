@@ -375,7 +375,7 @@ function gMove(x,y,t){
  var dx=x-TG.x0,dy=y-TG.y0;
  if(!TG.drag){if(Math.hypot(dx,dy)<7)return;TG.drag=1;TG.moved=true;P.dragging=1;}
  var dt=Math.max(1,t-TG.tt);TG.vy=.6*TG.vy+.4*(y-TG.ty)/dt;TG.ty=y;TG.tt=t;
- var atTop=!TG.sc||TG.sc.scrollTop<=0&&TG.top0<=0,tg=P.tgt,pull=dy>0&&atTop&&Math.abs(dy)>=Math.abs(dx)*.8;
+ var atTop=!TG.sc||TG.sc.scrollTop<=0&&TG.top0<=0,tg=P.tgt,pull=dy>14&&atTop&&dy>=Math.abs(dx)*1.6;   /* намір закрити: явно вниз, не по діагоналі, після невеликої «мертвої зони» */
  var X=rb(dx),Y=pull?dy*.8:rb(dy);
  tg.x=pull?dx*.15:X;tg.y=Y;
  var ex=Math.min(14,Math.abs(tg.x)*.5),ey=Math.min(16,Math.abs(tg.y)*(pull?.18:.5));
@@ -385,7 +385,8 @@ function gMove(x,y,t){
 function gEnd(){
  var P=TG.P;if(!P)return;
  var dy=TG.ty-TG.y0,atTop=!TG.sc||TG.top0<=0;
- var close=TG.drag&&P.pull&&atTop&&(dy>75||(dy>28&&TG.vy>.7));
+ var scr=!!TG.sc&&TG.sc.scrollHeight>TG.sc.clientHeight+2;   /* у вікні є що прокручувати — вимагаємо виразнішого жесту */
+ var close=TG.drag&&P.pull&&atTop&&(dy>(scr?150:110)||(dy>(scr?100:60)&&TG.vy>1));
  P.dragging=0;P.pull=false;P.tgt.x=P.tgt.y=P.tgt.sx=P.tgt.sy=0;TG.P=null;dirty=true;
  if(close){TG.moved=true;
   if(P===menu){if(menu.kind==='more')app.closePanel('more');else closeMenu();}
