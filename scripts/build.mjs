@@ -30,6 +30,7 @@ const html = `<!doctype html>
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="assets/icon-192.png">
 ${SPLASH}
+<script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sh',screen.height+'px');d.setProperty('--sw',screen.width+'px');}}catch(e){}})();</script>
 <title>Voice Finance</title>
 <style>${r('src/style.css')}</style></head><body>
 ${body}

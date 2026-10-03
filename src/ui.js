@@ -433,7 +433,7 @@ function mkRefresh(){
  if(mkBusy){mkAgain=true;return;}
  mkBusy=true;mkErr=null;
  MK.loadMarketData().then(function(){mkLast=Date.now();}).catch(function(e){mkErr=e;}).then(function(){
-  mkBusy=false;mkTried=true;renderPages();
+  mkBusy=false;mkTried=true;renderTicker();mkLoadSpark();
   if(mkAgain){mkAgain=false;mkRefresh();}
  });
 }
@@ -445,19 +445,19 @@ function mkToggle(btn){
  MK.toggleSelection(id,!on);
  sw.classList.toggle('on',!on);
  var c=curSheet&&curSheet.body.querySelector('[data-mkcount]');if(c)c.textContent=MK.selection.length;
- renderPages();sheetStale();
+ renderTicker();sheetStale();
  clearTimeout(mkT);mkT=setTimeout(mkRefresh,700);
 }
 function mkTapInfo(id){var m=MK.data[id];if(!m)return;toast(m.label+' · '+mkSource(m)+(m.updated?' · '+mkWhen(m.updated):''));}
-var tkG=VF.createTickerGesture(),tkOff=0,tkEl=null,tkPress=null,tkPause=0,tkLast=0,
+var tkG=VF.createTickerGesture(),tkOff=0,tkPress=null,tkPause=0,tkLast=0,tkReady=false,
     tkRM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 function tkLoop(t){
  requestAnimationFrame(tkLoop);
  var dt=Math.min(.05,Math.max(0,(t-tkLast)/1000));tkLast=t;
- if(!tkEl||!tkEl.isConnected)tkEl=root.querySelector('.tick .trk');
- var el=tkEl;if(!el)return;
+ if(!tkReady&&!boot.on){tkReady=true;tickerEl.classList.add('on');}
+ var el=tickerTrk;
  if(!el.dataset.loop){if(el._tx){el._tx='';el.style.transform='';}return;}
- if(!tkPress&&!tkRM&&t>tkPause&&sel===2&&!document.hidden&&!boot.on)tkOff+=34*dt;
+ if(!tkPress&&!tkRM&&t>tkPause&&!document.hidden&&!boot.on)tkOff+=34*dt;
  var w=el.scrollWidth/MK_COPIES;if(w<20)return;
  var o=((tkOff%w)+w)%w,s='translate3d('+(-o).toFixed(1)+'px,0,0)';
  if(el._tx!==s){el._tx=s;el.style.transform=s;}
@@ -467,16 +467,27 @@ function tkEnd(cancel){
  if(!tkPress)return;var r=tkG.end({cancelled:cancel});tkPress=null;
  if(r){tkPause=r.resumeAt;if(r.openMarketId)mkTapInfo(r.openMarketId);}
 }
-root.addEventListener('pointerdown',function(e){
- var tk=e.target.closest&&e.target.closest('.tick');if(!tk)return;
+/* строка закріплена поза сторінками: горизонтальне перетягування не скролить сторінку (touch-action:none) */
+tickerEl.addEventListener('pointerdown',function(e){
  var it=e.target.closest('[data-mk]');
- tkG.start({x:e.clientX,marketId:it?it.dataset.mk:'',offset:tkOff});tkPress={id:e.pointerId,y:e.clientY};
+ tkG.start({x:e.clientX,marketId:it?it.dataset.mk:'',offset:tkOff});tkPress={id:e.pointerId};
+ try{tickerEl.setPointerCapture(e.pointerId);}catch(_){}
 });
-root.addEventListener('pointermove',function(e){
+tickerEl.addEventListener('pointermove',function(e){
  if(!tkPress||e.pointerId!==tkPress.id)return;
- if(Math.abs(e.clientY-tkPress.y)>7){tkEnd(true);return;}   /* вертикальний скрол сторінки — не тап і не перетягування */
  var r=tkG.move({x:e.clientX});if(r)tkOff=r.offset;
 });
-root.addEventListener('pointerup',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(false);});
-root.addEventListener('pointercancel',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(true);});
-uiReady=true;mkRefresh();
+tickerEl.addEventListener('pointerup',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(false);});
+tickerEl.addEventListener('pointercancel',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(true);});
+/* міні-графіки: валюти беруть 14-денну історію з Frankfurter, крипто — денні закриття Kraken за ~30 днів */
+function mkLoadSpark(){
+ MK.selection.forEach(function(id){
+  if(id.indexOf('crypto:')!==0)return;var s=mkSpark[id];if(s&&Date.now()-s.t<6*3600000)return;
+  MK.loadMarketDetail(id).then(function(m){
+   var h=m&&m.detailHistory;
+   if(h&&h.length>2){mkSpark[id]={t:Date.now(),v:h.slice(-30).map(function(p){return p.value;})};mkSaveSpark();renderTicker();}
+  }).catch(function(){});
+ });
+}
+uiReady=true;renderTicker();
+(function w(){if(boot.on)setTimeout(w,200);else mkRefresh();})();   /* мережа й важкі операції — після екрана завантаження, щоб анімація не рвалась */
