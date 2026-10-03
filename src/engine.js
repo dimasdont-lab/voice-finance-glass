@@ -11,7 +11,7 @@ var GLSL_BG=['vec3 blob(vec3 c,vec2 n,vec2 ce,vec2 r,vec3 col){float a=clamp(1.-
  ' return o;}',
  'vec3 gradBg(vec2 p){',
  ' vec3 c=vec3(.0196,.0196,.0275);',
- ' vec3 g=vec3(gridL(gridWarp(p,1.)+u_go-u_vp*.5),gridL(gridWarp(p,1.14)+u_go-u_vp*.5),gridL(gridWarp(p,1.28)+u_go-u_vp*.5));return mix(c,vec3(.58),.17*g);}'].join('\n');
+ ' vec3 g=vec3(gridL(gridWarp(p,1.)+u_go-u_vp*.5),gridL(gridWarp(p,1.22)+u_go-u_vp*.5),gridL(gridWarp(p,1.44)+u_go-u_vp*.5));return mix(c,vec3(.58),.17*g);}'].join('\n');
 var VS='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
 var FS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
 'uniform sampler2D u_tb0;uniform sampler2D u_tb1;uniform float u_bm;uniform float u_bs;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform float u_gb2;uniform vec2 u_res;uniform vec2 u_org;uniform vec2 u_vp;uniform sampler2D u_t0;uniform sampler2D u_t1;uniform sampler2D u_t2;uniform vec4 u_p0;uniform vec4 u_p1;uniform vec4 u_p2;uniform vec3 u_w;uniform float u_scrim;uniform vec4 u_g;uniform float u_gr;uniform float u_gv;uniform vec4 u_a;uniform vec4 u_b;uniform vec4 u_c;uniform float u_cv;uniform float u_nk;uniform vec4 u_k;uniform float u_kv;uniform float u_bl;uniform float u_s;uniform vec4 u_rp;uniform vec4 u_rs;uniform float u_rb;uniform float u_gm;uniform float u_gd;uniform float u_gbl;uniform vec4 u_g2;uniform float u_gr2;uniform float u_gv2;uniform float u_sho;uniform vec4 u_rt;uniform float u_ord;',
@@ -61,7 +61,7 @@ GLSL_BG,
 'vec4 glassPx(vec2 px,vec4 G,float GR,float GV,float dg,float gd,float gbl,float ring){',
 ' float mm=(ring>.5?130.:36.)*u_s;float t=clamp(-dg/(0.6*mm),0.,1.);float e=1.5;',
 ' vec2 n=normalize(vec2(sdRB(px+vec2(e,0.)-G.xy,G.zw,GR)-sdRB(px-vec2(e,0.)-G.xy,G.zw,GR),sdRB(px+vec2(0.,e)-G.xy,G.zw,GR)-sdRB(px-vec2(0.,e)-G.xy,G.zw,GR))+1e-5);',
-' vec2 of=n*pow(1.-t,ring>.5?1.7:2.2)*(ring>.5?1.25:0.6)*mm;float ab=(ring>.5?.17:.10)*(0.35+pow(1.-t,1.5));float br=gbl*u_s*GV;',
+' vec2 of=n*pow(1.-t,ring>.5?1.7:2.2)*(ring>.5?1.25:0.6)*mm;float ab=(ring>.5?.24:.10)*(0.35+pow(1.-t,1.5));float br=gbl*u_s*GV;',
 ' vec3 ci=vec3(bgG(px-of*(1.+ab)).r,bgG(px-of).g,bgG(px-of*(1.-ab)).b)*gd;float rim=pow(1.-t,3.);',
 ' float sp=pow(max(dot(n,normalize(vec2(-0.6,-0.8))),0.),3.)+0.5*pow(max(dot(n,normalize(vec2(0.6,0.8))),0.),3.);',
 ' ci+=vec3(rim*(0.035+0.17*sp));float w=clamp(-dg/(1.5*u_s)+0.5,0.,1.)*clamp(GV*1.4,0.,1.);if(ring>.5)w*=1.-smoothstep(.7,1.,t);',
@@ -488,6 +488,20 @@ function rrPts(cx,cy,hw,hh,r,n){
  return p;
 }
 function smooth01(a,b,x){var t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);}
+var fontsOK=!(document.fonts&&document.fonts.ready);
+if(!fontsOK)document.fonts.ready.then(function(){fontsOK=true;});
+function viewportNudge(){   /* iOS інколи віддає вікну застосунку меншу висоту, ніж екран: перевстановлюємо meta viewport, щоб розкладка перерахувалась */
+ var m=document.querySelector('meta[name=viewport]');if(!m)return;
+ var c=m.getAttribute('content');
+ m.setAttribute('content',c.replace(/viewport-fit=cover,?/,'')+',maximum-scale=1');
+ setTimeout(function(){m.setAttribute('content',c);window.dispatchEvent(new Event('resize'));},80);
+}
+function bootGate(el){
+ if(boot.lay)return;
+ var sa=!!navigator.standalone,good=!sa||innerHeight>=screen.height-1;
+ if(!good&&el>.4&&(boot.nz||0)<8&&el>(boot.nzT||0)){boot.nz=(boot.nz||0)+1;boot.nzT=el+.5;viewportNudge();}
+ if((good||el>4.5)&&(fontsOK||el>4.5)&&ready&&el>.5){measure();tlAllStale();boot.lay=1;}
+}
 function bootStep(t,dt){
  if(!boot.on)return;
  if(!boot.t0)boot.t0=t;
@@ -495,6 +509,7 @@ function bootStep(t,dt){
  if(boot.phase<2){
   var h=window.__h2c,real=(h===1?.25:0)+.75*((full[0]?1:0)+(full[1]?1:0)+(full[2]?1:0))/3;
   if(h===-1&&el>2.5)real=1;
+  bootGate(el);if(!boot.lay)real=Math.min(real,.92);
   var tgt=Math.min(real,el/boot.MIN);if(el>9)tgt=1;
   boot.p+=(tgt-boot.p)*(1-Math.exp(-dt*7));if(tgt>=1&&boot.p>.985)boot.p=1;
   var pp=Math.max(0,Math.min(1,boot.p)),sc=2.4*(1-Math.pow(pp,1.8));   /* логотип зменшується разом із завантаженням, наприкінці до нуля */
@@ -512,7 +527,8 @@ function bootStep(t,dt){
   var s0=2+15*Math.min(1,u/.1);                                                        /* квадрат «вилітає» з точки й одразу має розмір логотипа */
   var hw=s0+(VW/2-s0)*e,hh=s0+(VH/2-s0)*e,cx=boot.cx+(VW/2-boot.cx)*e,cy=boot.cy+(VH/2-boot.cy)*e;
   var mn=Math.min(hw,hh),rr=Math.max(.5,Math.min(62,mn*(1-.552*smooth01(.06,.32,u))));                                /* від пропорцій логотипа до радіуса екрана 62 pt */
-  boot.g={cx:cx,cy:cy,hw:hw,hh:hh,r:rr,v:1-smooth01(.68,1,u)};
+  var gw=Math.max(.5,hw-6*e),gh=Math.max(.5,hh-6*e);
+  boot.g={cx:cx,cy:cy,hw:gw,hh:gh,r:Math.max(.5,Math.min(rr,gw,gh)),v:1-smooth01(.68,1,u)};
   var hp=rrPts(cx,cy,Math.max(.5,hw-1.5),Math.max(.5,hh-1.5),Math.max(.5,rr-1.5),12);
   boot.el.style.clipPath='polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,'+hp.join(',')+','+hp[0]+')';
   if(u>=.55)boot.hold=0;

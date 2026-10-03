@@ -531,10 +531,3 @@ tickerEl.addEventListener('pointerdown',function(e){clearTimeout(lpT);lpP=[e.cli
 tickerEl.addEventListener('pointermove',function(e){if(lpP&&Math.hypot(e.clientX-lpP[0],e.clientY-lpP[1])>12)clearTimeout(lpT);});
 ['pointerup','pointercancel'].forEach(function(n){tickerEl.addEventListener(n,function(){clearTimeout(lpT);});});
 if(/[?&]debug/.test(location.search)||(function(){try{return localStorage.getItem('vf-debug');}catch(e){return null;}})())hudOn();
-/* якщо iOS віддав вікну застосунку меншу висоту, ніж екран, — підштовхуємо перерахунок розкладки (перевстановлення meta viewport) */
-setTimeout(function(){
- if(navigator.standalone&&innerHeight<screen.height-1){
-  var m=document.querySelector('meta[name=viewport]');
-  if(m){var c=m.getAttribute('content');m.setAttribute('content',c+',maximum-scale=1');setTimeout(function(){m.setAttribute('content',c);},60);}
- }
-},500);
