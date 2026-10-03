@@ -88,6 +88,7 @@ root.addEventListener('click',function(e){
   else if(a==='dperson')app.openDebtPerson(id);
   else if(a==='person')nav.openPerson(v,t.dataset.name);
   else if(a==='dedit')app.editDebt(id);
+  else if(a==='mperiod')setMarketPeriod(v);
   else if(a==='sort')openDropdown(t,[{v:'name-asc',l:'За іменем А → Я'},{v:'name-desc',l:'За іменем Я → А'}],app.getState().interaction.debtSort,function(x){app.setDebtSort(x);});
   else if(a==='period'){var tg=periodTarget();openDropdown(t,VF.PERIODS.map(function(p){return{v:p,l:p==='ALL'?'Весь час':p};}),app.getState().interaction.periods[tg],function(x){app.setPeriod(tg,x);});}
  }catch(err){console.error(err);toast(err.message||'Помилка');}
@@ -314,7 +315,7 @@ function onDropClosed(){
 /* ---------- синхронізація: стан логіки → екран ---------- */
 function syncUI(){
  var st=app.getState(),n=st.navigation,ix=st.interaction;
- if(n.screen==='marketDetail'){nav.navigate('home');return;}
+ if(n.screen==='marketDetail')mkpEnter(n.params.marketId);
  var pi=PAGE_OF[n.screen];
  if(n.screen!==lastScreen){lastScreen=n.screen;if(pi>2)sy[pi]=0;}
  if(pi!==undefined)sel=pi;
@@ -449,7 +450,7 @@ function mkToggle(btn){
  clearTimeout(mkT);mkT=setTimeout(mkRefresh,700);
 }
 function mkTapInfo(id){var m=MK.data[id];if(!m)return;toast(m.label+' · '+mkSource(m)+(m.updated?' · '+mkWhen(m.updated):''));}
-var tkG=VF.createTickerGesture(),tkOff=0,tkPress=null,tkPause=0,tkLast=0,tkReady=false,
+var tkG=VF.createTickerGesture(),tkOff=0,tkPress=null,tkPause=0,tkLast=0,tkReady=false,tkVel=0,tkPX=0,tkPT=0,
     tkRM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 function tkLoop(t){
  requestAnimationFrame(tkLoop);
@@ -457,28 +458,35 @@ function tkLoop(t){
  if(!tkReady&&!boot.on){tkReady=true;tickerEl.classList.add('on');}
  var el=tickerTrk;
  if(!el.dataset.loop){if(el._tx){el._tx='';el.style.transform='';}return;}
- if(!tkPress&&!tkRM&&t>tkPause&&!document.hidden&&!boot.on)tkOff+=34*dt;
+ if(!tkPress){
+  if(Math.abs(tkVel)>8){tkOff+=tkVel*dt;tkVel*=Math.exp(-dt*2.6);tkPause=t+700;}   /* інерція після відпускання */
+  else{tkVel=0;if(!tkRM&&t>tkPause&&!document.hidden&&!boot.on)tkOff+=34*dt;}
+ }
  var w=el.scrollWidth/MK_COPIES;if(w<20)return;
  var o=((tkOff%w)+w)%w,s='translate3d('+(-o).toFixed(1)+'px,0,0)';
  if(el._tx!==s){el._tx=s;el.style.transform=s;}
 }
 requestAnimationFrame(tkLoop);
-function tkEnd(cancel){
+function tkEnd(cancel,ts){
  if(!tkPress)return;var r=tkG.end({cancelled:cancel});tkPress=null;
- if(r){tkPause=r.resumeAt;if(r.openMarketId)mkTapInfo(r.openMarketId);}
+ if(ts-tkPT>90)tkVel=0;                                   /* палець зупинився перед відпусканням — без інерції */
+ tkVel=Math.max(-3000,Math.min(3000,tkVel));
+ if(r){tkPause=r.resumeAt;if(r.openMarketId){tkVel=0;try{nav.openMarket(r.openMarketId);}catch(err){console.error(err);}}}
 }
 /* строка закріплена поза сторінками: горизонтальне перетягування не скролить сторінку (touch-action:none) */
 tickerEl.addEventListener('pointerdown',function(e){
  var it=e.target.closest('[data-mk]');
- tkG.start({x:e.clientX,marketId:it?it.dataset.mk:'',offset:tkOff});tkPress={id:e.pointerId};
+ tkG.start({x:e.clientX,marketId:it?it.dataset.mk:'',offset:tkOff});tkPress={id:e.pointerId};tkVel=0;tkPX=e.clientX;tkPT=e.timeStamp;
  try{tickerEl.setPointerCapture(e.pointerId);}catch(_){}
 });
 tickerEl.addEventListener('pointermove',function(e){
  if(!tkPress||e.pointerId!==tkPress.id)return;
  var r=tkG.move({x:e.clientX});if(r)tkOff=r.offset;
+ var dtm=e.timeStamp-tkPT;if(dtm>0){tkVel=.6*tkVel+.4*(-(e.clientX-tkPX)/dtm*1000);}
+ tkPX=e.clientX;tkPT=e.timeStamp;
 });
-tickerEl.addEventListener('pointerup',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(false);});
-tickerEl.addEventListener('pointercancel',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(true);});
+tickerEl.addEventListener('pointerup',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(false,e.timeStamp);});
+tickerEl.addEventListener('pointercancel',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(true,e.timeStamp);});
 /* міні-графіки: валюти беруть 14-денну історію з Frankfurter, крипто — денні закриття Kraken за ~30 днів */
 function mkLoadSpark(){
  MK.selection.forEach(function(id){

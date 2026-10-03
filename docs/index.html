@@ -38,7 +38,8 @@ input{font:inherit;color:inherit}
 .sec{font-size:13px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--mu);padding:8px 6px 0}
 .tile{position:relative;border-radius:28px;padding:18px;border:1px solid rgba(255,255,255,.1);
  background:linear-gradient(155deg,rgba(255,255,255,.085),rgba(255,255,255,.03) 60%,rgba(255,255,255,.045))}
-.tile.bal{background:linear-gradient(155deg,rgba(30,190,110,.22),rgba(30,190,110,.06) 62%,rgba(255,255,255,.03));border-color:rgba(60,210,130,.3)}
+.tile.bal.up{background:linear-gradient(155deg,rgba(60,200,120,.12),rgba(60,200,120,.03) 62%,rgba(255,255,255,.02));border-color:rgba(60,210,130,.2)}
+.tile.bal.dn{background:linear-gradient(155deg,rgba(255,125,131,.13),rgba(255,125,131,.03) 62%,rgba(255,255,255,.02));border-color:rgba(255,125,131,.22)}
 .lbl{font-size:13px;color:var(--mu);font-weight:500}
 .big{font-size:40px;line-height:1.1;font-weight:700;letter-spacing:-1px;margin-top:5px;white-space:nowrap}
 .mid{font-size:26px;line-height:1.15;font-weight:700;letter-spacing:-.5px;margin-top:4px;white-space:nowrap}
@@ -207,9 +208,24 @@ input{font:inherit;color:inherit}
 /* ---------- скляні віджети (шар #glt малює скло; тут лише прозорий фон) ---------- */
 #glt{position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:none}
 .gt .tile{background:none;border-color:rgba(255,255,255,.05)}
-.gt .tile.bal{border-color:rgba(80,220,140,.16)}
+.gt .tile.bal.up{border-color:rgba(90,220,150,.12)}
+.gt .tile.bal.dn{border-color:rgba(255,125,131,.12)}
 .gt .mini,.gt .split>button{background:none}
 .gt .srch{background:none;border-color:transparent}
+
+/* ---------- сторінка пари ---------- */
+.mchart{position:relative;height:210px;margin:12px 0 6px;touch-action:none}
+.mchart svg{position:absolute;left:0;top:0;width:100%;height:100%}
+.mchart .mx,.mchart .mn{position:absolute;left:0;font-size:12px;font-weight:600;color:var(--mu)}
+.mchart .mx{top:0}.mchart .mn{bottom:0}
+.mchart .msg{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 20px;font-size:14px;color:var(--mu)}
+.mt{display:flex;justify-content:space-between;font-size:12px;color:var(--mu);margin-bottom:12px}
+.mper{display:flex;gap:6px;flex-wrap:wrap}
+.chip{height:34px;padding:0 12px;border-radius:17px;font-size:13px;font-weight:600;color:var(--mu);border:1px solid var(--ln)}
+.chip.on{color:#fff;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.2)}
+#mcross{position:fixed;z-index:23;left:0;top:0;width:0;display:none;pointer-events:none}
+#mcross i{position:absolute;left:0;top:0;bottom:0;width:1px;background:rgba(255,255,255,.55)}
+#mcross b{position:absolute;top:-30px;transform:translateX(-50%);padding:5px 10px;border-radius:12px;background:rgba(20,20,26,.92);border:1px solid var(--ln);font-size:12px;font-weight:600;white-space:nowrap}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -217,6 +233,7 @@ input{font:inherit;color:inherit}
 <div id="scrim"></div>
 <div id="topblur"></div>
 <div id="ticker"><div class="trk"></div></div>
+<div id="mcross"><i></i><b></b></div>
 <div id="edge"></div>
 <div id="sheets"></div>
 <canvas id="gl"></canvas>
@@ -2268,7 +2285,7 @@ function chev(){return'<svg viewBox="0 0 12 12"><path d="M2.5 4.5 6 8l3.5-3.5"/>
 function curSym(c){return c;}
 
 /* ===== сторінки ===== */
-var PAGE_IDS=['insights','debts','home','balanceAnalysis','accountDetail','flowDetail','people','person'];
+var PAGE_IDS=['insights','debts','home','balanceAnalysis','accountDetail','flowDetail','people','person','marketDetail'];
 var NP=PAGE_IDS.length;
 var PAGE_OF={};PAGE_IDS.forEach(function(n,i){PAGE_OF[n]=i;});
 var root=document.getElementById('pages'),pg=[],inn=[];
@@ -2344,7 +2361,7 @@ function blocksHome(){
  var o=[];
  o.push(hdr('Гарного дня!',todayStr()));
  o.push(searchBlock('home','Пошук операцій'));
- o.push(B_('tile bal','<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>'+esc(pctTxt(pc))+' · 30 днів</span></div>'+spark(pts,'h')+'</div>'+
+ o.push(B_('tile bal '+(ch>0?'up':ch<0?'dn':''),'<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>'+esc(pctTxt(pc))+' · 30 днів</span></div>'+spark(pts,'h')+'</div>'+
   '<div class="split"><button data-act="flow" data-v="income"><i class="dot up">↑</i><div><span class="lbl">Доходи</span><b>'+esc(money(t.income))+'</b></div></button><button data-act="flow" data-v="expense"><i class="dot dn">↓</i><div><span class="lbl">Витрати</span><b>'+esc(money(t.expense))+'</b></div></button></div>'));
  o.push(B_('tile','<div class="th"><h2>Рахунки</h2>'+(accs.length>3?'<button data-act="accs">'+(ix.accountsExpanded?'Згорнути':'Усі ›')+'</button>':'<button data-act="addacc">Додати</button>')+'</div>'+
   (shown.length?shown.map(function(a,i){return'<button class="row'+(i?'':' first')+'" data-act="acc" data-id="'+esc(a.id)+'">'+icon(a.displayName||a.bankName,hashCol(a.id))+'<div class="rc"><b>'+esc(a.displayName||a.bankName)+'</b><span>'+esc(a.bankName||a.accountType||'Рахунок')+'</span></div><em>'+esc(money(a.currentBalance,a.currency))+'</em></button>';}).join(''):'<div class="empty">Рахунків поки немає. Додайте ручний рахунок або готівку — банк підключати не обов’язково.</div>')));
@@ -2386,7 +2403,7 @@ function blocksDebts(){
 }
 /* ---- деталі ---- */
 function periodBtn(cur){return'<button class="pillb dd" data-act="period"><span>'+esc(cur)+'</span>'+chev()+'</button>';}
-function chartTile(title,big,sub,pts,id,cur,neg){return B_(id==='b'?'tile bal':'tile','<div class="th"><div><div class="lbl">'+esc(title)+'</div></div>'+periodBtn(cur)+'</div><div class="big">'+esc(big)+'</div>'+(sub?'<div class="chg '+(neg?'neg':'')+'">'+sub+'</div>':'')+spark(pts,id)+'<div class="cap">'+(pts&&pts.length>1?'':'Замало точок для графіка за цей період.')+'</div>');}
+function chartTile(title,big,sub,pts,id,cur,neg){return B_(id==='b'?'tile bal '+(neg?'dn':'up'):'tile','<div class="th"><div><div class="lbl">'+esc(title)+'</div></div>'+periodBtn(cur)+'</div><div class="big">'+esc(big)+'</div>'+(sub?'<div class="chg '+(neg?'neg':'')+'">'+sub+'</div>':'')+spark(pts,id)+'<div class="cap">'+(pts&&pts.length>1?'':'Замало точок для графіка за цей період.')+'</div>');}
 function txTile(title,list,empty){return B_('tile','<div class="th"><h2>'+esc(title)+'</h2></div>'+(list.length?list.slice(0,40).map(function(x,i){return txRow(x,i===0);}).join(''):'<div class="empty">'+empty+'</div>'));}
 function blocksBalance(m){
  return[hdr('Баланс','Загальний графік',1),chartTile('Поточний',money(m.current),esc(mv(m.change)),m.points,'b',m.periods.balance,m.change<0),
@@ -2418,8 +2435,8 @@ function renderPages(){
  var st=nav.getState(),cur=st.screen;
  setBlocks(0,blocksInsights());setBlocks(1,blocksDebts());setBlocks(2,blocksHome());
  if(PAGE_OF[cur]>2){
-  var m=app.pageModel(),i=PAGE_OF[cur];
-  var bl=cur==='balanceAnalysis'?blocksBalance(m):cur==='accountDetail'?blocksAccount(m):cur==='flowDetail'?blocksFlow(m):cur==='people'?blocksPeople(m):cur==='person'?blocksPerson(m):[hdr('Недоступно','',1)];
+  var m=cur==='marketDetail'?null:app.pageModel(),i=PAGE_OF[cur];
+  var bl=cur==='balanceAnalysis'?blocksBalance(m):cur==='accountDetail'?blocksAccount(m):cur==='flowDetail'?blocksFlow(m):cur==='people'?blocksPeople(m):cur==='person'?blocksPerson(m):cur==='marketDetail'?blocksMarket():[hdr('Недоступно','',1)];
   setBlocks(i,bl);
  }
 }
@@ -2843,7 +2860,10 @@ function stepScroll(dt){
  return act;
 }
 /* ---- скляне меню: Додатково / випадаючі списки ---- */
-var BLS=4,gOX=0,gOY=0;                              /* розмиття фону під вікнами (σ, px) і зсув сітки за скролом */
+var BLS=4,gOX=0,gOY=0,fd={on:false,x0:0,y0:0,dx:0,dy:0};   /* fd — зсув пальця від точки дотику, сітка йде за ним */
+document.addEventListener('pointerdown',function(e){fd.on=true;fd.x0=e.clientX;fd.y0=e.clientY;fd.dx=0;fd.dy=0;},true);
+document.addEventListener('pointermove',function(e){if(fd.on){fd.dx=e.clientX-fd.x0;fd.dy=e.clientY-fd.y0;}},true);
+['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){fd.on=false;},true);});                              /* розмиття фону під вікнами (σ, px) і зсув сітки за скролом */
 var KZ=.8;                                           /* зум шарів під верхнім вікном: −20% */
 function kOf(v){return Math.pow(KZ,v);}
 function mkPanel(el,o){return Object.assign({on:0,s:0,vs:0,tx:0,ty:0,tw:0,th:0,r:28,ax:0,ay:0,rise:0,mode:'grow',el:el,g:{cx:0,cy:0,hw:0,hh:0,r:1,v:0},
@@ -2974,7 +2994,8 @@ function frame(t){
   if(pstyle[i]!==st){pstyle[i]=st;pg[i].style.visibility=vis?'visible':'hidden';inn[i].style.willChange=vis?'transform':'auto';if(vis)pg[i].style.transform=st;}}
  var fl=Math.max(0,Math.min(NP-1,Math.floor(ca))),f2=fl+1;
  var scrolling=stepScroll(dt);
- var gtx=ca*VW*.18,gty=(sy[sel]||0)*.28,gMov=false;
+ var fgx=fd.on?Math.max(-70,Math.min(70,-fd.dx*.25)):0,fgy=fd.on?Math.max(-50,Math.min(50,-fd.dy*.12)):0;
+ var gtx=ca*VW*.18+fgx,gty=(sy[sel]||0)*.28+fgy,gMov=false;
  if(Math.abs(gtx-gOX)+Math.abs(gty-gOY)>.04){var gf=1-Math.exp(-dt*9);gOX+=(gtx-gOX)*gf;gOY+=(gty-gOY)*gf;gMov=true;}else if(gtx!==gOX||gty!==gOY){gOX=gtx;gOY=gty;gMov=true;}
  recStep(dt);
  refreshTabs(t);
@@ -3115,8 +3136,9 @@ GLSL_BG,
 ' float m=36.*u_s;float t=clamp(-dm/(.6*m),0.,1.);float e=1.5;',
 ' vec2 n=normalize(vec2(sdRB(px+vec2(e,0.)-R.xy,R.zw,Q)-sdRB(px-vec2(e,0.)-R.xy,R.zw,Q),sdRB(px+vec2(0.,e)-R.xy,R.zw,Q)-sdRB(px-vec2(0.,e)-R.xy,R.zw,Q))+1e-5);',
 ' vec2 of=n*pow(1.-t,2.2)*.6*m;float ab=.07*(.35+pow(1.-t,1.5));',
-' vec3 ci=vec3(gradBg((px-of*(1.+ab))/u_s).r,gradBg((px-of)/u_s).g,gradBg((px-of*(1.-ab))/u_s).b);',
-' ci=mix(ci,vec3(.006,.19,.085),H*.62);',
+' vec2 za=R.xy+((px-of*(1.+ab))-R.xy)*.93,zb=R.xy+((px-of)-R.xy)*.93,zc=R.xy+((px-of*(1.-ab))-R.xy)*.93;',
+' vec3 ci=vec3(gradBg(za/u_s).r,gradBg(zb/u_s).g,gradBg(zc/u_s).b);',
+' ci=mix(ci,H>0.?vec3(.03,.34,.15):vec3(.45,.05,.08),abs(H)*.20);',
 ' float rim=pow(1.-t,3.);float sp=pow(max(dot(n,normalize(vec2(-.6,-.8))),0.),3.)+.5*pow(max(dot(n,normalize(vec2(.6,.8))),0.),3.);',
 ' ci+=vec3(rim*(.02+.09*sp));ci*=u_br;',
 ' float w=clamp(-dm/(1.5*u_s)+.5,0.,1.);gl_FragColor=vec4(mix(oc,ci,w),1.);}'].join('\n');
@@ -3137,7 +3159,7 @@ function tileRadius(el){for(var k in TILE_R)if(el.classList.contains(k))return T
 function tlMeasure(i){
  var ch=inn[i].children,list=[];
  for(var k=0;k<ch.length;k++){var el=ch[k],r=tileRadius(el);if(!r)continue;
-  list.push({l:el.offsetLeft,t:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight,r:r,hot:el.classList.contains('bal')?1:0});}
+  list.push({l:el.offsetLeft,t:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight,r:r,hot:el.classList.contains('bal')?(el.classList.contains('dn')?-1:el.classList.contains('up')?1:0):0});}
  TL[i]=list;tlStale[i]=0;
 }
 function tlAllStale(){for(var i=0;i<NP;i++)tlStale[i]=1;}
@@ -3170,6 +3192,118 @@ function drawTiles(){
  tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
  if(!tgShown){tgShown=true;TGC.style.display='block';document.documentElement.classList.add('gt');}
 }
+
+/* ===== 8. Сторінка пари: детальний графік за вибраний період (1 год … 5 років) =====
+   Джерела ті самі, що й у тікера: Frankfurter (валюти, щоденні курси ЄЦБ) і Kraken (крипто, свічки OHLC).
+   Для валют годинних даних у джерела немає, тому періоди «1 год» і «1 день» є лише в крипто. */
+var MKP_FX=['7D','1M','3M','1Y','5Y'],MKP_CR=['1H','1D','7D','1M','3M','1Y','5Y'];
+var MKP_L={'1H':'1 год','1D':'1 день','7D':'7 днів','1M':'1 міс','3M':'3 міс','1Y':'1 рік','5Y':'5 років'};
+var MKP_DAYS={'7D':7,'1M':30,'3M':91,'1Y':365,'5Y':1826};
+var MKP_KR={'1H':[1,3600000],'1D':[5,86400000],'7D':[60,604800000],'1M':[240,2592000000],'3M':[1440,7776000000],'1Y':[1440,31536000000],'5Y':[10080,157680000000]};
+var mkpCache={},mkP={id:'',period:'1M',pts:null,draw:null,state:'idle'},mkpReq=0,mcrossEl=document.getElementById('mcross');
+
+function mkMeta(id){var c=VF.marketCatalog();for(var i=0;i<c.length;i++)if(c[i].id===id)return c[i];return null;}
+function mkPeriods(m){return m&&m.kind==='crypto'?MKP_CR:MKP_FX;}
+function mkJson(url){return fetch(url).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();});}
+function mkLoadSeries(m,period){
+ var now=Date.now(),key=m.id+'|'+period,c=mkpCache[key];
+ if(c&&now-c.t<(m.kind==='crypto'?60000:3600000))return Promise.resolve(c.pts);
+ var p;
+ if(m.kind==='fx'){
+  var all=mkpCache[m.id+'|fx5y'];
+  if(all&&now-all.t<3600000)p=Promise.resolve(all.pts);
+  else{
+   var f=new Date(now);f.setFullYear(f.getFullYear()-5);
+   p=mkJson('https://api.frankfurter.dev/v2/rates?from='+f.toISOString().slice(0,10)+'&base='+m.base.toLowerCase()+'&quotes='+m.quote.toLowerCase()).then(function(rows){
+    var pts=rows.map(function(r){return{t:Date.parse(r.date),v:Number(r.rate)};}).filter(function(x){return isFinite(x.v)&&isFinite(x.t);});
+    mkpCache[m.id+'|fx5y']={t:now,pts:pts};return pts;});
+  }
+  p=p.then(function(pts){
+   var from=now-MKP_DAYS[period]*86400000,i=0;while(i<pts.length&&pts[i].t<from)i++;
+   return pts.slice(Math.max(0,i-1));});
+ }else{
+  var cfg=MKP_KR[period];
+  p=mkJson('https://api.kraken.com/0/public/OHLC?pair='+m.pair+'&interval='+cfg[0]+'&since='+Math.floor((now-cfg[1])/1000)).then(function(res){
+   if(res.error&&res.error.length)throw new Error(res.error[0]);
+   var rows=[],k,r=res.result||{};for(k in r)if(Array.isArray(r[k])){rows=r[k];break;}
+   return rows.map(function(x){return{t:x[0]*1000,v:Number(x[4])};}).filter(function(x){return isFinite(x.v);});});
+ }
+ return p.then(function(pts){mkpCache[key]={t:Date.now(),pts:pts};return pts;});
+}
+function mkpLoad(){
+ var m=mkMeta(mkP.id);if(!m)return;
+ var tok=++mkpReq;mkP.state='loading';mkP.pts=null;mkP.draw=null;
+ mkLoadSeries(m,mkP.period).then(function(pts){
+  if(tok!==mkpReq)return;mkP.pts=pts;mkP.state=pts.length>1?'ok':'empty';renderPages();
+ }).catch(function(e){
+  if(tok!==mkpReq)return;mkP.state='err';renderPages();
+ });
+ renderPages();
+}
+function mkpEnter(id){
+ if(mkP.id===id)return;
+ var m=mkMeta(id);mkP.id=id;
+ if(mkPeriods(m).indexOf(mkP.period)<0)mkP.period='1M';
+ mkpLoad();
+}
+function setMarketPeriod(p){if(p===mkP.period)return;mkP.period=p;mkpLoad();}
+function mkDate(t,period){
+ var d=new Date(t);
+ if(period==='1H')return d.toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
+ if(period==='1D')return d.toLocaleString('uk-UA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+ return d.toLocaleDateString('uk-UA',{day:'numeric',month:'short',year:'numeric'});
+}
+function mkDown(pts){
+ var n=pts.length,st=Math.ceil(n/260),o=[],i;
+ for(i=0;i<n;i+=st)o.push(pts[i]);
+ if(o[o.length-1]!==pts[n-1])o.push(pts[n-1]);
+ return o;
+}
+function mkChartHtml(pts,up){
+ var W=340,H=210,pd=22,mn=Infinity,mx=-Infinity,i;
+ for(i=0;i<pts.length;i++){if(pts[i].v<mn)mn=pts[i].v;if(pts[i].v>mx)mx=pts[i].v;}
+ var rg=mx-mn||1,col=up?'#66d896':'#ff7d83';
+ var xy=pts.map(function(p,k){return(k/(pts.length-1)*W).toFixed(1)+' '+(pd+(H-2*pd)*(1-(p.v-mn)/rg)).toFixed(1);});
+ var d='M'+xy.join(' L');
+ var grid='';for(i=0;i<3;i++){var gy=(pd+(H-2*pd)*i/2).toFixed(1);grid+='<line x1="0" x2="'+W+'" y1="'+gy+'" y2="'+gy+'" stroke="rgba(255,255,255,.08)" stroke-width="1" vector-effect="non-scaling-stroke"/>';}
+ return'<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="mpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".32"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+grid+
+  '<path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#mpg)"/><path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>'+
+  '<span class="mx">'+esc(mkFmt(mx))+'</span><span class="mn">'+esc(mkFmt(mn))+'</span>';
+}
+function blocksMarket(){
+ var m=mkMeta(nav.getState().params.marketId),o=[];
+ if(!m)return[hdr('Пару не знайдено','',1)];
+ var live=MK.data[m.id],pts=mkP.pts,ok=mkP.state==='ok'&&pts&&pts.length>1;
+ var first=ok?pts[0].v:null,last=ok?pts[pts.length-1].v:(live&&isFinite(live.value)?live.value:null);
+ var chg=ok&&first?(last-first)/first*100:null,up=chg==null||chg>=0;
+ o.push(hdr(m.label,(m.name?m.name+' · ':'')+mkSource(m),1));
+ var chips=mkPeriods(m).map(function(p){return'<button class="chip'+(p===mkP.period?' on':'')+'" data-act="mperiod" data-v="'+p+'">'+MKP_L[p]+'</button>';}).join('');
+ var body;
+ if(ok){mkP.draw=mkDown(pts);body='<div class="mchart" data-mkc="1">'+mkChartHtml(mkP.draw,up)+'</div><div class="mt"><span>'+esc(mkDate(pts[0].t,mkP.period))+'</span><span>'+esc(mkDate(pts[pts.length-1].t,mkP.period))+'</span></div>';}
+ else{var msg=mkP.state==='loading'?'Завантаження…':mkP.state==='err'?'Не вдалося завантажити дані: перевірте мережу.':'Для цього періоду даних немає.';body='<div class="mchart"><div class="msg">'+esc(msg)+'</div></div><div class="mt"><span></span><span></span></div>';}
+ o.push(B_('tile','<div class="lbl">'+esc(MKP_L[mkP.period])+'</div><div class="big">'+esc(last==null?'—':mkFmt(last))+'</div>'+
+  (chg==null?'':'<div class="chg '+(chg<0?'neg':'')+'">'+esc(mkPct(chg))+'<span>за період</span></div>')+body+'<div class="mper">'+chips+'</div>'));
+ if(ok){
+  var mn=Infinity,mx=-Infinity;pts.forEach(function(p){if(p.v<mn)mn=p.v;if(p.v>mx)mx=p.v;});
+  o.push(B_('tile','<div class="grid2"><div class="mini"><span class="lbl">Початок періоду</span><b>'+esc(mkFmt(first))+'</b></div><div class="mini"><span class="lbl">Зараз</span><b>'+esc(mkFmt(last))+'</b></div><div class="mini"><span class="lbl">Мінімум</span><b>'+esc(mkFmt(mn))+'</b></div><div class="mini"><span class="lbl">Максимум</span><b>'+esc(mkFmt(mx))+'</b></div></div>'));
+ }
+ o.push(B_('tile','<div class="lbl">Звідки дані</div><div class="cap">'+(m.kind==='crypto'?'Kraken (api.kraken.com), публічні свічки. Для періодів до року свічки від 1 хвилини до доби, для 5 років тижневі.':'Frankfurter (api.frankfurter.dev), офіційні щоденні курси ЄЦБ. Годинних і внутрішньоденних даних немає, тому періоди 1 год і 1 день недоступні.')+' Дані можуть мати затримку. Це не порада щодо інвестицій.</div>'));
+ return o;
+}
+/* лінія й підказка при дотику до графіка (окремий елемент поза сторінками, щоб не перезнімати блок) */
+function mcrossHide(){mcrossEl.style.display='none';}
+function mcrossAt(e){
+ var el=e.target.closest&&e.target.closest('.mchart[data-mkc]');
+ if(!el||!mkP.draw){mcrossHide();return;}
+ var r=el.getBoundingClientRect(),fr=clamp((e.clientX-r.left)/r.width,0,1),dr=mkP.draw,p=dr[Math.round(fr*(dr.length-1))];
+ var x=r.left+fr*r.width,lab=mcrossEl.lastChild;
+ mcrossEl.style.display='block';mcrossEl.style.left=x+'px';mcrossEl.style.top=r.top+'px';mcrossEl.style.height=r.height+'px';
+ lab.textContent=mkFmt(p.v)+' · '+mkDate(p.t,mkP.period);
+ lab.style.left=(clamp(x,90,VW-90)-x)+'px';
+}
+root.addEventListener('pointerdown',mcrossAt);
+root.addEventListener('pointermove',function(e){if(mcrossEl.style.display==='block'||e.buttons||e.pointerType==='touch')mcrossAt(e);});
+root.addEventListener('pointerup',mcrossHide);root.addEventListener('pointercancel',mcrossHide);
 
 /* ===== 6. Інтерфейс: події, аркуші, скляні меню, синхронізація зі станом логіки ===== */
 var sheetsEl=document.getElementById('sheets'),scrimEl=document.getElementById('scrim'),toastEl=document.getElementById('toast');
@@ -3261,6 +3395,7 @@ root.addEventListener('click',function(e){
   else if(a==='dperson')app.openDebtPerson(id);
   else if(a==='person')nav.openPerson(v,t.dataset.name);
   else if(a==='dedit')app.editDebt(id);
+  else if(a==='mperiod')setMarketPeriod(v);
   else if(a==='sort')openDropdown(t,[{v:'name-asc',l:'За іменем А → Я'},{v:'name-desc',l:'За іменем Я → А'}],app.getState().interaction.debtSort,function(x){app.setDebtSort(x);});
   else if(a==='period'){var tg=periodTarget();openDropdown(t,VF.PERIODS.map(function(p){return{v:p,l:p==='ALL'?'Весь час':p};}),app.getState().interaction.periods[tg],function(x){app.setPeriod(tg,x);});}
  }catch(err){console.error(err);toast(err.message||'Помилка');}
@@ -3487,7 +3622,7 @@ function onDropClosed(){
 /* ---------- синхронізація: стан логіки → екран ---------- */
 function syncUI(){
  var st=app.getState(),n=st.navigation,ix=st.interaction;
- if(n.screen==='marketDetail'){nav.navigate('home');return;}
+ if(n.screen==='marketDetail')mkpEnter(n.params.marketId);
  var pi=PAGE_OF[n.screen];
  if(n.screen!==lastScreen){lastScreen=n.screen;if(pi>2)sy[pi]=0;}
  if(pi!==undefined)sel=pi;
@@ -3622,7 +3757,7 @@ function mkToggle(btn){
  clearTimeout(mkT);mkT=setTimeout(mkRefresh,700);
 }
 function mkTapInfo(id){var m=MK.data[id];if(!m)return;toast(m.label+' · '+mkSource(m)+(m.updated?' · '+mkWhen(m.updated):''));}
-var tkG=VF.createTickerGesture(),tkOff=0,tkPress=null,tkPause=0,tkLast=0,tkReady=false,
+var tkG=VF.createTickerGesture(),tkOff=0,tkPress=null,tkPause=0,tkLast=0,tkReady=false,tkVel=0,tkPX=0,tkPT=0,
     tkRM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 function tkLoop(t){
  requestAnimationFrame(tkLoop);
@@ -3630,28 +3765,35 @@ function tkLoop(t){
  if(!tkReady&&!boot.on){tkReady=true;tickerEl.classList.add('on');}
  var el=tickerTrk;
  if(!el.dataset.loop){if(el._tx){el._tx='';el.style.transform='';}return;}
- if(!tkPress&&!tkRM&&t>tkPause&&!document.hidden&&!boot.on)tkOff+=34*dt;
+ if(!tkPress){
+  if(Math.abs(tkVel)>8){tkOff+=tkVel*dt;tkVel*=Math.exp(-dt*2.6);tkPause=t+700;}   /* інерція після відпускання */
+  else{tkVel=0;if(!tkRM&&t>tkPause&&!document.hidden&&!boot.on)tkOff+=34*dt;}
+ }
  var w=el.scrollWidth/MK_COPIES;if(w<20)return;
  var o=((tkOff%w)+w)%w,s='translate3d('+(-o).toFixed(1)+'px,0,0)';
  if(el._tx!==s){el._tx=s;el.style.transform=s;}
 }
 requestAnimationFrame(tkLoop);
-function tkEnd(cancel){
+function tkEnd(cancel,ts){
  if(!tkPress)return;var r=tkG.end({cancelled:cancel});tkPress=null;
- if(r){tkPause=r.resumeAt;if(r.openMarketId)mkTapInfo(r.openMarketId);}
+ if(ts-tkPT>90)tkVel=0;                                   /* палець зупинився перед відпусканням — без інерції */
+ tkVel=Math.max(-3000,Math.min(3000,tkVel));
+ if(r){tkPause=r.resumeAt;if(r.openMarketId){tkVel=0;try{nav.openMarket(r.openMarketId);}catch(err){console.error(err);}}}
 }
 /* строка закріплена поза сторінками: горизонтальне перетягування не скролить сторінку (touch-action:none) */
 tickerEl.addEventListener('pointerdown',function(e){
  var it=e.target.closest('[data-mk]');
- tkG.start({x:e.clientX,marketId:it?it.dataset.mk:'',offset:tkOff});tkPress={id:e.pointerId};
+ tkG.start({x:e.clientX,marketId:it?it.dataset.mk:'',offset:tkOff});tkPress={id:e.pointerId};tkVel=0;tkPX=e.clientX;tkPT=e.timeStamp;
  try{tickerEl.setPointerCapture(e.pointerId);}catch(_){}
 });
 tickerEl.addEventListener('pointermove',function(e){
  if(!tkPress||e.pointerId!==tkPress.id)return;
  var r=tkG.move({x:e.clientX});if(r)tkOff=r.offset;
+ var dtm=e.timeStamp-tkPT;if(dtm>0){tkVel=.6*tkVel+.4*(-(e.clientX-tkPX)/dtm*1000);}
+ tkPX=e.clientX;tkPT=e.timeStamp;
 });
-tickerEl.addEventListener('pointerup',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(false);});
-tickerEl.addEventListener('pointercancel',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(true);});
+tickerEl.addEventListener('pointerup',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(false,e.timeStamp);});
+tickerEl.addEventListener('pointercancel',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(true,e.timeStamp);});
 /* міні-графіки: валюти беруть 14-денну історію з Frankfurter, крипто — денні закриття Kraken за ~30 днів */
 function mkLoadSpark(){
  MK.selection.forEach(function(id){

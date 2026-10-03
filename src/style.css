@@ -17,7 +17,8 @@ input{font:inherit;color:inherit}
 .sec{font-size:13px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--mu);padding:8px 6px 0}
 .tile{position:relative;border-radius:28px;padding:18px;border:1px solid rgba(255,255,255,.1);
  background:linear-gradient(155deg,rgba(255,255,255,.085),rgba(255,255,255,.03) 60%,rgba(255,255,255,.045))}
-.tile.bal{background:linear-gradient(155deg,rgba(30,190,110,.22),rgba(30,190,110,.06) 62%,rgba(255,255,255,.03));border-color:rgba(60,210,130,.3)}
+.tile.bal.up{background:linear-gradient(155deg,rgba(60,200,120,.12),rgba(60,200,120,.03) 62%,rgba(255,255,255,.02));border-color:rgba(60,210,130,.2)}
+.tile.bal.dn{background:linear-gradient(155deg,rgba(255,125,131,.13),rgba(255,125,131,.03) 62%,rgba(255,255,255,.02));border-color:rgba(255,125,131,.22)}
 .lbl{font-size:13px;color:var(--mu);font-weight:500}
 .big{font-size:40px;line-height:1.1;font-weight:700;letter-spacing:-1px;margin-top:5px;white-space:nowrap}
 .mid{font-size:26px;line-height:1.15;font-weight:700;letter-spacing:-.5px;margin-top:4px;white-space:nowrap}
@@ -186,6 +187,21 @@ input{font:inherit;color:inherit}
 /* ---------- скляні віджети (шар #glt малює скло; тут лише прозорий фон) ---------- */
 #glt{position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:none}
 .gt .tile{background:none;border-color:rgba(255,255,255,.05)}
-.gt .tile.bal{border-color:rgba(80,220,140,.16)}
+.gt .tile.bal.up{border-color:rgba(90,220,150,.12)}
+.gt .tile.bal.dn{border-color:rgba(255,125,131,.12)}
 .gt .mini,.gt .split>button{background:none}
 .gt .srch{background:none;border-color:transparent}
+
+/* ---------- сторінка пари ---------- */
+.mchart{position:relative;height:210px;margin:12px 0 6px;touch-action:none}
+.mchart svg{position:absolute;left:0;top:0;width:100%;height:100%}
+.mchart .mx,.mchart .mn{position:absolute;left:0;font-size:12px;font-weight:600;color:var(--mu)}
+.mchart .mx{top:0}.mchart .mn{bottom:0}
+.mchart .msg{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 20px;font-size:14px;color:var(--mu)}
+.mt{display:flex;justify-content:space-between;font-size:12px;color:var(--mu);margin-bottom:12px}
+.mper{display:flex;gap:6px;flex-wrap:wrap}
+.chip{height:34px;padding:0 12px;border-radius:17px;font-size:13px;font-weight:600;color:var(--mu);border:1px solid var(--ln)}
+.chip.on{color:#fff;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.2)}
+#mcross{position:fixed;z-index:23;left:0;top:0;width:0;display:none;pointer-events:none}
+#mcross i{position:absolute;left:0;top:0;bottom:0;width:1px;background:rgba(255,255,255,.55)}
+#mcross b{position:absolute;top:-30px;transform:translateX(-50%);padding:5px 10px;border-radius:12px;background:rgba(20,20,26,.92);border:1px solid var(--ln);font-size:12px;font-weight:600;white-space:nowrap}

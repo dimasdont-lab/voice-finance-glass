@@ -39,6 +39,7 @@ ${body}
 ${r('src/core.js')}
 ${r('src/engine.js')}
 ${r('src/tiles.js')}
+${r('src/market.js')}
 ${r('src/ui.js')}
 })();</script></body></html>`;
 

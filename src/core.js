@@ -22,7 +22,7 @@ function chev(){return'<svg viewBox="0 0 12 12"><path d="M2.5 4.5 6 8l3.5-3.5"/>
 function curSym(c){return c;}
 
 /* ===== сторінки ===== */
-var PAGE_IDS=['insights','debts','home','balanceAnalysis','accountDetail','flowDetail','people','person'];
+var PAGE_IDS=['insights','debts','home','balanceAnalysis','accountDetail','flowDetail','people','person','marketDetail'];
 var NP=PAGE_IDS.length;
 var PAGE_OF={};PAGE_IDS.forEach(function(n,i){PAGE_OF[n]=i;});
 var root=document.getElementById('pages'),pg=[],inn=[];
@@ -98,7 +98,7 @@ function blocksHome(){
  var o=[];
  o.push(hdr('Гарного дня!',todayStr()));
  o.push(searchBlock('home','Пошук операцій'));
- o.push(B_('tile bal','<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>'+esc(pctTxt(pc))+' · 30 днів</span></div>'+spark(pts,'h')+'</div>'+
+ o.push(B_('tile bal '+(ch>0?'up':ch<0?'dn':''),'<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>'+esc(pctTxt(pc))+' · 30 днів</span></div>'+spark(pts,'h')+'</div>'+
   '<div class="split"><button data-act="flow" data-v="income"><i class="dot up">↑</i><div><span class="lbl">Доходи</span><b>'+esc(money(t.income))+'</b></div></button><button data-act="flow" data-v="expense"><i class="dot dn">↓</i><div><span class="lbl">Витрати</span><b>'+esc(money(t.expense))+'</b></div></button></div>'));
  o.push(B_('tile','<div class="th"><h2>Рахунки</h2>'+(accs.length>3?'<button data-act="accs">'+(ix.accountsExpanded?'Згорнути':'Усі ›')+'</button>':'<button data-act="addacc">Додати</button>')+'</div>'+
   (shown.length?shown.map(function(a,i){return'<button class="row'+(i?'':' first')+'" data-act="acc" data-id="'+esc(a.id)+'">'+icon(a.displayName||a.bankName,hashCol(a.id))+'<div class="rc"><b>'+esc(a.displayName||a.bankName)+'</b><span>'+esc(a.bankName||a.accountType||'Рахунок')+'</span></div><em>'+esc(money(a.currentBalance,a.currency))+'</em></button>';}).join(''):'<div class="empty">Рахунків поки немає. Додайте ручний рахунок або готівку — банк підключати не обов’язково.</div>')));
@@ -140,7 +140,7 @@ function blocksDebts(){
 }
 /* ---- деталі ---- */
 function periodBtn(cur){return'<button class="pillb dd" data-act="period"><span>'+esc(cur)+'</span>'+chev()+'</button>';}
-function chartTile(title,big,sub,pts,id,cur,neg){return B_(id==='b'?'tile bal':'tile','<div class="th"><div><div class="lbl">'+esc(title)+'</div></div>'+periodBtn(cur)+'</div><div class="big">'+esc(big)+'</div>'+(sub?'<div class="chg '+(neg?'neg':'')+'">'+sub+'</div>':'')+spark(pts,id)+'<div class="cap">'+(pts&&pts.length>1?'':'Замало точок для графіка за цей період.')+'</div>');}
+function chartTile(title,big,sub,pts,id,cur,neg){return B_(id==='b'?'tile bal '+(neg?'dn':'up'):'tile','<div class="th"><div><div class="lbl">'+esc(title)+'</div></div>'+periodBtn(cur)+'</div><div class="big">'+esc(big)+'</div>'+(sub?'<div class="chg '+(neg?'neg':'')+'">'+sub+'</div>':'')+spark(pts,id)+'<div class="cap">'+(pts&&pts.length>1?'':'Замало точок для графіка за цей період.')+'</div>');}
 function txTile(title,list,empty){return B_('tile','<div class="th"><h2>'+esc(title)+'</h2></div>'+(list.length?list.slice(0,40).map(function(x,i){return txRow(x,i===0);}).join(''):'<div class="empty">'+empty+'</div>'));}
 function blocksBalance(m){
  return[hdr('Баланс','Загальний графік',1),chartTile('Поточний',money(m.current),esc(mv(m.change)),m.points,'b',m.periods.balance,m.change<0),
@@ -172,8 +172,8 @@ function renderPages(){
  var st=nav.getState(),cur=st.screen;
  setBlocks(0,blocksInsights());setBlocks(1,blocksDebts());setBlocks(2,blocksHome());
  if(PAGE_OF[cur]>2){
-  var m=app.pageModel(),i=PAGE_OF[cur];
-  var bl=cur==='balanceAnalysis'?blocksBalance(m):cur==='accountDetail'?blocksAccount(m):cur==='flowDetail'?blocksFlow(m):cur==='people'?blocksPeople(m):cur==='person'?blocksPerson(m):[hdr('Недоступно','',1)];
+  var m=cur==='marketDetail'?null:app.pageModel(),i=PAGE_OF[cur];
+  var bl=cur==='balanceAnalysis'?blocksBalance(m):cur==='accountDetail'?blocksAccount(m):cur==='flowDetail'?blocksFlow(m):cur==='people'?blocksPeople(m):cur==='person'?blocksPerson(m):cur==='marketDetail'?blocksMarket():[hdr('Недоступно','',1)];
   setBlocks(i,bl);
  }
 }
