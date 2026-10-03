@@ -3,14 +3,20 @@ var TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],tlStale=[],tgSig=''
 var tgR=new Float32Array(TMAX*4),tgQ=new Float32Array(TMAX),tgHt=new Float32Array(TMAX);
 var TILE_R={tile:28,srch:24};
 var TFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
-'uniform vec2 u_res;uniform vec2 u_vp;uniform vec2 u_go;uniform float u_s;uniform float u_n;uniform float u_br;uniform vec4 u_r[24];uniform float u_q[24];uniform float u_h[24];',
+'uniform vec2 u_res;uniform vec2 u_vp;uniform vec2 u_go;uniform float u_isl;uniform float u_s;uniform float u_n;uniform float u_br;uniform vec4 u_r[24];uniform float u_q[24];uniform float u_h[24];',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
 GLSL_BG,
+'float edgeRim(vec2 p){vec2 c=u_vp*.5,q0=p-c;float d=sdRB(q0,c,62.);float r=0.;',
+' if(d<0.){float t=clamp(-d/16.,0.,1.);vec2 q=abs(q0)-c+62.;vec2 nn=((q.x>0.&&q.y>0.)?normalize(q):(q.x>q.y?vec2(1.,0.):vec2(0.,1.)))*sign(q0);',
+'  float sp=pow(max(dot(nn,normalize(vec2(-.6,-.8))),0.),3.)+.5*pow(max(dot(nn,normalize(vec2(.6,.8))),0.),3.);r+=pow(1.-t,3.)*(.03+.12*sp);}',
+' if(u_isl>.5){vec2 qi=p-vec2(c.x,29.5);float di=sdRB(qi,vec2(63.,18.5),18.5);',
+'  r+=.26*exp(-pow((di-1.2)/1.6,2.))+.07*pow(1.-clamp(di/20.,0.,1.),2.)*step(0.,di);}',
+' return r;}',
 'void main(){',
 ' vec2 px=vec2(gl_FragCoord.x,u_res.y-gl_FragCoord.y);vec2 p=px/u_s;',
 ' float dm=1e5;vec4 R=vec4(0.);float Q=1.;float H=0.;',
 ' for(int i=0;i<24;i++){if(float(i)>=u_n)break;float d=sdRB(px-u_r[i].xy,u_r[i].zw,u_q[i]);if(d<dm){dm=d;R=u_r[i];Q=u_q[i];H=u_h[i];}}',
-' vec3 base=gradBg(p);float sw=26.*u_s;',
+' vec3 base=gradBg(p)+vec3(edgeRim(p));float sw=26.*u_s;',
 ' if(dm>sw){gl_FragColor=vec4(base,1.);return;}',
 ' float sh=dm>0.?1.-clamp(dm/sw,0.,1.):0.;vec3 oc=base*(1.-.16*sh*sh);',
 ' if(dm>1.5*u_s){gl_FragColor=vec4(oc,1.);return;}',
@@ -33,7 +39,7 @@ GLSL_BG,
  tgl.useProgram(p);
  var b=tgl.createBuffer();tgl.bindBuffer(tgl.ARRAY_BUFFER,b);tgl.bufferData(tgl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),tgl.STATIC_DRAW);
  tgl.enableVertexAttribArray(0);tgl.vertexAttribPointer(0,2,tgl.FLOAT,false,0,0);
- ['u_res','u_vp','u_go','u_s','u_n','u_br','u_r','u_q','u_h'].forEach(function(n){TGU[n]=tgl.getUniformLocation(p,n);});
+ ['u_res','u_vp','u_go','u_isl','u_s','u_n','u_br','u_r','u_q','u_h'].forEach(function(n){TGU[n]=tgl.getUniformLocation(p,n);});
  tgOK=true;
 })();
 function tileRadius(el){for(var k in TILE_R)if(el.classList.contains(k))return TILE_R[k];return 0;}
@@ -68,7 +74,7 @@ function drawTiles(){
  tgSig=key;
  var W=Math.round(VW*S),H=Math.round(VH*S);
  if(W!==tgW||H!==tgH||S!==tgS){tgW=W;tgH=H;tgS=S;TGC.width=W;TGC.height=H;tgl.viewport(0,0,W,H);}
- tgl.uniform2f(TGU.u_res,W,H);tgl.uniform2f(TGU.u_vp,VW,VH);tgl.uniform1f(TGU.u_s,S);tgl.uniform2f(TGU.u_go,gOX,gOY);tgl.uniform1f(TGU.u_n,n);tgl.uniform1f(TGU.u_br,1-RD*v);
+ tgl.uniform2f(TGU.u_res,W,H);tgl.uniform2f(TGU.u_vp,VW,VH);tgl.uniform1f(TGU.u_s,S);tgl.uniform2f(TGU.u_go,gOX,gOY);tgl.uniform1f(TGU.u_isl,ISL);tgl.uniform1f(TGU.u_n,n);tgl.uniform1f(TGU.u_br,1-RD*v);
  tgl.uniform4fv(TGU.u_r,tgR);tgl.uniform1fv(TGU.u_q,tgQ);tgl.uniform1fv(TGU.u_h,tgHt);
  tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
  if(!tgShown){tgShown=true;TGC.style.display='block';document.documentElement.classList.add('gt');}
