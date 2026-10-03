@@ -500,3 +500,22 @@ function mkLoadSpark(){
 }
 uiReady=true;renderTicker();
 (function w(){if(boot.on)setTimeout(w,200);else mkRefresh();})();   /* мережа й важкі операції — після екрана завантаження, щоб анімація не рвалась */
+
+/* ?debug у адресі: показує розміри вікна, екрана й безпечних зон (для діагностики смуг унизу/вгорі на iPhone) */
+if(/[?&]debug/.test(location.search)){
+ var hud=document.createElement('pre');
+ hud.style.cssText='position:fixed;left:6px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;margin:0;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,.78);color:#9f9;font:11px/1.35 ui-monospace,Menlo,monospace;pointer-events:none;white-space:pre';
+ document.body.appendChild(hud);
+ var probe=function(side){var q=document.createElement('div');q.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-'+side+',0px);visibility:hidden';document.body.appendChild(q);var h=q.offsetHeight;q.remove();return h;};
+ setInterval(function(){
+  var vv=window.visualViewport,b=bgEl.getBoundingClientRect(),d=dock.getBoundingClientRect(),c=cv.getBoundingClientRect(),cs=getComputedStyle(document.documentElement);
+  hud.textContent=['standalone '+(navigator.standalone?'yes':'no')+' / dm '+(matchMedia('(display-mode: standalone)').matches?'sa':'br'),
+   'inner '+innerWidth+'x'+innerHeight+'  outer '+outerWidth+'x'+outerHeight,'screen '+screen.width+'x'+screen.height+'  dpr '+devicePixelRatio,
+   'vv '+(vv?Math.round(vv.width)+'x'+Math.round(vv.height)+' top '+Math.round(vv.offsetTop)+' sc '+vv.scale.toFixed(2):'-'),
+   'safe top '+probe('top')+' bottom '+probe('bottom')+'  appH '+(cs.getPropertyValue('--appH')||'-'),
+   'bg top '+Math.round(b.top)+' h '+Math.round(b.height)+'  VH '+Math.round(VH),
+   'dock top '+Math.round(d.top)+' bot '+Math.round(d.bottom)+' h '+Math.round(d.height),
+   'gl top '+Math.round(c.top)+' h '+Math.round(c.height)+'  island '+ISL,
+   'html '+document.documentElement.clientHeight+' scrollY '+Math.round(scrollY)].join('\n');
+ },500);
+}

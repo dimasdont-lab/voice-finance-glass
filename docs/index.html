@@ -17,7 +17,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1170x2532.jpg" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
-<script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sh',screen.height+'px');d.setProperty('--sw',screen.width+'px');}}catch(e){}})();</script>
+<script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sh',screen.height+'px');d.setProperty('--sw',screen.width+'px');d.setProperty('--appH',screen.height+'px');d.setProperty('--dockTop','calc('+screen.height+'px - 86px - env(safe-area-inset-bottom,0px))');}}catch(e){}})();</script>
 <title>Voice Finance</title>
 <style>:root{--f:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',Inter,'Helvetica Neue',Arial,sans-serif;
  --tx:#f5f5f7;--mu:#9b9ba6;--mu2:#6d6d78;--ac:#ff7d83;--ac2:#ff454f;--gr:#66d896;--ln:rgba(255,255,255,.09)}
@@ -202,7 +202,7 @@ input{font:inherit;color:inherit}
 .mkr .sw{display:block}
 
 /* ---------- скляні віджети (шар #glt малює скло; тут лише прозорий фон) ---------- */
-#glt{position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:none}
+#glt{position:fixed;left:0;top:0;width:100%;height:var(--appH,100%);z-index:-1;pointer-events:none;display:none}
 .gt .tile{background:none;border-color:rgba(255,255,255,.05)}
 .gt .tile.bal.up{border-color:rgba(90,220,150,.12)}
 .gt .tile.bal.dn{border-color:rgba(255,125,131,.12)}
@@ -222,6 +222,10 @@ input{font:inherit;color:inherit}
 #mcross{position:fixed;z-index:23;left:0;top:0;width:0;display:none;pointer-events:none}
 #mcross i{position:absolute;left:0;top:0;bottom:0;width:1px;background:rgba(255,255,255,.55)}
 #mcross b{position:absolute;top:-30px;transform:translateX(-50%);padding:5px 10px;border-radius:12px;background:rgba(20,20,26,.92);border:1px solid var(--ln);font-size:12px;font-weight:600;white-space:nowrap}
+
+/* у застосунку з іконки всі повноекранні шари й док прив'язані до фактичної висоти екрана (screen.height), щоб унизу не лишалось смуги */
+#bg,#pages,#sheets,#scrim,#edge,#menuShade{height:var(--appH,auto)}
+#dock{top:var(--dockTop,auto)}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -2440,7 +2444,7 @@ function renderPages(){
 var cv=document.getElementById('gl');
 var gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,powerPreference:'high-performance'})||cv.getContext('experimental-webgl');
 var ISL=(function(){try{var q=document.createElement('div');q.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden';document.body.appendChild(q);var h=q.offsetHeight||0;q.remove();return(h>=40||/[?&]island/.test(location.search))?1:0;}catch(e){return 0;}})();
-var GRID_CELL=60;   /* ≈5 мм на iPhone (CSS-пікселі) */
+var GRID_CELL=45;   /* ≈5 мм на iPhone (CSS-пікселі) */
 var GLSL_BG=['vec3 blob(vec3 c,vec2 n,vec2 ce,vec2 r,vec3 col){float a=clamp(1.-length((n-ce)/r)/0.7,0.,1.);return mix(c,col,a);}',
  'float gridL(vec2 p){vec2 q=abs(fract(p/'+GRID_CELL+'.+.5)-.5)*'+GRID_CELL+'.;return 1.-smoothstep(.0,1.,min(q.x,q.y));}',
 
@@ -2631,7 +2635,7 @@ function shot(el,w,h,ts){
  FC.innerHTML='';var n=FD.importNode(el,true);
  var src=el.querySelectorAll('input,textarea'),dst=n.querySelectorAll('input,textarea');
  for(var q=0;q<src.length;q++){if(src[q].tagName==='TEXTAREA')dst[q].textContent=src[q].value;else dst[q].setAttribute('value',src[q].value);}
- n.style.margin='0';n.style.width=w+'px';n.style.transform='none';n.style.willChange='auto';FC.appendChild(n);
+ n.style.margin='0';n.style.filter='';n.style.opacity='';n.style.width=w+'px';n.style.transform='none';n.style.willChange='auto';FC.appendChild(n);
  FR.style.width=Math.ceil(w)+'px';FR.style.height=Math.ceil(h)+'px';
  return html2canvas(n,{backgroundColor:null,scale:ts,logging:false,windowWidth:Math.ceil(w),windowHeight:Math.ceil(h),imageTimeout:0});
 }
@@ -2722,7 +2726,8 @@ function measure(){
  var wChanged=Math.abs(b.width-VW)>.5;
  if(ready&&!wChanged&&S2===S&&Math.abs(b.height-VH)<.5&&x0===R.x&&y0===R.y&&w===R.w&&h===R.h)return;
  S=S2;VW=b.width;VH=b.height;R={x:x0,y:y0,w:w,h:h};
- cv.style.left=x0+'px';cv.style.top=y0+'px';cv.style.width=w+'px';cv.style.height=h+'px';
+ cv.style.left=x0+'px';cv.style.width=w+'px';cv.style.height=h+'px';
+ if(!fullMode&&!document.documentElement.style.getPropertyValue('--appH')){cv.style.top='auto';cv.style.bottom=(b.height-y0-h)+'px';}else{cv.style.bottom='auto';cv.style.top=y0+'px';}
  cv.width=Math.round(w*S);cv.height=Math.round(h*S);gl.viewport(0,0,cv.width,cv.height);
  if(wChanged){T.forEach(drop);P.forEach(drop);T=[];P=[];B=[];full=[];asm=[];needSync=allSync();}
  dirty=true;ready=true;
@@ -2940,16 +2945,16 @@ function bootStep(t,dt){
   if(boot.phase===0&&boot.p>=1){boot.phase=1;boot.t1=t;boot.wrap.classList.add('p1');boot.warm=1;dirty=true;}
   else if(boot.phase===1&&t-boot.t1>330){
    boot.phase=2;boot.t2=t;boot.wrap.classList.add('p2');
-   var r=boot.logo.getBoundingClientRect();boot.cx=r.left+r.width/2;boot.cy=r.top+r.height/2;
+   var r=boot.logo.getBoundingClientRect();boot.cx=r.left+r.width/2;boot.cy=r.top+r.height/2;introStart(t);
    cv.style.opacity=1;dirty=true;
   }
  }
  if(boot.phase===2){
   var u=Math.min(1,(t-boot.t2)/1000/boot.DUR),e=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;   /* плавний старт і плавне завершення */
-  var s0=2+15*Math.min(1,u/.08);                                                        /* квадрат «вилітає» з точки й одразу має розмір логотипа */
+  var s0=2+15*Math.min(1,u/.1);                                                        /* квадрат «вилітає» з точки й одразу має розмір логотипа */
   var hw=s0+(VW/2-s0)*e,hh=s0+(VH/2-s0)*e,cx=boot.cx+(VW/2-boot.cx)*e,cy=boot.cy+(VH/2-boot.cy)*e;
-  var rr=Math.max(.5,Math.min(62,.448*Math.min(hw,hh)));                                /* від пропорцій логотипа до радіуса екрана 62 pt */
-  boot.g={cx:cx,cy:cy,hw:hw,hh:hh,r:rr,v:1-smooth01(.9,1,u)};
+  var mn=Math.min(hw,hh),rr=Math.max(.5,Math.min(62,mn*(1-.552*smooth01(.06,.32,u))));                                /* від пропорцій логотипа до радіуса екрана 62 pt */
+  boot.g={cx:cx,cy:cy,hw:hw,hh:hh,r:rr,v:1-smooth01(.68,1,u)};
   var hp=rrPts(cx,cy,Math.max(.5,hw-1.5),Math.max(.5,hh-1.5),Math.max(.5,rr-1.5),12);
   boot.el.style.clipPath='polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,'+hp.join(',')+','+hp[0]+')';
   if(u>=.55)boot.hold=0;
@@ -3012,6 +3017,7 @@ function frame(t){
  if(Math.abs(gtx-gOX)+Math.abs(gty-gOY)>.04){var gf=1-Math.exp(-dt*9);gOX+=(gtx-gOX)*gf;gOY+=(gty-gOY)*gf;gMov=true;}else if(gtx!==gOX||gty!==gOY){gOX=gtx;gOY=gty;gMov=true;}
  recStep(dt);
  refreshTabs(t);
+ if(intro.on)introStep(t);
  if(tgOK)drawTiles();
  if(menu.s>0||menu.on)stepMenu(dt);
  if(sheetP.s>0||sheetP.on)stepSheet(dt);
@@ -3132,10 +3138,10 @@ function frame(t){
 
 /* ===== 7. Скляні віджети: окремий WebGL-шар під текстом. Малює фон із сіткою й плитки з заломленням сітки ===== */
 var TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=24;
-var tgR=new Float32Array(TMAX*4),tgQ=new Float32Array(TMAX),tgHt=new Float32Array(TMAX);
+var tgAl=new Float32Array(TMAX),tgR=new Float32Array(TMAX*4),tgQ=new Float32Array(TMAX),tgHt=new Float32Array(TMAX);
 var TILE_R={tile:28,srch:24};
 var TFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
-'uniform vec2 u_res;uniform vec2 u_vp;uniform vec2 u_go;uniform float u_isl;uniform float u_s;uniform float u_n;uniform float u_br;uniform vec4 u_r[24];uniform float u_q[24];uniform float u_h[24];',
+'uniform vec2 u_res;uniform vec2 u_vp;uniform vec2 u_go;uniform float u_isl;uniform float u_s;uniform float u_n;uniform float u_br;uniform vec4 u_r[24];uniform float u_q[24];uniform float u_h[24];uniform float u_al[24];',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
 GLSL_BG,
 'float edgeRim(vec2 p){vec2 c=u_vp*.5,q0=p-c;float d=sdRB(q0,c,62.);float r=0.;',
@@ -3146,11 +3152,11 @@ GLSL_BG,
 ' return r;}',
 'void main(){',
 ' vec2 px=vec2(gl_FragCoord.x,u_res.y-gl_FragCoord.y);vec2 p=px/u_s;',
-' float dm=1e5;vec4 R=vec4(0.);float Q=1.;float H=0.;',
-' for(int i=0;i<24;i++){if(float(i)>=u_n)break;float d=sdRB(px-u_r[i].xy,u_r[i].zw,u_q[i]);if(d<dm){dm=d;R=u_r[i];Q=u_q[i];H=u_h[i];}}',
+' float dm=1e5;vec4 R=vec4(0.);float Q=1.;float H=0.;float AL=1.;',
+' for(int i=0;i<24;i++){if(float(i)>=u_n)break;float d=sdRB(px-u_r[i].xy,u_r[i].zw,u_q[i]);if(d<dm){dm=d;R=u_r[i];Q=u_q[i];H=u_h[i];AL=u_al[i];}}',
 ' vec3 base=gradBg(p)+vec3(edgeRim(p));float sw=26.*u_s;',
 ' if(dm>sw){gl_FragColor=vec4(base,1.);return;}',
-' float sh=dm>0.?1.-clamp(dm/sw,0.,1.):0.;vec3 oc=base*(1.-.16*sh*sh);',
+' float sh=dm>0.?1.-clamp(dm/sw,0.,1.):0.;vec3 oc=base*(1.-.16*sh*sh*AL);',
 ' if(dm>1.5*u_s){gl_FragColor=vec4(oc,1.);return;}',
 ' float m=36.*u_s;float t=clamp(-dm/(.6*m),0.,1.);float e=1.5;',
 ' vec2 n=normalize(vec2(sdRB(px+vec2(e,0.)-R.xy,R.zw,Q)-sdRB(px-vec2(e,0.)-R.xy,R.zw,Q),sdRB(px+vec2(0.,e)-R.xy,R.zw,Q)-sdRB(px-vec2(0.,e)-R.xy,R.zw,Q))+1e-5);',
@@ -3160,7 +3166,7 @@ GLSL_BG,
 ' ci=mix(ci,H>0.?vec3(.03,.34,.15):vec3(.45,.05,.08),abs(H)*.20);',
 ' float rim=pow(1.-t,3.);float sp=pow(max(dot(n,normalize(vec2(-.6,-.8))),0.),3.)+.5*pow(max(dot(n,normalize(vec2(.6,.8))),0.),3.);',
 ' ci+=vec3(rim*(.02+.09*sp));ci*=u_br;',
-' float w=clamp(-dm/(1.5*u_s)+.5,0.,1.);gl_FragColor=vec4(mix(oc,ci,w),1.);}'].join('\n');
+' float w=clamp(-dm/(1.5*u_s)+.5,0.,1.);gl_FragColor=vec4(mix(oc,ci,w*AL),1.);}'].join('\n');
 (function(){
  try{tgl=TGC.getContext('webgl',{alpha:false,antialias:false,powerPreference:'high-performance'});}catch(e){}
  if(!tgl)return;
@@ -3171,14 +3177,14 @@ GLSL_BG,
  tgl.useProgram(p);
  var b=tgl.createBuffer();tgl.bindBuffer(tgl.ARRAY_BUFFER,b);tgl.bufferData(tgl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),tgl.STATIC_DRAW);
  tgl.enableVertexAttribArray(0);tgl.vertexAttribPointer(0,2,tgl.FLOAT,false,0,0);
- ['u_res','u_vp','u_go','u_isl','u_s','u_n','u_br','u_r','u_q','u_h'].forEach(function(n){TGU[n]=tgl.getUniformLocation(p,n);});
+ ['u_res','u_vp','u_go','u_isl','u_s','u_n','u_br','u_r','u_q','u_h','u_al'].forEach(function(n){TGU[n]=tgl.getUniformLocation(p,n);});
  tgOK=true;
 })();
 function tileRadius(el){for(var k in TILE_R)if(el.classList.contains(k))return TILE_R[k];return 0;}
 function tlMeasure(i){
  var ch=inn[i].children,list=[];
  for(var k=0;k<ch.length;k++){var el=ch[k],r=tileRadius(el);if(!r)continue;
-  list.push({l:el.offsetLeft,t:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight,r:r,hot:el.classList.contains('bal')?(el.classList.contains('dn')?-1:el.classList.contains('up')?1:0):0});}
+  list.push({el:el,l:el.offsetLeft,t:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight,r:r,hot:el.classList.contains('bal')?(el.classList.contains('dn')?-1:el.classList.contains('up')?1:0):0});}
  TL[i]=list;tlStale[i]=0;
 }
 function tlAllStale(){for(var i=0;i<NP;i++)tlStale[i]=1;}
@@ -3194,11 +3200,12 @@ function drawTiles(){
   var yy=sy[i];sig.push(i,yy.toFixed(2));
   var list=TL[i];
   for(j=0;j<list.length&&n<TMAX;j++){
-   var t=list[j],cx=t.l+t.w/2+o*VW,cy=t.t+t.h/2-yy,hw=t.w/2,hh=t.h/2,rr=t.r;
+   var t=list[j],ia=t.el._ia,cx=t.l+t.w/2+o*VW,cy=t.t+t.h/2-yy,hw=t.w/2,hh=t.h/2,rr=t.r;
+   if(ia){cx+=ia.x;cy+=ia.y;hw*=ia.s;hh*=ia.s;rr*=ia.s;}
    if(v){cx=rp.ox+rp.tx*v+k*(cx-rp.ox);cy=rp.oy+rp.ty*v+k*(cy-rp.oy);hw*=k;hh*=k;rr*=k;}
    if(cx+hw<-40||cx-hw>VW+40||cy+hh<-40||cy-hh>VH+40)continue;
-   tgR[n*4]=cx*S;tgR[n*4+1]=cy*S;tgR[n*4+2]=hw*S;tgR[n*4+3]=hh*S;tgQ[n]=Math.min(rr*S,hw*S,hh*S);tgHt[n]=t.hot;n++;
-   sig.push(cx.toFixed(1),cy.toFixed(1),hw.toFixed(1),hh.toFixed(1));
+   tgR[n*4]=cx*S;tgR[n*4+1]=cy*S;tgR[n*4+2]=hw*S;tgR[n*4+3]=hh*S;tgQ[n]=Math.min(rr*S,hw*S,hh*S);tgHt[n]=t.hot;tgAl[n]=ia?ia.a:1;n++;
+   sig.push(cx.toFixed(1),cy.toFixed(1),hw.toFixed(1),hh.toFixed(1),ia?ia.a.toFixed(2):'');
   }
  }
  var key=sig.join(',');
@@ -3207,9 +3214,37 @@ function drawTiles(){
  var W=Math.round(VW*S),H=Math.round(VH*S);
  if(W!==tgW||H!==tgH||S!==tgS){tgW=W;tgH=H;tgS=S;TGC.width=W;TGC.height=H;tgl.viewport(0,0,W,H);}
  tgl.uniform2f(TGU.u_res,W,H);tgl.uniform2f(TGU.u_vp,VW,VH);tgl.uniform1f(TGU.u_s,S);tgl.uniform2f(TGU.u_go,gOX,gOY);tgl.uniform1f(TGU.u_isl,ISL);tgl.uniform1f(TGU.u_n,n);tgl.uniform1f(TGU.u_br,1-RD*v);
- tgl.uniform4fv(TGU.u_r,tgR);tgl.uniform1fv(TGU.u_q,tgQ);tgl.uniform1fv(TGU.u_h,tgHt);
+ tgl.uniform4fv(TGU.u_r,tgR);tgl.uniform1fv(TGU.u_q,tgQ);tgl.uniform1fv(TGU.u_h,tgHt);tgl.uniform1fv(TGU.u_al,tgAl);
  tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
  if(!tgShown){tgShown=true;TGC.style.display='block';document.documentElement.classList.add('gt');}
+}
+
+/* ---- поява віджетів під час розширення скляної форми: злітаються з країв екрана з розмиття й затемнення, знизу догори, у випадковому порядку ---- */
+var intro={on:0,t0:0,items:[]};
+function introStart(t){
+ var host=inn[sel];if(!host)return;
+ var ch=host.children,list=[],k;
+ for(k=0;k<ch.length;k++){var el=ch[k];if(el.offsetTop-(sy[sel]||0)<VH+20)list.push({el:el,top:el.offsetTop});}
+ list.sort(function(a,b){return b.top-a.top;});                       /* знизу вгору */
+ intro.items=list.map(function(it,rank){
+  var side=Math.floor(Math.random()*4),r=Math.random()-.5,dx=0,dy=0;
+  if(side===0){dx=-VW*.85;dy=r*260;}else if(side===1){dx=VW*.85;dy=r*260;}else if(side===2){dy=VH*.55;dx=r*260;}else{dy=-VH*.45;dx=r*260;}
+  return{el:it.el,dx:dx,dy:dy,delay:.1+rank*.1+Math.random()*.16,dur:.9+Math.random()*.25};
+ });
+ intro.on=1;intro.t0=t;
+}
+function introStep(t){
+ var tt=(t-intro.t0)/1000,done=true;
+ intro.items.forEach(function(it){
+  var p=Math.max(0,Math.min(1,(tt-it.delay)/it.dur)),e=1-Math.pow(1-p,3.4),st=it.el.style;
+  if(p<1)done=false;
+  var x=it.dx*(1-e),y=it.dy*(1-e),sc=.78+.22*e,al=Math.min(1,p*2.2);
+  st.transform=p<1?'translate3d('+x.toFixed(1)+'px,'+y.toFixed(1)+'px,0) scale('+sc.toFixed(3)+')':'';
+  st.filter=p<1?'blur('+(18*(1-e)).toFixed(1)+'px) brightness('+(.3+.7*e).toFixed(2)+')':'';
+  st.opacity=al<1?al.toFixed(2):'';
+  it.el._ia=p<1?{x:x,y:y,s:sc,a:al}:null;
+ });
+ if(done){intro.on=0;intro.items=[];}
 }
 
 /* ===== 8. Сторінка пари: детальний графік за вибраний період (1 год … 5 років) =====
@@ -3826,5 +3861,24 @@ function mkLoadSpark(){
 }
 uiReady=true;renderTicker();
 (function w(){if(boot.on)setTimeout(w,200);else mkRefresh();})();   /* мережа й важкі операції — після екрана завантаження, щоб анімація не рвалась */
+
+/* ?debug у адресі: показує розміри вікна, екрана й безпечних зон (для діагностики смуг унизу/вгорі на iPhone) */
+if(/[?&]debug/.test(location.search)){
+ var hud=document.createElement('pre');
+ hud.style.cssText='position:fixed;left:6px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;margin:0;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,.78);color:#9f9;font:11px/1.35 ui-monospace,Menlo,monospace;pointer-events:none;white-space:pre';
+ document.body.appendChild(hud);
+ var probe=function(side){var q=document.createElement('div');q.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-'+side+',0px);visibility:hidden';document.body.appendChild(q);var h=q.offsetHeight;q.remove();return h;};
+ setInterval(function(){
+  var vv=window.visualViewport,b=bgEl.getBoundingClientRect(),d=dock.getBoundingClientRect(),c=cv.getBoundingClientRect(),cs=getComputedStyle(document.documentElement);
+  hud.textContent=['standalone '+(navigator.standalone?'yes':'no')+' / dm '+(matchMedia('(display-mode: standalone)').matches?'sa':'br'),
+   'inner '+innerWidth+'x'+innerHeight+'  outer '+outerWidth+'x'+outerHeight,'screen '+screen.width+'x'+screen.height+'  dpr '+devicePixelRatio,
+   'vv '+(vv?Math.round(vv.width)+'x'+Math.round(vv.height)+' top '+Math.round(vv.offsetTop)+' sc '+vv.scale.toFixed(2):'-'),
+   'safe top '+probe('top')+' bottom '+probe('bottom')+'  appH '+(cs.getPropertyValue('--appH')||'-'),
+   'bg top '+Math.round(b.top)+' h '+Math.round(b.height)+'  VH '+Math.round(VH),
+   'dock top '+Math.round(d.top)+' bot '+Math.round(d.bottom)+' h '+Math.round(d.height),
+   'gl top '+Math.round(c.top)+' h '+Math.round(c.height)+'  island '+ISL,
+   'html '+document.documentElement.clientHeight+' scrollY '+Math.round(scrollY)].join('\n');
+ },500);
+}
 
 })();</script></body></html>

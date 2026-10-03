@@ -181,7 +181,7 @@ input{font:inherit;color:inherit}
 .mkr .sw{display:block}
 
 /* ---------- скляні віджети (шар #glt малює скло; тут лише прозорий фон) ---------- */
-#glt{position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:none}
+#glt{position:fixed;left:0;top:0;width:100%;height:var(--appH,100%);z-index:-1;pointer-events:none;display:none}
 .gt .tile{background:none;border-color:rgba(255,255,255,.05)}
 .gt .tile.bal.up{border-color:rgba(90,220,150,.12)}
 .gt .tile.bal.dn{border-color:rgba(255,125,131,.12)}
@@ -201,3 +201,7 @@ input{font:inherit;color:inherit}
 #mcross{position:fixed;z-index:23;left:0;top:0;width:0;display:none;pointer-events:none}
 #mcross i{position:absolute;left:0;top:0;bottom:0;width:1px;background:rgba(255,255,255,.55)}
 #mcross b{position:absolute;top:-30px;transform:translateX(-50%);padding:5px 10px;border-radius:12px;background:rgba(20,20,26,.92);border:1px solid var(--ln);font-size:12px;font-weight:600;white-space:nowrap}
+
+/* у застосунку з іконки всі повноекранні шари й док прив'язані до фактичної висоти екрана (screen.height), щоб унизу не лишалось смуги */
+#bg,#pages,#sheets,#scrim,#edge,#menuShade{height:var(--appH,auto)}
+#dock{top:var(--dockTop,auto)}

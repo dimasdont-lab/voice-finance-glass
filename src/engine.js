@@ -1,7 +1,7 @@
 var cv=document.getElementById('gl');
 var gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,powerPreference:'high-performance'})||cv.getContext('experimental-webgl');
 var ISL=(function(){try{var q=document.createElement('div');q.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden';document.body.appendChild(q);var h=q.offsetHeight||0;q.remove();return(h>=40||/[?&]island/.test(location.search))?1:0;}catch(e){return 0;}})();
-var GRID_CELL=60;   /* ≈5 мм на iPhone (CSS-пікселі) */
+var GRID_CELL=45;   /* ≈5 мм на iPhone (CSS-пікселі) */
 var GLSL_BG=['vec3 blob(vec3 c,vec2 n,vec2 ce,vec2 r,vec3 col){float a=clamp(1.-length((n-ce)/r)/0.7,0.,1.);return mix(c,col,a);}',
  'float gridL(vec2 p){vec2 q=abs(fract(p/'+GRID_CELL+'.+.5)-.5)*'+GRID_CELL+'.;return 1.-smoothstep(.0,1.,min(q.x,q.y));}',
 
@@ -192,7 +192,7 @@ function shot(el,w,h,ts){
  FC.innerHTML='';var n=FD.importNode(el,true);
  var src=el.querySelectorAll('input,textarea'),dst=n.querySelectorAll('input,textarea');
  for(var q=0;q<src.length;q++){if(src[q].tagName==='TEXTAREA')dst[q].textContent=src[q].value;else dst[q].setAttribute('value',src[q].value);}
- n.style.margin='0';n.style.width=w+'px';n.style.transform='none';n.style.willChange='auto';FC.appendChild(n);
+ n.style.margin='0';n.style.filter='';n.style.opacity='';n.style.width=w+'px';n.style.transform='none';n.style.willChange='auto';FC.appendChild(n);
  FR.style.width=Math.ceil(w)+'px';FR.style.height=Math.ceil(h)+'px';
  return html2canvas(n,{backgroundColor:null,scale:ts,logging:false,windowWidth:Math.ceil(w),windowHeight:Math.ceil(h),imageTimeout:0});
 }
@@ -283,7 +283,8 @@ function measure(){
  var wChanged=Math.abs(b.width-VW)>.5;
  if(ready&&!wChanged&&S2===S&&Math.abs(b.height-VH)<.5&&x0===R.x&&y0===R.y&&w===R.w&&h===R.h)return;
  S=S2;VW=b.width;VH=b.height;R={x:x0,y:y0,w:w,h:h};
- cv.style.left=x0+'px';cv.style.top=y0+'px';cv.style.width=w+'px';cv.style.height=h+'px';
+ cv.style.left=x0+'px';cv.style.width=w+'px';cv.style.height=h+'px';
+ if(!fullMode&&!document.documentElement.style.getPropertyValue('--appH')){cv.style.top='auto';cv.style.bottom=(b.height-y0-h)+'px';}else{cv.style.bottom='auto';cv.style.top=y0+'px';}
  cv.width=Math.round(w*S);cv.height=Math.round(h*S);gl.viewport(0,0,cv.width,cv.height);
  if(wChanged){T.forEach(drop);P.forEach(drop);T=[];P=[];B=[];full=[];asm=[];needSync=allSync();}
  dirty=true;ready=true;
@@ -501,16 +502,16 @@ function bootStep(t,dt){
   if(boot.phase===0&&boot.p>=1){boot.phase=1;boot.t1=t;boot.wrap.classList.add('p1');boot.warm=1;dirty=true;}
   else if(boot.phase===1&&t-boot.t1>330){
    boot.phase=2;boot.t2=t;boot.wrap.classList.add('p2');
-   var r=boot.logo.getBoundingClientRect();boot.cx=r.left+r.width/2;boot.cy=r.top+r.height/2;
+   var r=boot.logo.getBoundingClientRect();boot.cx=r.left+r.width/2;boot.cy=r.top+r.height/2;introStart(t);
    cv.style.opacity=1;dirty=true;
   }
  }
  if(boot.phase===2){
   var u=Math.min(1,(t-boot.t2)/1000/boot.DUR),e=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;   /* плавний старт і плавне завершення */
-  var s0=2+15*Math.min(1,u/.08);                                                        /* квадрат «вилітає» з точки й одразу має розмір логотипа */
+  var s0=2+15*Math.min(1,u/.1);                                                        /* квадрат «вилітає» з точки й одразу має розмір логотипа */
   var hw=s0+(VW/2-s0)*e,hh=s0+(VH/2-s0)*e,cx=boot.cx+(VW/2-boot.cx)*e,cy=boot.cy+(VH/2-boot.cy)*e;
-  var rr=Math.max(.5,Math.min(62,.448*Math.min(hw,hh)));                                /* від пропорцій логотипа до радіуса екрана 62 pt */
-  boot.g={cx:cx,cy:cy,hw:hw,hh:hh,r:rr,v:1-smooth01(.9,1,u)};
+  var mn=Math.min(hw,hh),rr=Math.max(.5,Math.min(62,mn*(1-.552*smooth01(.06,.32,u))));                                /* від пропорцій логотипа до радіуса екрана 62 pt */
+  boot.g={cx:cx,cy:cy,hw:hw,hh:hh,r:rr,v:1-smooth01(.68,1,u)};
   var hp=rrPts(cx,cy,Math.max(.5,hw-1.5),Math.max(.5,hh-1.5),Math.max(.5,rr-1.5),12);
   boot.el.style.clipPath='polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,'+hp.join(',')+','+hp[0]+')';
   if(u>=.55)boot.hold=0;
@@ -573,6 +574,7 @@ function frame(t){
  if(Math.abs(gtx-gOX)+Math.abs(gty-gOY)>.04){var gf=1-Math.exp(-dt*9);gOX+=(gtx-gOX)*gf;gOY+=(gty-gOY)*gf;gMov=true;}else if(gtx!==gOX||gty!==gOY){gOX=gtx;gOY=gty;gMov=true;}
  recStep(dt);
  refreshTabs(t);
+ if(intro.on)introStep(t);
  if(tgOK)drawTiles();
  if(menu.s>0||menu.on)stepMenu(dt);
  if(sheetP.s>0||sheetP.on)stepSheet(dt);
