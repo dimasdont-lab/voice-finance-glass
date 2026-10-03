@@ -38,7 +38,7 @@ input{font:inherit;color:inherit}
 .sec{font-size:13px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--mu);padding:8px 6px 0}
 .tile{position:relative;border-radius:28px;padding:18px;border:1px solid rgba(255,255,255,.1);
  background:linear-gradient(155deg,rgba(255,255,255,.085),rgba(255,255,255,.03) 60%,rgba(255,255,255,.045))}
-.tile.hot{background:linear-gradient(155deg,rgba(255,125,131,.2),rgba(255,125,131,.05) 62%,rgba(255,255,255,.04));border-color:rgba(255,125,131,.28)}
+.tile.bal{background:linear-gradient(155deg,rgba(30,190,110,.22),rgba(30,190,110,.06) 62%,rgba(255,255,255,.03));border-color:rgba(60,210,130,.3)}
 .lbl{font-size:13px;color:var(--mu);font-weight:500}
 .big{font-size:40px;line-height:1.1;font-weight:700;letter-spacing:-1px;margin-top:5px;white-space:nowrap}
 .mid{font-size:26px;line-height:1.15;font-weight:700;letter-spacing:-.5px;margin-top:4px;white-space:nowrap}
@@ -207,7 +207,8 @@ input{font:inherit;color:inherit}
 /* ---------- скляні віджети (шар #glt малює скло; тут лише прозорий фон) ---------- */
 #glt{position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:none}
 .gt .tile{background:none;border-color:rgba(255,255,255,.05)}
-.gt .tile.hot{border-color:rgba(255,125,131,.1)}
+.gt .tile.bal{border-color:rgba(80,220,140,.16)}
+.gt .mini,.gt .split>button{background:none}
 .gt .srch{background:none;border-color:transparent}
 </style></head><body>
 <div id="bg"></div>
@@ -2291,10 +2292,10 @@ function todayStr(){return new Date().toLocaleDateString('uk-UA',{weekday:'long'
 function spark(points,id){
  var v=(points||[]).map(function(p){return p.value;}).filter(isFinite);
  if(v.length<2)v=[0,0];
- var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),rg=mx-mn||1,W=320,H=84,pad=6;
+ var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),rg=mx-mn||1,W=320,H=84,pad=6,col=v[v.length-1]>=v[0]?'#66d896':'#ff7d83';
  var xy=v.map(function(y,i){return[(i/(v.length-1))*W,pad+(H-2*pad)*(1-(y-mn)/rg)];});
  var d=xy.map(function(p,i){return(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' ');
- return'<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7d83" stop-opacity=".38"/><stop offset="1" stop-color="#ff7d83" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#g'+id+')"/><path d="'+d+'" fill="none" stroke="#ff7d83" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+ return'<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".38"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#g'+id+')"/><path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 }
 function txRow(t,first){
  var cat=catName(t.category),title=t.client||(t.note&&t.note.length<34?t.note:cat),inc=t.type==='income';
@@ -2343,7 +2344,7 @@ function blocksHome(){
  var o=[];
  o.push(hdr('Гарного дня!',todayStr()));
  o.push(searchBlock('home','Пошук операцій'));
- o.push(B_('tile hot','<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>'+esc(pctTxt(pc))+' · 30 днів</span></div>'+spark(pts,'h')+'</div>'+
+ o.push(B_('tile bal','<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>'+esc(pctTxt(pc))+' · 30 днів</span></div>'+spark(pts,'h')+'</div>'+
   '<div class="split"><button data-act="flow" data-v="income"><i class="dot up">↑</i><div><span class="lbl">Доходи</span><b>'+esc(money(t.income))+'</b></div></button><button data-act="flow" data-v="expense"><i class="dot dn">↓</i><div><span class="lbl">Витрати</span><b>'+esc(money(t.expense))+'</b></div></button></div>'));
  o.push(B_('tile','<div class="th"><h2>Рахунки</h2>'+(accs.length>3?'<button data-act="accs">'+(ix.accountsExpanded?'Згорнути':'Усі ›')+'</button>':'<button data-act="addacc">Додати</button>')+'</div>'+
   (shown.length?shown.map(function(a,i){return'<button class="row'+(i?'':' first')+'" data-act="acc" data-id="'+esc(a.id)+'">'+icon(a.displayName||a.bankName,hashCol(a.id))+'<div class="rc"><b>'+esc(a.displayName||a.bankName)+'</b><span>'+esc(a.bankName||a.accountType||'Рахунок')+'</span></div><em>'+esc(money(a.currentBalance,a.currency))+'</em></button>';}).join(''):'<div class="empty">Рахунків поки немає. Додайте ручний рахунок або готівку — банк підключати не обов’язково.</div>')));
@@ -2358,7 +2359,7 @@ function blocksInsights(){
  var g=fin.goals(),s=fin.insights(),o=[],tot=s.totals,net=tot.income-tot.expense;
  o.push(hdr('Аналітика','Цілі та підсумки'));
  o.push(B_('sec','Цілі'));
- o.push(B_('tile hot','<div class="lbl">Місячний ліміт витрат</div><div class="big">'+esc(money(g.limit))+'</div><div class="bar"><i style="width:'+g.percent.toFixed(1)+'%"></i></div><div class="cap">Витрачено '+esc(money(g.expense))+' · '+esc(pctTxt(g.percent))+'</div>'));
+ o.push(B_('tile','<div class="lbl">Місячний ліміт витрат</div><div class="big">'+esc(money(g.limit))+'</div><div class="bar"><i style="width:'+g.percent.toFixed(1)+'%"></i></div><div class="cap">Витрачено '+esc(money(g.expense))+' · '+esc(pctTxt(g.percent))+'</div>'));
  o.push(B_('tile','<div class="lbl">Накопичення</div><div class="big">'+esc(money(g.savings))+'</div><div class="cap">Поточний баланс: рахунки плюс операції без рахунку.</div>'));
  o.push(B_('sec','Аналітика'));
  o.push(B_('tile','<div class="lbl">Чистий результат</div><div class="mid" style="color:'+(net<0?'var(--ac)':'var(--gr)')+'">'+esc(mv(net))+'</div><div class="grid2" style="margin-top:12px"><button class="mini" data-act="flow" data-v="income"><span class="lbl">Доходи</span><b>'+esc(money(tot.income))+'</b></button><button class="mini" data-act="flow" data-v="expense"><span class="lbl">Витрати</span><b>'+esc(money(tot.expense))+'</b></button></div>'));
@@ -2385,7 +2386,7 @@ function blocksDebts(){
 }
 /* ---- деталі ---- */
 function periodBtn(cur){return'<button class="pillb dd" data-act="period"><span>'+esc(cur)+'</span>'+chev()+'</button>';}
-function chartTile(title,big,sub,pts,id,cur,neg){return B_('tile hot','<div class="th"><div><div class="lbl">'+esc(title)+'</div></div>'+periodBtn(cur)+'</div><div class="big">'+esc(big)+'</div>'+(sub?'<div class="chg '+(neg?'neg':'')+'">'+sub+'</div>':'')+spark(pts,id)+'<div class="cap">'+(pts&&pts.length>1?'':'Замало точок для графіка за цей період.')+'</div>');}
+function chartTile(title,big,sub,pts,id,cur,neg){return B_(id==='b'?'tile bal':'tile','<div class="th"><div><div class="lbl">'+esc(title)+'</div></div>'+periodBtn(cur)+'</div><div class="big">'+esc(big)+'</div>'+(sub?'<div class="chg '+(neg?'neg':'')+'">'+sub+'</div>':'')+spark(pts,id)+'<div class="cap">'+(pts&&pts.length>1?'':'Замало точок для графіка за цей період.')+'</div>');}
 function txTile(title,list,empty){return B_('tile','<div class="th"><h2>'+esc(title)+'</h2></div>'+(list.length?list.slice(0,40).map(function(x,i){return txRow(x,i===0);}).join(''):'<div class="empty">'+empty+'</div>'));}
 function blocksBalance(m){
  return[hdr('Баланс','Загальний графік',1),chartTile('Поточний',money(m.current),esc(mv(m.change)),m.points,'b',m.periods.balance,m.change<0),
@@ -2433,7 +2434,7 @@ var GLSL_BG=['vec3 blob(vec3 c,vec2 n,vec2 ce,vec2 r,vec3 col){float a=clamp(1.-
  ' return mix(c,vec3(.58),.17*gridL(p+u_go));}'].join('\n');
 var VS='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
 var FS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
-'uniform vec2 u_go;uniform float u_gb2;uniform vec2 u_res;uniform vec2 u_org;uniform vec2 u_vp;uniform sampler2D u_t0;uniform sampler2D u_t1;uniform sampler2D u_t2;uniform vec4 u_p0;uniform vec4 u_p1;uniform vec4 u_p2;uniform vec3 u_w;uniform float u_scrim;uniform vec4 u_g;uniform float u_gr;uniform float u_gv;uniform vec4 u_a;uniform vec4 u_b;uniform vec4 u_c;uniform float u_cv;uniform float u_nk;uniform vec4 u_k;uniform float u_kv;uniform float u_bl;uniform float u_s;uniform vec4 u_rp;uniform vec4 u_rs;uniform float u_rb;uniform float u_gm;uniform float u_gd;uniform float u_gbl;uniform vec4 u_g2;uniform float u_gr2;uniform float u_gv2;uniform float u_sho;uniform vec4 u_rt;uniform float u_ord;',
+'uniform sampler2D u_tb0;uniform sampler2D u_tb1;uniform float u_bm;uniform float u_bs;uniform vec2 u_go;uniform float u_gb2;uniform vec2 u_res;uniform vec2 u_org;uniform vec2 u_vp;uniform sampler2D u_t0;uniform sampler2D u_t1;uniform sampler2D u_t2;uniform vec4 u_p0;uniform vec4 u_p1;uniform vec4 u_p2;uniform vec3 u_w;uniform float u_scrim;uniform vec4 u_g;uniform float u_gr;uniform float u_gv;uniform vec4 u_a;uniform vec4 u_b;uniform vec4 u_c;uniform float u_cv;uniform float u_nk;uniform vec4 u_k;uniform float u_kv;uniform float u_bl;uniform float u_s;uniform vec4 u_rp;uniform vec4 u_rs;uniform float u_rb;uniform float u_gm;uniform float u_gd;uniform float u_gbl;uniform vec4 u_g2;uniform float u_gr2;uniform float u_gv2;uniform float u_sho;uniform vec4 u_rt;uniform float u_ord;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
 'float smin(float a,float b,float k){float h=max(k-abs(a-b),0.)/k;return min(a,b)-h*h*k*0.25;}',
 'float sdBar(vec2 x){float a=sdRB(x-u_a.xy,u_a.zw,min(u_a.z,u_a.w));if(u_kv<.01)return a;return smin(a,sdRB(x-u_k.xy,u_k.zw,min(u_k.z,u_k.w)),34.*u_s);}',
@@ -2453,6 +2454,15 @@ GLSL_BG,
 ' if(gNS<.5){if(u_gv2>.01){float ds=sdRB(xpx-u_g2.xy,u_g2.zw,u_gr2);c*=mix(1.,.5,clamp(-ds/(1.5*u_s)+.5,0.,1.));}',
 '  vec4 o=pageS(u_t2,u_p2,u_w.z,rt(p,u_rs,u_rt.zw));o.rgb*=u_rs.w;c=c*(1.-o.a)+o.rgb;}',
 ' return c;}',
+'vec4 tbS(sampler2D tx,vec2 pp){vec2 uv=vec2(pp.x/u_vp.x,1.-pp.y/u_vp.y);float m=step(0.,uv.x)*step(uv.x,1.)*step(0.,uv.y)*step(uv.y,1.);return texture2D(tx,clamp(uv,0.,1.))*m;}',
+'vec3 bgBl(vec2 xpx){',
+' vec2 p=u_org+xpx/u_s;vec3 c=vec3(.0196,.0196,.0275);vec2 pp=rt(p,u_rp,u_rt.xy);',
+' vec4 a=tbS(u_tb0,pp);a.rgb*=u_rp.w;c=c*(1.-a.a)+a.rgb;',
+' c*=(1.-u_scrim);',
+' if(gNS<.5){if(u_gv2>.01){float ds=sdRB(xpx-u_g2.xy,u_g2.zw,u_gr2);c*=mix(1.,.5,clamp(-ds/(1.5*u_s)+.5,0.,1.));}',
+'  vec4 o=tbS(u_tb1,rt(p,u_rs,u_rt.zw))*u_p2.w;o.rgb*=u_rs.w;c=c*(1.-o.a)+o.rgb;}',
+' return c;}',
+'vec3 bgG(vec2 x){return u_bm>.003?mix(bg(x),bgBl(x),u_bm):bg(x);}',
 'float sdU(vec2 x){float a=sdBar(x);if(u_cv<.5)return a;return smin(a,sdC(x),max(u_nk,0.001));}',
 'float mU(vec2 x){float mb=min(u_a.z,u_a.w);if(u_cv<.5)return mb;float a=sdBar(x),b=sdC(x);float wb=clamp(.5+.5*(a-b)/max(u_nk,0.001),0.,1.);return mix(mb,min(u_c.z,u_c.w),wb);}',
 'float hsh(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}',
@@ -2472,7 +2482,7 @@ GLSL_BG,
 ' float mm=(ring>.5?130.:36.)*u_s;float t=clamp(-dg/(0.6*mm),0.,1.);float e=1.5;',
 ' vec2 n=normalize(vec2(sdRB(px+vec2(e,0.)-G.xy,G.zw,GR)-sdRB(px-vec2(e,0.)-G.xy,G.zw,GR),sdRB(px+vec2(0.,e)-G.xy,G.zw,GR)-sdRB(px-vec2(0.,e)-G.xy,G.zw,GR))+1e-5);',
 ' vec2 of=n*pow(1.-t,ring>.5?1.7:2.2)*(ring>.5?1.25:0.6)*mm;float ab=(ring>.5?.17:.10)*(0.35+pow(1.-t,1.5));float br=gbl*u_s*GV;',
-' vec3 ci=vec3(bgS(px-of*(1.+ab),br).r,bgB(px-of,br).g,bgS(px-of*(1.-ab),br).b)*gd;float rim=pow(1.-t,3.);',
+' vec3 ci=vec3(bgG(px-of*(1.+ab)).r,bgG(px-of).g,bgG(px-of*(1.-ab)).b)*gd;float rim=pow(1.-t,3.);',
 ' float sp=pow(max(dot(n,normalize(vec2(-0.6,-0.8))),0.),3.)+0.5*pow(max(dot(n,normalize(vec2(0.6,0.8))),0.),3.);',
 ' ci+=vec3(rim*(0.035+0.17*sp));float w=clamp(-dg/(1.5*u_s)+0.5,0.,1.)*clamp(GV*1.4,0.,1.);if(ring>.5)w*=1.-smoothstep(.7,1.,t);',
 ' return vec4(ci,w);}',
@@ -2491,18 +2501,18 @@ GLSL_BG,
 ' vec4 g1=vec4(0.),g2=vec4(0.);',
 ' if(dg<1.5*u_s){if(u_ord>.5)gNS=1.;g1=glassPx(px,u_g,u_gr,u_gv,dg,u_gd,u_gbl,u_gm);gNS=0.;}',
 ' if(dg2<1.5*u_s){gNS=1.;g2=glassPx(px,u_g2,u_gr2,u_gv2,dg2,.5,u_gb2,0.);gNS=0.;',
-'  if(u_sho>.5){vec2 pc=u_org+px/u_s;vec4 o=pageS(u_t2,u_p2,u_w.z,rt(pc,u_rs,u_rt.zw));o.rgb*=u_rs.w;g2.rgb=g2.rgb*(1.-o.a)+o.rgb;}}',
+'  if(u_sho>.5){vec2 pc=u_org+px/u_s;vec2 rq=rt(pc,u_rs,u_rt.zw);vec4 o=mix(pageS(u_t2,u_p2,u_w.z,rq),tbS(u_tb1,rq)*u_p2.w,u_bs);o.rgb*=u_rs.w;g2.rgb=g2.rgb*(1.-o.a)+o.rgb;}}',
 ' if(u_ord>.5){rgb=rgb*(1.-g1.a)+g1.rgb*g1.a;a=a*(1.-g1.a)+g1.a;rgb=rgb*(1.-g2.a)+g2.rgb*g2.a;a=a*(1.-g2.a)+g2.a;}',
 ' else{rgb=rgb*(1.-g2.a)+g2.rgb*g2.a;a=a*(1.-g2.a)+g2.a;rgb=rgb*(1.-g1.a)+g1.rgb*g1.a;a=a*(1.-g1.a)+g1.a;}',
 ' gl_FragColor=vec4(rgb,a);}'].join('\n');
 function sh(t,q){var o=gl.createShader(t);gl.shaderSource(o,q);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(o));return o;}
-var pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));
+var pr=gl.createProgram(),MP=pr;gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));
 gl.bindAttribLocation(pr,0,'p');gl.linkProgram(pr);gl.useProgram(pr);
 var buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
 gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
 gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
-var U={};['u_go','u_gb2','u_res','u_org','u_vp','u_t0','u_t1','u_t2','u_p0','u_p1','u_p2','u_scrim','u_rp','u_rs','u_rb','u_gm','u_gd','u_gbl','u_g2','u_gr2','u_gv2','u_sho','u_rt','u_ord','u_g','u_gr','u_gv','u_w','u_a','u_b','u_c','u_cv','u_nk','u_k','u_kv','u_bl','u_s'].forEach(function(n){U[n]=gl.getUniformLocation(pr,n);});
-gl.uniform1i(U.u_t0,0);gl.uniform1i(U.u_t1,1);gl.uniform1i(U.u_t2,2);
+var U={};['u_tb0','u_tb1','u_bm','u_bs','u_go','u_gb2','u_res','u_org','u_vp','u_t0','u_t1','u_t2','u_p0','u_p1','u_p2','u_scrim','u_rp','u_rs','u_rb','u_gm','u_gd','u_gbl','u_g2','u_gr2','u_gv2','u_sho','u_rt','u_ord','u_g','u_gr','u_gv','u_w','u_a','u_b','u_c','u_cv','u_nk','u_k','u_kv','u_bl','u_s'].forEach(function(n){U[n]=gl.getUniformLocation(pr,n);});
+gl.uniform1i(U.u_t0,0);gl.uniform1i(U.u_t1,1);gl.uniform1i(U.u_t2,2);gl.uniform1i(U.u_tb0,3);gl.uniform1i(U.u_tb1,4);
 gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
 gl.clearColor(0,0,0,0);
 var MAXT=Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE)||4096,8192);
@@ -2511,6 +2521,56 @@ function mkTex(w,h){var t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);return t;}
 var dummy=mkTex(1,1);
+
+/* ===== розмиття фону під скляними вікнами: заздалегідь розмиті копії сторінок і аркуша (без шуму від випадкової вибірки) ===== */
+var BKS=.25,BK={w:0,h:0,pg:null,sh:null,tmp:null};
+var BKPREC=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif'];
+var BKFS=BKPREC.concat(['uniform vec2 u_res;uniform vec2 u_vp;uniform sampler2D u_t0;uniform sampler2D u_t1;uniform sampler2D u_t2;uniform vec4 u_p0;uniform vec4 u_p1;uniform vec4 u_p2;uniform vec3 u_w;uniform float u_mode;',
+'vec4 pageS(sampler2D tx,vec4 P,float W0,vec2 p){',
+' vec2 uv=vec2((p.x-P.x)/W0,(p.y+P.y)/P.z);',
+' float m=P.w*step(0.,uv.x)*step(uv.x,1.)*step(0.,uv.y)*step(uv.y,1.);',
+' return texture2D(tx,clamp(uv,0.,1.))*m;}',
+'void main(){vec2 pos=vec2(gl_FragCoord.x/u_res.x*u_vp.x,(1.-gl_FragCoord.y/u_res.y)*u_vp.y);',
+' if(u_mode<.5){vec4 a=pageS(u_t0,u_p0,u_w.x,pos);vec4 b=pageS(u_t1,u_p1,u_w.y,pos);gl_FragColor=b+a*(1.-b.a);}',
+' else gl_FragColor=pageS(u_t2,u_p2,u_w.z,pos);}']).join('\n');
+var BLFS=BKPREC.concat(['uniform sampler2D u_src;uniform vec2 u_res;uniform vec2 u_dir;',
+'void main(){vec2 uv=gl_FragCoord.xy/u_res;',
+' gl_FragColor=texture2D(u_src,uv)*.570+(texture2D(u_src,uv+u_dir)+texture2D(u_src,uv-u_dir))*.205+(texture2D(u_src,uv+u_dir*2.)+texture2D(u_src,uv-u_dir*2.))*.0096;}']).join('\n');
+function mkProg(fs){var p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,VS));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));gl.bindAttribLocation(p,0,'p');gl.linkProgram(p);return p;}
+var bkP=mkProg(BKFS),blP=mkProg(BLFS),BU={},BL={};
+['u_res','u_vp','u_t0','u_t1','u_t2','u_p0','u_p1','u_p2','u_w','u_mode'].forEach(function(n){BU[n]=gl.getUniformLocation(bkP,n);});
+['u_src','u_res','u_dir'].forEach(function(n){BL[n]=gl.getUniformLocation(blP,n);});
+gl.useProgram(bkP);gl.uniform1i(BU.u_t0,0);gl.uniform1i(BU.u_t1,1);gl.uniform1i(BU.u_t2,2);
+gl.useProgram(blP);gl.uniform1i(BL.u_src,0);
+gl.useProgram(MP);
+function bkMk(w,h){var t=mkTex(w,h),f=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,f);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,t,0);gl.bindFramebuffer(gl.FRAMEBUFFER,null);return{t:t,f:f};}
+function bkEnsure(){
+ var w=Math.max(8,Math.ceil(VW*BKS)),h=Math.max(8,Math.ceil(VH*BKS));
+ if(BK.pg&&BK.w===w&&BK.h===h)return;
+ ['pg','sh','tmp'].forEach(function(k){if(BK[k]){gl.deleteTexture(BK[k].t);gl.deleteFramebuffer(BK[k].f);}BK[k]=bkMk(w,h);});
+ BK.w=w;BK.h=h;
+}
+function bake(which,mode,p0,p1,p2,w3){
+ bkEnsure();
+ gl.useProgram(bkP);gl.bindFramebuffer(gl.FRAMEBUFFER,BK[which].f);gl.viewport(0,0,BK.w,BK.h);
+ gl.uniform2f(BU.u_res,BK.w,BK.h);gl.uniform2f(BU.u_vp,VW,VH);gl.uniform1f(BU.u_mode,mode);
+ gl.uniform4f(BU.u_p0,p0[0],p0[1],p0[2],p0[3]);gl.uniform4f(BU.u_p1,p1[0],p1[1],p1[2],p1[3]);gl.uniform4f(BU.u_p2,p2[0],p2[1],p2[2],p2[3]);gl.uniform3f(BU.u_w,w3[0],w3[1],w3[2]);
+ gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+ gl.useProgram(blP);gl.uniform2f(BL.u_res,BK.w,BK.h);gl.activeTexture(gl.TEXTURE0);
+ for(var it=0;it<2;it++){
+  gl.bindFramebuffer(gl.FRAMEBUFFER,BK.tmp.f);gl.bindTexture(gl.TEXTURE_2D,BK[which].t);gl.uniform2f(BL.u_dir,1/BK.w,0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,BK[which].f);gl.bindTexture(gl.TEXTURE_2D,BK.tmp.t);gl.uniform2f(BL.u_dir,0,1/BK.h);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+ }
+}
+function bkEnd(A,Bt){
+ gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,cv.width,cv.height);gl.useProgram(MP);
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,A?A.tex:dummy);
+ gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,Bt?Bt.tex:dummy);
+ gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,SH.tex||dummy);
+ gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,BK.pg?BK.pg.t:dummy);
+ gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,BK.sh?BK.sh.t:dummy);
+ gl.activeTexture(gl.TEXTURE0);
+}
 
 /* ===== 3. Інкрементальні знімки: кожен блок сторінки знімається окремо й один раз,
           перезнімається лише той блок, у якому змінився DOM (texSubImage2D) ===== */
@@ -3022,6 +3082,13 @@ function frame(t){
   gl.uniform4f(U.u_k,(c.cx(KS)-R.x)*S,cy,27*S,(DR.height/2-12+bump*7.75)*S);gl.uniform1f(U.u_kv,bump);
   if(pr&&pr.w>.5&&pr.h>.5){gl.uniform4f(U.u_c,(pr.x-R.x)*S,(pr.y-R.y)*S,pr.w*S,pr.h*S);gl.uniform1f(U.u_cv,1);gl.uniform1f(U.u_nk,pr.nk*S);gl.uniform1f(U.u_bl,(pr.bl||0)*S);}
   else{gl.uniform4f(U.u_c,0,0,0,0);gl.uniform1f(U.u_cv,0);gl.uniform1f(U.u_bl,0);}
+  var bmv=boot.on?0:Math.min(1,rec.pg.v*1.2),bsv=Math.min(1,rec.sh.v*1.2),shOK=(SH.on&&SH.ready)?1:0;
+  if(bmv>.003||bsv>.003){
+   var P0=[(fl-ca)*VW,sy[fl],A?A.ch:1,A?1:0],P1=[(f2-ca)*VW,f2<NP?sy[f2]:0,Bt?Bt.ch:1,Bt?1:0],P2=[SH.x,-SH.y,SH.ch,shOK],W3=[A?A.cw:1,Bt?Bt.cw:1,SH.cw];
+   bake('pg',0,P0,P1,P2,W3);if(shOK)bake('sh',1,P0,P1,P2,W3);
+   bkEnd(A,Bt);
+  }
+  gl.uniform1f(U.u_bm,bmv);gl.uniform1f(U.u_bs,bsv);
   gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);dirty=false;boot.warm=0;
  }
  if(!shown&&full[sel]){shown=true;cv.style.opacity=1;}
@@ -3043,13 +3110,13 @@ GLSL_BG,
 ' for(int i=0;i<24;i++){if(float(i)>=u_n)break;float d=sdRB(px-u_r[i].xy,u_r[i].zw,u_q[i]);if(d<dm){dm=d;R=u_r[i];Q=u_q[i];H=u_h[i];}}',
 ' vec3 base=gradBg(p);float sw=26.*u_s;',
 ' if(dm>sw){gl_FragColor=vec4(base,1.);return;}',
-' float sh=dm>0.?1.-clamp(dm/sw,0.,1.):0.;vec3 oc=base*(1.-.30*sh*sh);',
+' float sh=dm>0.?1.-clamp(dm/sw,0.,1.):0.;vec3 oc=base*(1.-.16*sh*sh);',
 ' if(dm>1.5*u_s){gl_FragColor=vec4(oc,1.);return;}',
 ' float m=36.*u_s;float t=clamp(-dm/(.6*m),0.,1.);float e=1.5;',
 ' vec2 n=normalize(vec2(sdRB(px+vec2(e,0.)-R.xy,R.zw,Q)-sdRB(px-vec2(e,0.)-R.xy,R.zw,Q),sdRB(px+vec2(0.,e)-R.xy,R.zw,Q)-sdRB(px-vec2(0.,e)-R.xy,R.zw,Q))+1e-5);',
 ' vec2 of=n*pow(1.-t,2.2)*.6*m;float ab=.07*(.35+pow(1.-t,1.5));',
 ' vec3 ci=vec3(gradBg((px-of*(1.+ab))/u_s).r,gradBg((px-of)/u_s).g,gradBg((px-of*(1.-ab))/u_s).b);',
-' ci=ci*.88+vec3(.045)+H*vec3(.17,.04,.055);',
+' ci=mix(ci,vec3(.006,.19,.085),H*.62);',
 ' float rim=pow(1.-t,3.);float sp=pow(max(dot(n,normalize(vec2(-.6,-.8))),0.),3.)+.5*pow(max(dot(n,normalize(vec2(.6,.8))),0.),3.);',
 ' ci+=vec3(rim*(.02+.09*sp));ci*=u_br;',
 ' float w=clamp(-dm/(1.5*u_s)+.5,0.,1.);gl_FragColor=vec4(mix(oc,ci,w),1.);}'].join('\n');
@@ -3070,7 +3137,7 @@ function tileRadius(el){for(var k in TILE_R)if(el.classList.contains(k))return T
 function tlMeasure(i){
  var ch=inn[i].children,list=[];
  for(var k=0;k<ch.length;k++){var el=ch[k],r=tileRadius(el);if(!r)continue;
-  list.push({l:el.offsetLeft,t:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight,r:r,hot:el.classList.contains('hot')?1:0});}
+  list.push({l:el.offsetLeft,t:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight,r:r,hot:el.classList.contains('bal')?1:0});}
  TL[i]=list;tlStale[i]=0;
 }
 function tlAllStale(){for(var i=0;i<NP;i++)tlStale[i]=1;}

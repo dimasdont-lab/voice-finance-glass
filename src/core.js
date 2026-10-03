@@ -46,10 +46,10 @@ function todayStr(){return new Date().toLocaleDateString('uk-UA',{weekday:'long'
 function spark(points,id){
  var v=(points||[]).map(function(p){return p.value;}).filter(isFinite);
  if(v.length<2)v=[0,0];
- var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),rg=mx-mn||1,W=320,H=84,pad=6;
+ var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),rg=mx-mn||1,W=320,H=84,pad=6,col=v[v.length-1]>=v[0]?'#66d896':'#ff7d83';
  var xy=v.map(function(y,i){return[(i/(v.length-1))*W,pad+(H-2*pad)*(1-(y-mn)/rg)];});
  var d=xy.map(function(p,i){return(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' ');
- return'<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7d83" stop-opacity=".38"/><stop offset="1" stop-color="#ff7d83" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#g'+id+')"/><path d="'+d+'" fill="none" stroke="#ff7d83" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+ return'<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".38"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#g'+id+')"/><path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 }
 function txRow(t,first){
  var cat=catName(t.category),title=t.client||(t.note&&t.note.length<34?t.note:cat),inc=t.type==='income';
@@ -98,7 +98,7 @@ function blocksHome(){
  var o=[];
  o.push(hdr('Гарного дня!',todayStr()));
  o.push(searchBlock('home','Пошук операцій'));
- o.push(B_('tile hot','<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>'+esc(pctTxt(pc))+' · 30 днів</span></div>'+spark(pts,'h')+'</div>'+
+ o.push(B_('tile bal','<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>'+esc(pctTxt(pc))+' · 30 днів</span></div>'+spark(pts,'h')+'</div>'+
   '<div class="split"><button data-act="flow" data-v="income"><i class="dot up">↑</i><div><span class="lbl">Доходи</span><b>'+esc(money(t.income))+'</b></div></button><button data-act="flow" data-v="expense"><i class="dot dn">↓</i><div><span class="lbl">Витрати</span><b>'+esc(money(t.expense))+'</b></div></button></div>'));
  o.push(B_('tile','<div class="th"><h2>Рахунки</h2>'+(accs.length>3?'<button data-act="accs">'+(ix.accountsExpanded?'Згорнути':'Усі ›')+'</button>':'<button data-act="addacc">Додати</button>')+'</div>'+
   (shown.length?shown.map(function(a,i){return'<button class="row'+(i?'':' first')+'" data-act="acc" data-id="'+esc(a.id)+'">'+icon(a.displayName||a.bankName,hashCol(a.id))+'<div class="rc"><b>'+esc(a.displayName||a.bankName)+'</b><span>'+esc(a.bankName||a.accountType||'Рахунок')+'</span></div><em>'+esc(money(a.currentBalance,a.currency))+'</em></button>';}).join(''):'<div class="empty">Рахунків поки немає. Додайте ручний рахунок або готівку — банк підключати не обов’язково.</div>')));
@@ -113,7 +113,7 @@ function blocksInsights(){
  var g=fin.goals(),s=fin.insights(),o=[],tot=s.totals,net=tot.income-tot.expense;
  o.push(hdr('Аналітика','Цілі та підсумки'));
  o.push(B_('sec','Цілі'));
- o.push(B_('tile hot','<div class="lbl">Місячний ліміт витрат</div><div class="big">'+esc(money(g.limit))+'</div><div class="bar"><i style="width:'+g.percent.toFixed(1)+'%"></i></div><div class="cap">Витрачено '+esc(money(g.expense))+' · '+esc(pctTxt(g.percent))+'</div>'));
+ o.push(B_('tile','<div class="lbl">Місячний ліміт витрат</div><div class="big">'+esc(money(g.limit))+'</div><div class="bar"><i style="width:'+g.percent.toFixed(1)+'%"></i></div><div class="cap">Витрачено '+esc(money(g.expense))+' · '+esc(pctTxt(g.percent))+'</div>'));
  o.push(B_('tile','<div class="lbl">Накопичення</div><div class="big">'+esc(money(g.savings))+'</div><div class="cap">Поточний баланс: рахунки плюс операції без рахунку.</div>'));
  o.push(B_('sec','Аналітика'));
  o.push(B_('tile','<div class="lbl">Чистий результат</div><div class="mid" style="color:'+(net<0?'var(--ac)':'var(--gr)')+'">'+esc(mv(net))+'</div><div class="grid2" style="margin-top:12px"><button class="mini" data-act="flow" data-v="income"><span class="lbl">Доходи</span><b>'+esc(money(tot.income))+'</b></button><button class="mini" data-act="flow" data-v="expense"><span class="lbl">Витрати</span><b>'+esc(money(tot.expense))+'</b></button></div>'));
@@ -140,7 +140,7 @@ function blocksDebts(){
 }
 /* ---- деталі ---- */
 function periodBtn(cur){return'<button class="pillb dd" data-act="period"><span>'+esc(cur)+'</span>'+chev()+'</button>';}
-function chartTile(title,big,sub,pts,id,cur,neg){return B_('tile hot','<div class="th"><div><div class="lbl">'+esc(title)+'</div></div>'+periodBtn(cur)+'</div><div class="big">'+esc(big)+'</div>'+(sub?'<div class="chg '+(neg?'neg':'')+'">'+sub+'</div>':'')+spark(pts,id)+'<div class="cap">'+(pts&&pts.length>1?'':'Замало точок для графіка за цей період.')+'</div>');}
+function chartTile(title,big,sub,pts,id,cur,neg){return B_(id==='b'?'tile bal':'tile','<div class="th"><div><div class="lbl">'+esc(title)+'</div></div>'+periodBtn(cur)+'</div><div class="big">'+esc(big)+'</div>'+(sub?'<div class="chg '+(neg?'neg':'')+'">'+sub+'</div>':'')+spark(pts,id)+'<div class="cap">'+(pts&&pts.length>1?'':'Замало точок для графіка за цей період.')+'</div>');}
 function txTile(title,list,empty){return B_('tile','<div class="th"><h2>'+esc(title)+'</h2></div>'+(list.length?list.slice(0,40).map(function(x,i){return txRow(x,i===0);}).join(''):'<div class="empty">'+empty+'</div>'));}
 function blocksBalance(m){
  return[hdr('Баланс','Загальний графік',1),chartTile('Поточний',money(m.current),esc(mv(m.change)),m.points,'b',m.periods.balance,m.change<0),

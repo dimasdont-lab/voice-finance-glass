@@ -12,13 +12,13 @@ GLSL_BG,
 ' for(int i=0;i<24;i++){if(float(i)>=u_n)break;float d=sdRB(px-u_r[i].xy,u_r[i].zw,u_q[i]);if(d<dm){dm=d;R=u_r[i];Q=u_q[i];H=u_h[i];}}',
 ' vec3 base=gradBg(p);float sw=26.*u_s;',
 ' if(dm>sw){gl_FragColor=vec4(base,1.);return;}',
-' float sh=dm>0.?1.-clamp(dm/sw,0.,1.):0.;vec3 oc=base*(1.-.30*sh*sh);',
+' float sh=dm>0.?1.-clamp(dm/sw,0.,1.):0.;vec3 oc=base*(1.-.16*sh*sh);',
 ' if(dm>1.5*u_s){gl_FragColor=vec4(oc,1.);return;}',
 ' float m=36.*u_s;float t=clamp(-dm/(.6*m),0.,1.);float e=1.5;',
 ' vec2 n=normalize(vec2(sdRB(px+vec2(e,0.)-R.xy,R.zw,Q)-sdRB(px-vec2(e,0.)-R.xy,R.zw,Q),sdRB(px+vec2(0.,e)-R.xy,R.zw,Q)-sdRB(px-vec2(0.,e)-R.xy,R.zw,Q))+1e-5);',
 ' vec2 of=n*pow(1.-t,2.2)*.6*m;float ab=.07*(.35+pow(1.-t,1.5));',
 ' vec3 ci=vec3(gradBg((px-of*(1.+ab))/u_s).r,gradBg((px-of)/u_s).g,gradBg((px-of*(1.-ab))/u_s).b);',
-' ci=ci*.88+vec3(.045)+H*vec3(.17,.04,.055);',
+' ci=mix(ci,vec3(.006,.19,.085),H*.62);',
 ' float rim=pow(1.-t,3.);float sp=pow(max(dot(n,normalize(vec2(-.6,-.8))),0.),3.)+.5*pow(max(dot(n,normalize(vec2(.6,.8))),0.),3.);',
 ' ci+=vec3(rim*(.02+.09*sp));ci*=u_br;',
 ' float w=clamp(-dm/(1.5*u_s)+.5,0.,1.);gl_FragColor=vec4(mix(oc,ci,w),1.);}'].join('\n');
@@ -39,7 +39,7 @@ function tileRadius(el){for(var k in TILE_R)if(el.classList.contains(k))return T
 function tlMeasure(i){
  var ch=inn[i].children,list=[];
  for(var k=0;k<ch.length;k++){var el=ch[k],r=tileRadius(el);if(!r)continue;
-  list.push({l:el.offsetLeft,t:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight,r:r,hot:el.classList.contains('hot')?1:0});}
+  list.push({l:el.offsetLeft,t:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight,r:r,hot:el.classList.contains('bal')?1:0});}
  TL[i]=list;tlStale[i]=0;
 }
 function tlAllStale(){for(var i=0;i<NP;i++)tlStale[i]=1;}
