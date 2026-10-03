@@ -1,0 +1,149 @@
+{
+  "source": {
+    "repository": "https://github.com/dimasdont-lab/voice-finance-free",
+    "commit": "193dedfba571707ea25727b52bda95baa7cad9bc",
+    "indexSha256": "82C167895CF6CA80EFAFA9CF03B0441CEC8F08FACDF524F8B87274A34957C18E"
+  },
+  "files": [
+    {
+      "path": "START_HERE_CLAUDE.md",
+      "bytes": 4194,
+      "sha256": "fc9addeb4918fbcdf004f78da62d51908f608e4da0f558207f917191af3393c8"
+    },
+    {
+      "path": "README.md",
+      "bytes": 7783,
+      "sha256": "6d53a384848ae0329abedd18b766baded68ff6d329dde31bb6a801440021497d"
+    },
+    {
+      "path": "INTERACTIONS.md",
+      "bytes": 16812,
+      "sha256": "c2133dbb93071c121f2dffc803f4a68cf281e36b85b3bcdb38ec11f3b4948784"
+    },
+    {
+      "path": "DATA_MODEL.md",
+      "bytes": 7407,
+      "sha256": "7c34ab6214b26b3aac7d84f2fe8fa9b689ee42200b880de158b75d754669035b"
+    },
+    {
+      "path": "BACKEND.md",
+      "bytes": 10056,
+      "sha256": "e5b2146c064e6e3b7a6ddb4ae7366ad94efc5e8a6c09f7cf12643518241f7b31"
+    },
+    {
+      "path": "PROVENANCE.md",
+      "bytes": 3757,
+      "sha256": "c6065a798724c6ec7da29424b008f3b187193ca15934e8b05496e1c4410eff07"
+    },
+    {
+      "path": "VERIFICATION.md",
+      "bytes": 2487,
+      "sha256": "f0a54b0f71d15efabdcee1b1c86a199a7f694ca960958b248ab9515a54b228ce"
+    },
+    {
+      "path": "index.mjs",
+      "bytes": 420,
+      "sha256": "7e544a168659937374cac9d5829902c3d11671792110991f8347267236ed3124"
+    },
+    {
+      "path": "integration-example.mjs",
+      "bytes": 3226,
+      "sha256": "f68779b670f0edad43a73230e5f6410351794ad5a220e750afc21eeb0a440166"
+    },
+    {
+      "path": "application.mjs",
+      "bytes": 11404,
+      "sha256": "a826d97b0de451e21ef057471854df4ae537ec557d9ecc917c543d5656d5c6bf"
+    },
+    {
+      "path": "navigation.mjs",
+      "bytes": 4610,
+      "sha256": "64d3f84e9e8f8b55369429920cafa0aef78be66328461147169b95d77dca00f2"
+    },
+    {
+      "path": "finance-core.mjs",
+      "bytes": 21481,
+      "sha256": "926f43224dc4ec9ba0f11b549766210cac10f3efdd700bb81975973b273d55c4"
+    },
+    {
+      "path": "input-parser.mjs",
+      "bytes": 13335,
+      "sha256": "a67d386b60cf41ada2c8092a62e2be4bb09ebcac8014c7c9c76b215d278b2796"
+    },
+    {
+      "path": "interaction-helpers.mjs",
+      "bytes": 2486,
+      "sha256": "ebb2ec2b95ea2822d90fd005cb4382886590aa41215079d30302dc58ea71117c"
+    },
+    {
+      "path": "voice-capture.mjs",
+      "bytes": 14077,
+      "sha256": "f3c257001c2447eeb2a94427c1ccf08dff3f5dd9dde6f1f2d71378ac6a5017e3"
+    },
+    {
+      "path": "whisper-worker.js",
+      "bytes": 4877,
+      "sha256": "3d564b5fff8e69ce436036ae6462a29d043a161e3d28959aa8d209d9920d0a64"
+    },
+    {
+      "path": "market-service.mjs",
+      "bytes": 9209,
+      "sha256": "3efec19ce8e1bdc8e82f48908bd58145b6f395bbf2b5fa994262e393b1011dbc"
+    },
+    {
+      "path": "banking-client.mjs",
+      "bytes": 3813,
+      "sha256": "a293eb9b03bc19f1e53e38340b2ca8cbcb4e7e7d830663bc10cdada58e2fb861"
+    },
+    {
+      "path": "backend/worker.js",
+      "bytes": 6258,
+      "sha256": "e732b4aad154ce7498d8ebb71524eb914efceb9c4493830b234d796be5de01f6"
+    },
+    {
+      "path": "backend/schema.sql",
+      "bytes": 1266,
+      "sha256": "51edf95e252e2be761c208ceb5ab8ddc875cac766504f40d05b77cb846815cea"
+    },
+    {
+      "path": "tests/application.test.mjs",
+      "bytes": 9259,
+      "sha256": "f949a4f3598577273f01b68956ad84d283a1675edf2c71f6c157bb9e2ce39b14"
+    },
+    {
+      "path": "tests/finance-core.test.mjs",
+      "bytes": 19034,
+      "sha256": "b14f77cf8409b21313e35c5db398dc9d6a2065cd3de75b5be966e146255ff210"
+    },
+    {
+      "path": "tests/input-parser.test.mjs",
+      "bytes": 10239,
+      "sha256": "58c02d0d4ff736836f2e90e76ccb9c2adf2491f407452a570c1d7b2719cfbe2f"
+    },
+    {
+      "path": "tests/services.test.mjs",
+      "bytes": 20702,
+      "sha256": "8bec3a23a9fb8c3a1e7da0643db93283ecc2ea41f7958ad5e3ea8b317cf92dd5"
+    },
+    {
+      "path": "tests/handoff.test.mjs",
+      "bytes": 2546,
+      "sha256": "a0db80a679340a7a3eb6fd8d5a2f32c4a5649b61492bf428251ca746411a1af8"
+    },
+    {
+      "path": "package.json",
+      "bytes": 351,
+      "sha256": "3338d8a9d51cc5e02d42a3d9d777739100ddb8e752e6b132bb79288378474996"
+    },
+    {
+      "path": "build-handoff.mjs",
+      "bytes": 3263,
+      "sha256": "7ca1eebc48f7c52604ec9bdf0ccc10a5db796f8106be8ebf648fa8a4f9d6f95c"
+    }
+  ],
+  "singleFile": {
+    "path": "CLAUDE_LOGIC_FULL.md",
+    "bytes": 150650,
+    "sha256": "ae32507bf5f4af6999c7f02d577e605ee743f5b1c27739275485806094e1b3aa"
+  }
+}

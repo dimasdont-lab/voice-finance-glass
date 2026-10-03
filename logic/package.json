@@ -1,0 +1,12 @@
+{
+  "name": "voice-finance-claude-logic-handoff",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "UI-free Voice Finance logic, interactions and Claude handoff",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "bundle": "node build-handoff.mjs",
+    "verify:bundle": "node build-handoff.mjs --check"
+  }
+}
