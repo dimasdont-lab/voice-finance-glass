@@ -2454,7 +2454,7 @@ var GLSL_BG=['vec3 blob(vec3 c,vec2 n,vec2 ce,vec2 r,vec3 col){float a=clamp(1.-
  ' return o;}',
  'vec3 gradBg(vec2 p){',
  ' vec3 c=vec3(.0196,.0196,.0275);',
- ' vec3 g=vec3(gridL(gridWarp(p,1.)+u_go),gridL(gridWarp(p,1.14)+u_go),gridL(gridWarp(p,1.28)+u_go));return mix(c,vec3(.58),.17*g);}'].join('\n');
+ ' vec3 g=vec3(gridL(gridWarp(p,1.)+u_go-u_vp*.5),gridL(gridWarp(p,1.14)+u_go-u_vp*.5),gridL(gridWarp(p,1.28)+u_go-u_vp*.5));return mix(c,vec3(.58),.17*g);}'].join('\n');
 var VS='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
 var FS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
 'uniform sampler2D u_tb0;uniform sampler2D u_tb1;uniform float u_bm;uniform float u_bs;uniform vec2 u_go;uniform float u_isl;uniform float u_gb2;uniform vec2 u_res;uniform vec2 u_org;uniform vec2 u_vp;uniform sampler2D u_t0;uniform sampler2D u_t1;uniform sampler2D u_t2;uniform vec4 u_p0;uniform vec4 u_p1;uniform vec4 u_p2;uniform vec3 u_w;uniform float u_scrim;uniform vec4 u_g;uniform float u_gr;uniform float u_gv;uniform vec4 u_a;uniform vec4 u_b;uniform vec4 u_c;uniform float u_cv;uniform float u_nk;uniform vec4 u_k;uniform float u_kv;uniform float u_bl;uniform float u_s;uniform vec4 u_rp;uniform vec4 u_rs;uniform float u_rb;uniform float u_gm;uniform float u_gd;uniform float u_gbl;uniform vec4 u_g2;uniform float u_gr2;uniform float u_gv2;uniform float u_sho;uniform vec4 u_rt;uniform float u_ord;',
@@ -3013,7 +3013,7 @@ function frame(t){
  var fl=Math.max(0,Math.min(NP-1,Math.floor(ca))),f2=fl+1;
  var scrolling=stepScroll(dt);
  var fgx=fd.on?Math.max(-70,Math.min(70,-fd.dx*.25)):0,fgy=fd.on?Math.max(-50,Math.min(50,-fd.dy*.12)):0;
- var gtx=ca*VW*.18+fgx,gty=(sy[sel]||0)*.28+fgy,gMov=false;
+ var gtx=ca*(Math.max(1,Math.round(VW*.18/GRID_CELL))*GRID_CELL)+fgx,gty=(sy[sel]||0)*.28+fgy,gMov=false;
  if(Math.abs(gtx-gOX)+Math.abs(gty-gOY)>.04){var gf=1-Math.exp(-dt*9);gOX+=(gtx-gOX)*gf;gOY+=(gty-gOY)*gf;gMov=true;}else if(gtx!==gOX||gty!==gOY){gOX=gtx;gOY=gty;gMov=true;}
  recStep(dt);
  refreshTabs(t);
