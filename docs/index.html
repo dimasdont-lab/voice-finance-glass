@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-04 06:30 UTC';
+<script>window.__VF_BUILD='2026-10-04 06:37 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -3891,7 +3891,7 @@ function drawTilesS(S){
  var W=Math.round(VW*S),H=Math.round(VH*S);
  if(W!==tgW||H!==tgH||S!==tgS){tgW=W;tgH=H;tgS=S;TGC.width=W;TGC.height=H;tgl.viewport(0,0,W,H);}
  tgl.uniform2f(TGU.u_res,W,H);tgl.uniform2f(TGU.u_vp,VW,VH);tgl.uniform1f(TGU.u_s,S);tgl.uniform2f(TGU.u_go,gOX,gOY);tgl.uniform1f(TGU.u_isl,ISL);tgl.uniform1f(TGU.u_cell,gridCell());tgl.uniform3f(TGU.u_gcol,GCOL[0],GCOL[1],GCOL[2]);tgl.uniform1f(TGU.u_n,n);tgl.uniform1f(TGU.u_br,1-RD*v);
- var tkT=tickerEl.offsetTop,tkH=tickerEl.offsetHeight;tgl.uniform4f(TGU.u_tk,tkT*S,tkH*S,28*S,0); tgl.uniform1i(TGU.u_fg,0);tgl.uniform1f(TGU.u_fgk,FGact?1:0);
+ var tkT=tickerEl.offsetTop,tkH=tickerEl.offsetHeight;tgl.uniform4f(TGU.u_tk,tkT*S,tkH*S,28*S,0); tgl.uniform1i(TGU.u_fg,0);tgl.uniform1f(TGU.u_fgk,FGact?.55:0);
  if(FGact&&FGc){if(!FGtex){FGtex=tgl.createTexture();tgl.bindTexture(tgl.TEXTURE_2D,FGtex);tgl.texParameteri(tgl.TEXTURE_2D,tgl.TEXTURE_MIN_FILTER,tgl.LINEAR);tgl.texParameteri(tgl.TEXTURE_2D,tgl.TEXTURE_MAG_FILTER,tgl.LINEAR);tgl.texParameteri(tgl.TEXTURE_2D,tgl.TEXTURE_WRAP_S,tgl.CLAMP_TO_EDGE);tgl.texParameteri(tgl.TEXTURE_2D,tgl.TEXTURE_WRAP_T,tgl.CLAMP_TO_EDGE);}
   tgl.activeTexture(tgl.TEXTURE0);tgl.bindTexture(tgl.TEXTURE_2D,FGtex);tgl.texImage2D(tgl.TEXTURE_2D,0,tgl.RGBA,tgl.RGBA,tgl.UNSIGNED_BYTE,FGc);}
  tgl.uniform4fv(TGU.u_r,tgR);tgl.uniform4fv(TGU.u_m,tgM);tgl.uniform4fv(TGU.u_c,tgC);tgl.uniform4fv(TGU.u_gu,tgGU);tgl.uniform1i(TGU.u_ga,1);tgl.uniform2f(TGU.u_gas,GA.W,GA.H);if(GA.tex){tgl.activeTexture(tgl.TEXTURE1);tgl.bindTexture(tgl.TEXTURE_2D,GA.tex);tgl.activeTexture(tgl.TEXTURE0);}
@@ -4813,16 +4813,16 @@ document.addEventListener('visibilitychange',function(){if(SYN.on&&!document.hid
 /* ---------- світіння за пальцем: суцільний насичений лазерний слід кольору балансу; малюється в текстуру, яку скло плиток заломлює ---------- */
 var FGc=document.getElementById('fglow'),FGx=FGc&&FGc.getContext('2d'),FGp=[],FGraf=0,FGdown=false;
 function fgSize(){if(!FGc)return;var w=Math.max(8,Math.round(VW/4)),h=Math.max(8,Math.round(VH/4));if(FGc.width!==w||FGc.height!==h){FGc.width=w;FGc.height=h;}}
-function fgCol(){return BAL_TREND>0?[40,255,90]:BAL_TREND<0?[255,10,30]:[90,170,255];}
-function fgAdd(x,y,brk){FGp.push({x:x,y:y,t:performance.now(),b:!!brk});if(FGp.length>90)FGp.shift();kickFg();}
+function fgCol(){return BAL_TREND>0?[0,255,70]:BAL_TREND<0?[255,0,8]:[60,140,255];}
+function fgAdd(x,y,brk){var now=performance.now(),pv=FGp.length?FGp[FGp.length-1]:null,v=0;if(pv&&!brk){v=Math.hypot(x-pv.x,y-pv.y)/Math.max(1,now-pv.t);v=pv.v*.65+v*.35;}FGp.push({x:x,y:y,t:now,b:!!brk,v:v});if(FGp.length>90)FGp.shift();kickFg();}
 function kickFg(){if(!FGraf)FGraf=requestAnimationFrame(fgStep);}
 function fgStep(){
- FGraf=0;if(!FGc)return;fgSize();var now=performance.now(),LIFE=1700,c=FGx,k=.25;
+ FGraf=0;if(!FGc)return;fgSize();var now=performance.now(),LIFE=2200,c=FGx,k=.25;
  FGp=FGp.filter(function(p){return now-p.t<LIFE;});
  c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-over';c.fillStyle='#000';c.fillRect(0,0,FGc.width,FGc.height);
- var col=fgCol();c.globalCompositeOperation='lighter';c.lineCap='round';c.lineJoin='round';
- for(var i=1;i<FGp.length;i++){var a=FGp[i-1],b=FGp[i];if(b.b)continue;var age=1-(now-b.t)/LIFE;age=Math.max(0,age);var al=Math.pow(age,1.6);
-  c.strokeStyle='rgba('+col[0]+','+col[1]+','+col[2]+','+(al*.9).toFixed(3)+')';c.lineWidth=(20*k)*(.5+.5*age);c.shadowColor='rgb('+col[0]+','+col[1]+','+col[2]+')';c.shadowBlur=18*k;
+ var col=fgCol(),RED=BAL_TREND<0;c.globalCompositeOperation='lighten';c.lineCap='round';c.lineJoin='round';
+ for(var i=1;i<FGp.length;i++){var a=FGp[i-1],b=FGp[i];if(b.b)continue;var age=1-(now-b.t)/LIFE;age=Math.max(0,age);var al=Math.pow(age,1.6),wf=1-Math.min(1,b.v/2.5)*.55;
+  c.strokeStyle='rgba('+col[0]+','+col[1]+','+col[2]+','+(al*.42).toFixed(3)+')';c.lineWidth=(40*k)*wf*(.5+.5*age);c.shadowColor='rgba('+col[0]+','+col[1]+','+col[2]+','+(al*.5).toFixed(3)+')';c.shadowBlur=30*k;
   c.beginPath();c.moveTo(a.x*k,a.y*k);c.lineTo(b.x*k,b.y*k);c.stroke();}
  if(FGp.length===1){var p=FGp[0],g=c.createRadialGradient(p.x*k,p.y*k,0,p.x*k,p.y*k,16*k);g.addColorStop(0,'rgba('+col+',.9)');g.addColorStop(1,'rgba('+col+',0)');c.fillStyle=g;c.fillRect(p.x*k-16*k,p.y*k-16*k,32*k,32*k);}
  c.shadowBlur=0;

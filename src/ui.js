@@ -749,16 +749,16 @@ document.addEventListener('visibilitychange',function(){if(SYN.on&&!document.hid
 /* ---------- світіння за пальцем: суцільний насичений лазерний слід кольору балансу; малюється в текстуру, яку скло плиток заломлює ---------- */
 var FGc=document.getElementById('fglow'),FGx=FGc&&FGc.getContext('2d'),FGp=[],FGraf=0,FGdown=false;
 function fgSize(){if(!FGc)return;var w=Math.max(8,Math.round(VW/4)),h=Math.max(8,Math.round(VH/4));if(FGc.width!==w||FGc.height!==h){FGc.width=w;FGc.height=h;}}
-function fgCol(){return BAL_TREND>0?[40,255,90]:BAL_TREND<0?[255,10,30]:[90,170,255];}
-function fgAdd(x,y,brk){FGp.push({x:x,y:y,t:performance.now(),b:!!brk});if(FGp.length>90)FGp.shift();kickFg();}
+function fgCol(){return BAL_TREND>0?[0,255,70]:BAL_TREND<0?[255,0,8]:[60,140,255];}
+function fgAdd(x,y,brk){var now=performance.now(),pv=FGp.length?FGp[FGp.length-1]:null,v=0;if(pv&&!brk){v=Math.hypot(x-pv.x,y-pv.y)/Math.max(1,now-pv.t);v=pv.v*.65+v*.35;}FGp.push({x:x,y:y,t:now,b:!!brk,v:v});if(FGp.length>90)FGp.shift();kickFg();}
 function kickFg(){if(!FGraf)FGraf=requestAnimationFrame(fgStep);}
 function fgStep(){
- FGraf=0;if(!FGc)return;fgSize();var now=performance.now(),LIFE=1700,c=FGx,k=.25;
+ FGraf=0;if(!FGc)return;fgSize();var now=performance.now(),LIFE=2200,c=FGx,k=.25;
  FGp=FGp.filter(function(p){return now-p.t<LIFE;});
  c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-over';c.fillStyle='#000';c.fillRect(0,0,FGc.width,FGc.height);
- var col=fgCol();c.globalCompositeOperation='lighter';c.lineCap='round';c.lineJoin='round';
- for(var i=1;i<FGp.length;i++){var a=FGp[i-1],b=FGp[i];if(b.b)continue;var age=1-(now-b.t)/LIFE;age=Math.max(0,age);var al=Math.pow(age,1.6);
-  c.strokeStyle='rgba('+col[0]+','+col[1]+','+col[2]+','+(al*.9).toFixed(3)+')';c.lineWidth=(20*k)*(.5+.5*age);c.shadowColor='rgb('+col[0]+','+col[1]+','+col[2]+')';c.shadowBlur=18*k;
+ var col=fgCol(),RED=BAL_TREND<0;c.globalCompositeOperation='lighten';c.lineCap='round';c.lineJoin='round';
+ for(var i=1;i<FGp.length;i++){var a=FGp[i-1],b=FGp[i];if(b.b)continue;var age=1-(now-b.t)/LIFE;age=Math.max(0,age);var al=Math.pow(age,1.6),wf=1-Math.min(1,b.v/2.5)*.55;
+  c.strokeStyle='rgba('+col[0]+','+col[1]+','+col[2]+','+(al*.42).toFixed(3)+')';c.lineWidth=(40*k)*wf*(.5+.5*age);c.shadowColor='rgba('+col[0]+','+col[1]+','+col[2]+','+(al*.5).toFixed(3)+')';c.shadowBlur=30*k;
   c.beginPath();c.moveTo(a.x*k,a.y*k);c.lineTo(b.x*k,b.y*k);c.stroke();}
  if(FGp.length===1){var p=FGp[0],g=c.createRadialGradient(p.x*k,p.y*k,0,p.x*k,p.y*k,16*k);g.addColorStop(0,'rgba('+col+',.9)');g.addColorStop(1,'rgba('+col+',0)');c.fillStyle=g;c.fillRect(p.x*k-16*k,p.y*k-16*k,32*k,32*k);}
  c.shadowBlur=0;
