@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-04 19:04 UTC';
+<script>window.__VF_BUILD='2026-10-04 19:28 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -3882,9 +3882,9 @@ function gaDraw(cx,t,ox,oy){
  cx.save();cx.translate(ox,oy);cx.scale(2,2);cx.beginPath();cx.rect(-26,-26,t.w+52,t.h+52);cx.clip();cx.textBaseline='middle';cx.textAlign='left';
  var sv=el.classList.contains('chw')?el.querySelector('svg[data-pts]'):null;
  if(sv){var sr=sv.getBoundingClientRect(),vb=(sv.getAttribute('data-vb')||'1,1').split(',').map(Number),pp=sv.getAttribute('data-pts').split(' ').map(function(q){var a=q.split(',');return[10+a[0]/vb[0]*(t.w-20),(sr.top-er.top)/sx+(.12+.7*a[1]/vb[1])*sr.height/sx];}),col=sv.getAttribute('data-col')||'#66d896',bot=(sr.top-er.top)/sx+sr.height/sx,g;
-  if(pp.length>1){var y0=pp[0][1],y1=pp[pp.length-1][1];pp.unshift([-26,y0],[-6,y0]);pp.push([t.w+6,y1],[t.w+26,y1]);cx.beginPath();cx.moveTo(pp[0][0],bot);cx.lineTo(pp[0][0],pp[0][1]);for(var k=1;k<pp.length-1;k++){cx.quadraticCurveTo(pp[k][0],pp[k][1],(pp[k][0]+pp[k+1][0])/2,(pp[k][1]+pp[k+1][1])/2);}cx.lineTo(pp[pp.length-1][0],pp[pp.length-1][1]);cx.lineTo(pp[pp.length-1][0],bot);cx.closePath();
+  if(pp.length>1){var y0=pp[0][1],y1=pp[pp.length-1][1];pp.unshift([-26,y0],[-6,y0]);pp.push([t.w+6,y1],[t.w+26,y1]);cx.beginPath();cx.moveTo(pp[0][0],bot);cx.lineTo(pp[0][0],pp[0][1]);for(var k=1;k<pp.length-1;k++)cx.lineTo(pp[k][0],pp[k][1]);cx.lineTo(pp[pp.length-1][0],pp[pp.length-1][1]);cx.lineTo(pp[pp.length-1][0],bot);cx.closePath();
    g=cx.createLinearGradient(0,0,0,bot);g.addColorStop(0,col+'55');g.addColorStop(1,col+'00');cx.fillStyle=g;cx.fill();
-   cx.beginPath();cx.moveTo(pp[0][0],pp[0][1]);for(var k2=1;k2<pp.length-1;k2++){cx.quadraticCurveTo(pp[k2][0],pp[k2][1],(pp[k2][0]+pp[k2+1][0])/2,(pp[k2][1]+pp[k2+1][1])/2);}cx.lineTo(pp[pp.length-1][0],pp[pp.length-1][1]);cx.strokeStyle=col;cx.lineWidth=3;cx.lineJoin='round';cx.lineCap='round';cx.stroke();}}
+   cx.beginPath();cx.moveTo(pp[0][0],pp[0][1]);for(var k2=1;k2<pp.length-1;k2++)cx.lineTo(pp[k2][0],pp[k2][1]);cx.lineTo(pp[pp.length-1][0],pp[pp.length-1][1]);cx.strokeStyle=col;cx.lineWidth=3;cx.lineJoin='round';cx.lineCap='round';cx.stroke();}}
  var tw=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),n;
  while((n=tw.nextNode())){var s=n.nodeValue;if(!s||!s.trim())continue;var pe=n.parentElement,ga=pe.closest('.dot,.ic,.aic');if(ga&&ga!==el)continue;
   var rg=document.createRange();rg.selectNodeContents(n);var rc=rg.getBoundingClientRect(),cs=getComputedStyle(pe);
