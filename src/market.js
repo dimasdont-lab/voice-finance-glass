@@ -71,8 +71,8 @@ function mkChartHtml(pts,up){
  var xy=pts.map(function(p,k){return(k/(pts.length-1)*W).toFixed(1)+' '+(pd+(H-2*pd)*(1-(p.v-mn)/rg)).toFixed(1);});
  var d='M'+xy.join(' L');
  var grid='';for(i=0;i<3;i++){var gy=(pd+(H-2*pd)*i/2).toFixed(1);grid+='<line x1="0" x2="'+W+'" y1="'+gy+'" y2="'+gy+'" stroke="rgba(255,255,255,.08)" stroke-width="1" vector-effect="non-scaling-stroke"/>';}
- return'<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="mpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".32"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+grid+
-  '<path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#mpg)"/>'+lineSvg(d,col,2.2,' vector-effect="non-scaling-stroke"')+'</svg>'+
+ return'<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" data-pts="'+ptsAttr(xy.map(function(q){return q.split(' ');}))+'" data-vb="'+W+','+H+'" data-col="'+col+'" data-lw="3.2"><defs><linearGradient id="mpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".32"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+grid+
+  '<path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#mpg)"/>'+lineSvg(d,col,2.2,' vector-effect="non-scaling-stroke"',true)+'</svg>'+
   '<span class="mx">'+esc(mkFmt(mx))+'</span><span class="mn">'+esc(mkFmt(mn))+'</span>';
 }
 function blocksMarket(){
