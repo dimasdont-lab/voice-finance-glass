@@ -230,4 +230,6 @@ html.glines.gt .bar,html.glines.gt .cat .b{background:rgba(255,255,255,.05);box-
 /* тікер на всю ширину: скло з виворотними закругленнями до країв екрана малює шар плиток; вміст сторінок зникає під тікером */
 .gt #ticker{left:0;right:0;border-radius:0;border:0;background:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 .gt #topblur{display:none}
-.gt #pages{-webkit-mask-image:linear-gradient(to bottom,transparent 0,transparent calc(env(safe-area-inset-top,0px) + 64px),#000 calc(env(safe-area-inset-top,0px) + 78px));mask-image:linear-gradient(to bottom,transparent 0,transparent calc(env(safe-area-inset-top,0px) + 64px),#000 calc(env(safe-area-inset-top,0px) + 78px))}
+
+/* скло тікера малює головне полотно (#gl) поверх віджетів; коли відкрита панель, полотно вище тікера — тікер просто темніє */
+.gt.fm #ticker{background:rgba(8,8,11,.78)}
