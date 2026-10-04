@@ -12,8 +12,8 @@ document.body.appendChild(spT);document.body.appendChild(spB);
 var spL=document.createElement('div'),LV=0;spL.style.cssText='position:fixed;left:0;top:0;width:0;height:100lvh;visibility:hidden;pointer-events:none';document.body.appendChild(spL);
 function lvCheck(){if(!navigator.standalone)return;var lv=spL.offsetHeight||0,ih=innerHeight,st=document.documentElement;
  if(!LV&&lv>ih+1){LV=1;st.classList.add('lv');st.style.setProperty('--appH',lv+'px');LG('lv','iOS урізав вікно ('+ih+' з '+lv+'): документ розтягнуто до '+lv+', шари з fixed на absolute');}
- else if(LV&&lv<=ih+1){LV=0;st.classList.remove('lv');st.style.removeProperty('--appH');LG('lv','вікно повне ('+ih+'): режим вимкнено');}
- else if(LV&&Math.abs(parseFloat(st.style.getPropertyValue('--appH'))-lv)>1){st.style.setProperty('--appH',lv+'px');LG('lv','висота документа → '+lv);}}
+ else if(LV&&!LV.full&&ih>=lv-1){LV={full:1};LG('lv','iOS віддав повну висоту вікна ('+ih+'): смуги немає; режим лишається ввімкненим (без нього вікно знову стане коротким)');}
+ else if(LV&&lv>(parseFloat(st.style.getPropertyValue('--appH'))||0)+1){st.style.setProperty('--appH',lv+'px');LG('lv','висота документа → '+lv);}}   /* режим не вимикаємо: інакше вікно 812↔874 перемикається щокадру (блимання) */
 function liveEnv(){SAFE.t=spT.offsetHeight||0;SAFE.b=spB.offsetHeight||0;ISL=(SAFE.t>=40||/[?&]island/.test(location.search))?1:0;var y=window.scrollY||window.pageYOffset||0;SO=y<0?y:0;var k=SAFE.t+'/'+SAFE.b+'/'+SO+'/'+ISL;if(k!==liveEnv.k){liveEnv.k=k;LG('env','safe '+SAFE.t+'/'+SAFE.b+' scrollY-зсув '+SO+' island '+ISL);}}
 function frect(el){liveEnv();var r=el.getBoundingClientRect();return{left:r.left,right:r.right,width:r.width,height:r.height,top:r.top+SO,bottom:r.bottom+SO};}
 var GRID_CELL=45;   /* ≈5 мм на iPhone (CSS-пікселі) */
@@ -514,7 +514,7 @@ if(!fontsOK)document.fonts.ready.then(function(){fontsOK=true;});
 function bootGate(el,t){
  if(boot.lay)return;
  var stable=t-vpLastT>900;
- var gk=(stable?'стабільне':'змінюється')+' '+innerHeight;if(gk!==bootGate.k){bootGate.k=gk;LG('gate','вікно '+gk+' (екран '+screen.height+', lvh-режим '+LV+')');}
+ var gk=(stable?'стабільне':'змінюється')+' '+innerHeight;if(gk!==bootGate.k){bootGate.k=gk;LG('gate','вікно '+gk+' (екран '+screen.height+', lvh-режим '+(LV?1:0)+')');}
  if((stable||el>5.5)&&(fontsOK||el>5.5)&&ready&&el>.6){measure();tlAllStale();boot.lay=1;LG('gate','готово: вихід із завантаження');}
 }
 function bootStep(t,dt){
