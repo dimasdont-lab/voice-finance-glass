@@ -218,7 +218,7 @@ if(window.visualViewport)window.visualViewport.addEventListener('resize',functio
 function showSheet(top){
  var key=top?top.key:'';
  if(curSheet&&curSheet.key===key){
-  if(top&&!/^(transaction|debt|manualAccount|markets)/.test(top.kind)){var html=sheetHtml(top.kind,top.ov);if(html!==curSheet.html){curSheet.html=html;curSheet.body.innerHTML=html;layoutSheet();sheetStale();}}
+  if(top&&!/^(transaction|debt|manualAccount|markets)/.test(top.kind)){var html=sheetHtml(top.kind,top.ov);if(html!==curSheet.html){var st0=curSheet.body.scrollTop,se=curSheet.el.scrollTop;curSheet.html=html;curSheet.body.innerHTML=html;layoutSheet();curSheet.body.scrollTop=st0;curSheet.el.scrollTop=se;sheetStale();}}
   return;
  }
  SH.on=0;SH.ready=0;SH.el=null;clearTimeout(showSheet.t);
@@ -393,7 +393,7 @@ var TG={P:null,x0:0,y0:0,t0:0,ty:0,tt:0,vy:0,drag:0,moved:false,sc:null,top0:0};
 function rb(d){return d/(1+Math.abs(d)/55)*.55;}
 function scrollParent(n,stop){while(n&&n!==stop){if(n.scrollHeight>n.clientHeight+2){var o=getComputedStyle(n).overflowY;if(o==='auto'||o==='scroll')return n;}n=n.parentNode;}return stop&&stop.scrollHeight>stop.clientHeight+2&&/auto|scroll/.test(getComputedStyle(stop).overflowY)?stop:null;}
 function gStart(P,x,y,t,tg){
- if(!P.on)return;TG.atBot=false;
+ if(!P.on)return;if(tg&&tg.closest&&tg.closest('input[type=range]'))return;TG.atBot=false;
  TG.P=P;TG.x0=x;TG.y0=y;TG.t0=t;TG.ty=y;TG.tt=t;TG.vy=0;TG.drag=0;TG.moved=false;
  TG.lx=x;TG.sc=scrollParent(tg,P.el);TG.top0=TG.sc?TG.sc.scrollTop:0;
  TG.atBot=!TG.sc||(TG.sc.scrollTop+TG.sc.clientHeight>=TG.sc.scrollHeight-2);   /* жест почався вже внизу списку */
@@ -404,7 +404,7 @@ function gMove(x,y,t){
  if(!TG.drag){if(Math.hypot(dx,dy)<7)return;TG.drag=1;TG.moved=true;P.dragging=1;}
  var dt=Math.max(1,t-TG.tt);TG.vy=.6*TG.vy+.4*(y-TG.ty)/dt;TG.ty=y;TG.tt=t;
  var atTop=!TG.sc||TG.sc.scrollTop<=0&&TG.top0<=0,tg=P.tgt,pull=dy>14&&atTop&&dy>=Math.abs(dx)*1.6;   /* намір закрити: явно вниз, не по діагоналі, після невеликої «мертвої зони» */
- var X=rb(dx),Y=pull?dy*.8:rb(dy);
+ var sk=P===sheetP?.5:1,X=rb(dx)*sk,Y=pull?dy*.8:rb(dy)*sk;
  tg.x=pull?dx*.15:X;tg.y=Y;
  var ex=Math.min(14,Math.abs(tg.x)*.5),ey=Math.min(16,Math.abs(tg.y)*(pull?.18:.5));
  tg.sx=(ex-.5*ey)/Math.max(60,P.tw);tg.sy=(ey-.5*ex)/Math.max(60,P.th);
@@ -716,7 +716,7 @@ document.addEventListener('pointerdown',prDown,true);
 ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){prUp(false);},true);});
 document.addEventListener('pointermove',function(e){if(PRd&&Math.hypot(e.clientX-PRd.x,e.clientY-PRd.y)>9)prUp(true);},true);
 
-function mkSheetRefresh(){if(!curSheet||curSheet.kind!=='marketSheet')return;var h=sheetHtml('marketSheet',{data:{marketId:mkP.id}});if(h!==curSheet.html){curSheet.html=h;curSheet.body.innerHTML=h;layoutSheet();sheetStale();}}
+function mkSheetRefresh(){if(!curSheet||curSheet.kind!=='marketSheet')return;var h=sheetHtml('marketSheet',{data:{marketId:mkP.id}});if(h!==curSheet.html){var st0=curSheet.body.scrollTop;curSheet.html=h;curSheet.body.innerHTML=h;layoutSheet();curSheet.body.scrollTop=st0;sheetStale();}}
 
 /* ---------- автосинхронізація: знімок усіх даних шифрується ключем і лежить у приватному gist; останній запис перемагає ---------- */
 var SYN=(function(){var d={on:0,id:'',tok:'',dev:'',at:0,init:0};try{var j=JSON.parse(localStorage.getItem('vf-gist')||'null');if(j)d=Object.assign(d,j);}catch(e){}if(!d.dev)d.dev=Math.random().toString(36).slice(2,10);return d;})();

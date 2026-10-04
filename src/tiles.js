@@ -19,13 +19,22 @@ var FXFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','
 ' float pulse=.7+.3*sin(u_t*.6+ang*2.+sin(u_t*.27+ang*3.));return col*band*pulse*u_aura*.46;}',
 'void main(){vec2 p=vec2(gl_FragCoord.x/u_res.x,1.-gl_FragCoord.y/u_res.y)*u_vp;gl_FragColor=vec4(fgAt(p)+auraAt(p),1.);}'].join('\n');
 var FX={p:null,U:{},fb:null,tex:null,w:0,h:0};
-function mkTFS(nseg){return['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
-'uniform vec2 u_res;uniform vec2 u_vp;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform float u_s;uniform float u_n;uniform float u_br;uniform vec4 u_tk;uniform vec4 u_r[40];uniform vec4 u_m[40];uniform vec4 u_c[40];uniform vec4 u_gu[40];uniform sampler2D u_ga;uniform vec2 u_gas;uniform sampler2D u_fx;uniform float u_fxk;',,
-nseg?'uniform vec4 u_sg['+nseg+'];uniform vec4 u_lb[4];uniform vec4 u_li[4];uniform vec4 u_lc[4];uniform vec4 u_lf[4];uniform float u_nl;uniform float u_am;':'',
+var BGFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
+'uniform vec2 u_vp;uniform vec2 u_res;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform sampler2D u_fx;uniform float u_fxk;uniform float u_clean;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
 'vec3 fgAt(vec2 p){return vec3(0.);}',
-'vec3 auraAt(vec2 p){return u_fxk>0.?texture2D(u_fx,clamp(p/u_vp,0.,1.)).rgb:vec3(0.);}',
+'vec3 auraAt(vec2 p){return u_fxk>0.?texture2D(u_fx,vec2(p.x/u_vp.x,1.-p.y/u_vp.y)).rgb:vec3(0.);}',
 GLSL_BG,
+'void main(){vec2 p=vec2(gl_FragCoord.x/u_res.x,1.-gl_FragCoord.y/u_res.y)*u_vp;',
+' if(u_clean>.5){gl_FragColor=vec4(mix(vec3(.0196,.0196,.0275),u_gcol,.17*gridL(p+u_go-u_vp*.5)),1.);return;}',
+' gl_FragColor=vec4(gradBg(p),1.);}'].join('\n');
+var BG={p:null,U:{},fb:null,tex:null,w:0,h:0};
+var TCLEAN=0;
+function mkTFS(nseg){return['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
+'uniform vec2 u_res;uniform vec2 u_vp;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform float u_s;uniform float u_n;uniform float u_br;uniform vec4 u_tk;uniform vec4 u_r[40];uniform vec4 u_m[40];uniform vec4 u_c[40];uniform vec4 u_gu[40];uniform sampler2D u_ga;uniform vec2 u_gas;uniform sampler2D u_bgt;uniform float u_clean;',,
+nseg?'uniform vec4 u_sg['+nseg+'];uniform vec4 u_lb[4];uniform vec4 u_li[4];uniform vec4 u_lc[4];uniform vec4 u_lf[4];uniform float u_nl;uniform float u_am;':'',
+'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
+'vec3 gradBg(vec2 p){return texture2D(u_bgt,vec2(p.x/u_vp.x,1.-p.y/u_vp.y)).rgb;}',
 'float edgeRim(vec2 p){vec2 c=u_vp*.5,q0=p-c;float d=sdRB(q0,c,62.);float r=0.;',
 ' if(d<0.){float t=clamp(-d/22.,0.,1.);vec2 q=abs(q0)-c+62.;vec2 nn=((q.x>0.&&q.y>0.)?normalize(q):(q.x>q.y?vec2(1.,0.):vec2(0.,1.)))*sign(q0);',
 '  float sp=pow(max(dot(nn,normalize(vec2(-.6,-.8))),0.),3.)+.5*pow(max(dot(nn,normalize(vec2(.6,.8))),0.),3.);r+=pow(1.-t,3.)*(.015+.054*sp);}',
@@ -63,7 +72,7 @@ GLSL_BG,
 ' for(int i=0;i<40;i++){if(float(i)>=u_n||px.y<tkb)break;vec4 r=u_r[i];vec4 m=u_m[i];if(max(abs(px.x-r.x)-r.z,abs(px.y-r.y)-r.w)>34.*u_s)continue;float d=sdRB(px-r.xy,r.zw,m.x);',
 '  if(m.w<.5&&d<dn){dn=d;aN=m.z;}if(m.w>2.5&&d<dBr){dBr=d;RBr=r;QBr=m.x;}',
 '  if(d<1.5*u_s){if(m.w>=bl){pl=bl;RP=RB;MP=MB;CP=CB;dP=dB;GP=GB;bl=m.w;RB=r;MB=m;CB=u_c[i];dB=d;GB=u_gu[i];}else if(m.w>=pl){pl=m.w;RP=r;MP=m;CP=u_c[i];dP=d;GP=u_gu[i];}}}',
-' vec3 col=gradBg(p)+vec3(edgeRim(p));float sw=26.*u_s;',
+' vec3 col=gradBg(p)+vec3(edgeRim(p))*(1.-u_clean);float sw=26.*u_s;',
 ' float sh=dn>0.?1.-clamp(dn/sw,0.,1.):0.;col*=1.-.16*sh*sh*aN;',
 ' for(int Ls=0;Ls<2;Ls++){if(Ls==0&&pl<-.5)continue;if(Ls==1&&bl<-.5)continue;bool b0=Ls==0;vec4 g=glassAt(px,b0?RP:RB,b0?MP:MB,b0?CP:CB,b0?dP:dB,b0?GP:GB);col=mix(col,g.rgb,g.a);}',
 nseg?(' for(int l=0;l<4;l++){if(float(l)>=u_nl||px.y<tkb)break;vec4 bb=u_lb[l];if(px.x<bb.x||px.y<bb.y||px.x>bb.z||px.y>bb.w)continue;'+
@@ -91,10 +100,14 @@ nseg?(' for(int l=0;l<4;l++){if(float(l)>=u_nl||px.y<tkb)break;vec4 bb=u_lb[l];i
  tgl.useProgram(p);
  var b=tgl.createBuffer();tgl.bindBuffer(tgl.ARRAY_BUFFER,b);tgl.bufferData(tgl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),tgl.STATIC_DRAW);
  tgl.enableVertexAttribArray(0);tgl.vertexAttribPointer(0,2,tgl.FLOAT,false,0,0);
- ['u_res','u_vp','u_go','u_cell','u_isl','u_gcol','u_s','u_n','u_br','u_r','u_m','u_c','u_sg','u_lb','u_li','u_lc','u_nl','u_am','u_tk','u_lf','u_gu','u_ga','u_gas','u_fx','u_fxk'].forEach(function(n){TGU[n]=tgl.getUniformLocation(p,n);});
+ ['u_res','u_vp','u_go','u_cell','u_isl','u_gcol','u_s','u_n','u_br','u_r','u_m','u_c','u_sg','u_lb','u_li','u_lc','u_nl','u_am','u_tk','u_lf','u_gu','u_ga','u_gas','u_bgt','u_clean'].forEach(function(n){TGU[n]=tgl.getUniformLocation(p,n);});
  var fv=cs(tgl.VERTEX_SHADER,VS),ff=cs(tgl.FRAGMENT_SHADER,FXFS);
  if(fv&&ff){var fp=tgl.createProgram();tgl.attachShader(fp,fv);tgl.attachShader(fp,ff);tgl.bindAttribLocation(fp,0,'p');tgl.linkProgram(fp);
   if(tgl.getProgramParameter(fp,tgl.LINK_STATUS)){FX.p=fp;['u_vp','u_res','u_fp','u_fc','u_fn','u_t','u_aura'].forEach(function(n){FX.U[n]=tgl.getUniformLocation(fp,n);});}}
+ var bv=cs(tgl.VERTEX_SHADER,VS),bf=cs(tgl.FRAGMENT_SHADER,BGFS);
+ if(bv&&bf){var bp=tgl.createProgram();tgl.attachShader(bp,bv);tgl.attachShader(bp,bf);tgl.bindAttribLocation(bp,0,'p');tgl.linkProgram(bp);
+  if(tgl.getProgramParameter(bp,tgl.LINK_STATUS)){BG.p=bp;['u_vp','u_res','u_go','u_cell','u_isl','u_gcol','u_fx','u_fxk','u_clean'].forEach(function(n){BG.U[n]=tgl.getUniformLocation(bp,n);});}}
+ if(!BG.p){console.error('tile bg program failed');return;}
  FX.main=p;tgl.useProgram(p);
  tgOK=true;GLASS_LINE_OK=NSEG>0;
  LG('glt','шар скла плиток: WebGL ok, uniform-векторів '+maxV+', ланок ліній '+NSEG);
@@ -180,6 +193,23 @@ function tlAllStale(){for(var i=0;i<NP;i++)tlStale[i]=1;}
 window.addEventListener('resize',tlAllStale);
 setTimeout(tlAllStale,1200);setTimeout(tlAllStale,3500);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(tlAllStale);
+function bgPrep(W,H,fxOn){
+ if(!BG.tex||BG.w!==W||BG.h!==H){if(BG.tex){tgl.deleteTexture(BG.tex);tgl.deleteFramebuffer(BG.fb);}BG.tex=tgl.createTexture();tgl.activeTexture(tgl.TEXTURE3);tgl.bindTexture(tgl.TEXTURE_2D,BG.tex);tgl.texImage2D(tgl.TEXTURE_2D,0,tgl.RGBA,W,H,0,tgl.RGBA,tgl.UNSIGNED_BYTE,null);
+  tgl.texParameteri(tgl.TEXTURE_2D,tgl.TEXTURE_MIN_FILTER,tgl.LINEAR);tgl.texParameteri(tgl.TEXTURE_2D,tgl.TEXTURE_MAG_FILTER,tgl.LINEAR);tgl.texParameteri(tgl.TEXTURE_2D,tgl.TEXTURE_WRAP_S,tgl.CLAMP_TO_EDGE);tgl.texParameteri(tgl.TEXTURE_2D,tgl.TEXTURE_WRAP_T,tgl.CLAMP_TO_EDGE);
+  BG.fb=tgl.createFramebuffer();tgl.bindFramebuffer(tgl.FRAMEBUFFER,BG.fb);tgl.framebufferTexture2D(tgl.FRAMEBUFFER,tgl.COLOR_ATTACHMENT0,tgl.TEXTURE_2D,BG.tex,0);tgl.bindFramebuffer(tgl.FRAMEBUFFER,null);BG.w=W;BG.h=H;}
+ tgl.useProgram(BG.p);
+ tgl.uniform2f(BG.U.u_vp,VW,VH);tgl.uniform2f(BG.U.u_res,W,H);tgl.uniform2f(BG.U.u_go,gOX,gOY);tgl.uniform1f(BG.U.u_cell,gridCell());tgl.uniform1f(BG.U.u_isl,ISL);tgl.uniform3f(BG.U.u_gcol,GCOL[0],GCOL[1],GCOL[2]);
+ tgl.uniform1i(BG.U.u_fx,2);tgl.uniform1f(BG.U.u_fxk,fxOn&&!TCLEAN?1:0);tgl.uniform1f(BG.U.u_clean,TCLEAN);
+ tgl.useProgram(FX.main);tgl.activeTexture(tgl.TEXTURE3);tgl.bindTexture(tgl.TEXTURE_2D,BG.tex);tgl.activeTexture(tgl.TEXTURE0);
+}
+function pass2(x,y,w,h){   /* фон у текстуру, потім скло — у межах прямокутника (координати WebGL) */
+ var W=tgW,H=tgH;
+ if(x!==null){tgl.enable(tgl.SCISSOR_TEST);tgl.scissor(x,y,w,h);}else tgl.disable(tgl.SCISSOR_TEST);
+ tgl.useProgram(BG.p);tgl.bindFramebuffer(tgl.FRAMEBUFFER,BG.fb);tgl.activeTexture(tgl.TEXTURE3);tgl.bindTexture(tgl.TEXTURE_2D,null);tgl.activeTexture(tgl.TEXTURE0);
+ tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
+ tgl.bindFramebuffer(tgl.FRAMEBUFFER,null);tgl.useProgram(FX.main);tgl.activeTexture(tgl.TEXTURE3);tgl.bindTexture(tgl.TEXTURE_2D,BG.tex);tgl.activeTexture(tgl.TEXTURE0);
+ tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
+}
 function fxRender(W,H){
  var w=Math.max(8,Math.round(W/3)),h=Math.max(8,Math.round(H/3));
  if(!FX.tex||FX.w!==w||FX.h!==h){if(FX.tex){tgl.deleteTexture(FX.tex);tgl.deleteFramebuffer(FX.fb);}FX.tex=tgl.createTexture();tgl.activeTexture(tgl.TEXTURE2);tgl.bindTexture(tgl.TEXTURE_2D,FX.tex);tgl.texImage2D(tgl.TEXTURE_2D,0,tgl.RGBA,w,h,0,tgl.RGBA,tgl.UNSIGNED_BYTE,null);
@@ -191,6 +221,7 @@ function fxRender(W,H){
  tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
  tgl.bindFramebuffer(tgl.FRAMEBUFFER,null);tgl.viewport(0,0,W,H);tgl.useProgram(FX.main);tgl.activeTexture(tgl.TEXTURE2);tgl.bindTexture(tgl.TEXTURE_2D,FX.tex);tgl.activeTexture(tgl.TEXTURE0);
 }
+function tgCleanShot(fn){if(!tgOK||!tgW){fn();return;}TCLEAN=1;tgSig='';drawTilesS.q=null;drawTiles();try{fn();}finally{TCLEAN=0;tgSig='';drawTilesS.q=null;drawTiles();}}
 function drawTiles(){drawTilesS(Math.min(S,1.6));}
 function drawTilesS(S){
  if(!VW||!VH)return;
@@ -198,7 +229,7 @@ function drawTilesS(S){
  /* швидкий вихід без жодних виділень пам'яті: якщо сцена не змінилась з минулого малювання — нічого не робимо */
  {var qr=rec.pg,qs=0,qi,qst=false;for(qi=0;qi<NP;qi++){qs+=(sy[qi]||0)*(1.1+qi*.37);if(Math.abs(qi-ca)<1&&(tlStale[qi]||!TL[qi]))qst=true;}
   var qn=ca*7.3+VW*3.1+VH*1.7+S*5+gOX*1.3+gOY*2.1+GCOL[0]*11+GCOL[1]*13+GCOL[2]*17+qr.v*19+qr.ox*.3+qr.oy*.5+qr.tx*.7+qr.ty*.9+qs+CG.is+CG.ib*3+CG.bal*5+AREA_MODE*101+(AURA?Math.floor(performance.now()/66):0)*.37+FGgen*.71+GA.gen*13+tickerEl.offsetTop*.11;
-  if(qn===drawTilesS.q&&tgW&&!qst&&!GA.dirty&&!intro.on&&!(typeof PRS!=='undefined'&&PRS.size))return;drawTilesS.q=qn;}
+  if(!TCLEAN&&qn===drawTilesS.q&&tgW&&!qst&&!GA.dirty&&!intro.on&&!(typeof PRS!=='undefined'&&PRS.size))return;drawTilesS.q=qn;}
  var rp=rec.pg,v=rp.v>.003?rp.v:0,k=v?kOf(v):1,n=0,ns=0,nl=0,sig=[ca.toFixed(3),VW,VH,S,gOX.toFixed(1),gOY.toFixed(1),GCOL.map(function(x){return x.toFixed(3);}).join(':'),v.toFixed(3),rp.ox.toFixed(1),rp.oy.toFixed(1),rp.tx.toFixed(1),rp.ty.toFixed(1),'am'+AREA_MODE,'tk'+tickerEl.offsetTop+'/'+tickerEl.offsetHeight,CG.is,CG.ib,CG.bal,PRSIG],i,j;
  TGF++;for(i=0;i<NP;i++){if(Math.abs(i-ca)<1&&(tlStale[i]||!TL[i]))tlMeasure(i);}
  if(GA.dirty)gaBuild();var mna='ga'+GA.gen+'fg'+FGgen,minor=mna+(AURA?Math.floor(performance.now()/66):0);
@@ -242,23 +273,19 @@ function drawTilesS(S){
  var W=Math.round(VW*S),H=Math.round(VH*S);
  if(W!==tgW||H!==tgH||S!==tgS){tgW=W;tgH=H;tgS=S;TGC.width=W;TGC.height=H;tgl.viewport(0,0,W,H);onlyAura=false;onlyLite=false;}
  tgl.uniform2f(TGU.u_res,W,H);tgl.uniform2f(TGU.u_vp,VW,VH);tgl.uniform1f(TGU.u_s,S);tgl.uniform2f(TGU.u_go,gOX,gOY);tgl.uniform1f(TGU.u_isl,ISL);tgl.uniform1f(TGU.u_cell,gridCell());tgl.uniform3f(TGU.u_gcol,GCOL[0],GCOL[1],GCOL[2]);tgl.uniform1f(TGU.u_n,n);tgl.uniform1f(TGU.u_br,1-RD*v);
- var tkT=tickerEl.offsetTop,tkH=tickerEl.offsetHeight;tgl.uniform4f(TGU.u_tk,tkT*S,tkH*S,28*S,0); var fxOn=FX.p&&(AURA||FGact)?1:0;if(fxOn)fxRender(W,H);tgl.uniform1i(TGU.u_fx,2);tgl.uniform1f(TGU.u_fxk,fxOn);
+ var tkT=tickerEl.offsetTop,tkH=tickerEl.offsetHeight;tgl.uniform4f(TGU.u_tk,tkT*S,tkH*S,28*S,0); var fxOn=FX.p&&(AURA||FGact)&&!TCLEAN?1:0;if(fxOn)fxRender(W,H);bgPrep(W,H,fxOn);tgl.uniform1i(TGU.u_bgt,3);tgl.uniform1f(TGU.u_clean,TCLEAN);
 
  tgl.uniform4fv(TGU.u_r,tgR);tgl.uniform4fv(TGU.u_m,tgM);tgl.uniform4fv(TGU.u_c,tgC);tgl.uniform4fv(TGU.u_gu,tgGU);tgl.uniform1i(TGU.u_ga,1);tgl.uniform2f(TGU.u_gas,GA.W,GA.H);if(GA.tex){tgl.activeTexture(tgl.TEXTURE1);tgl.bindTexture(tgl.TEXTURE_2D,GA.tex);tgl.activeTexture(tgl.TEXTURE0);}
 
  if(NSEG){tgl.uniform4fv(TGU.u_sg,tgSG);tgl.uniform4fv(TGU.u_lb,tgLB);tgl.uniform4fv(TGU.u_li,tgLI);tgl.uniform4fv(TGU.u_lc,tgLC);tgl.uniform4fv(TGU.u_lf,tgLF);tgl.uniform1f(TGU.u_nl,nl);tgl.uniform1f(TGU.u_am,AREA_MODE);}
  tgDraws++;
  var fgR=null;if(FGbb||FGbbPrev){var A1=FGbb||FGbbPrev,B1=FGbbPrev||FGbb;fgR=[Math.min(A1[0],B1[0]),Math.min(A1[1],B1[1]),Math.max(A1[2],B1[2]),Math.max(A1[3],B1[3])];}FGbbPrev=FGbb;
- if(onlyLite&&!onlyAura&&fgR){tgl.enable(tgl.SCISSOR_TEST);var fx0=Math.max(0,Math.floor(fgR[0]*S)),fy0=Math.max(0,Math.floor(fgR[1]*S)),fx1=Math.min(W,Math.ceil(fgR[2]*S)),fy1=Math.min(H,Math.ceil(fgR[3]*S));
-  if(fx1>fx0&&fy1>fy0){tgl.scissor(fx0,H-fy1,fx1-fx0,fy1-fy0);tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);}onlyAura=true;}
- if(onlyAura&&AURA){var bd=Math.round(72*S);tgl.enable(tgl.SCISSOR_TEST);
-  tgl.scissor(0,H-bd,W,bd);tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
-  tgl.scissor(0,0,W,bd);tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
-  tgl.scissor(0,bd,bd,Math.max(1,H-2*bd));tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
-  tgl.scissor(W-bd,bd,bd,Math.max(1,H-2*bd));tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
-  tgl.disable(tgl.SCISSOR_TEST);}
- else if(onlyAura)tgl.disable(tgl.SCISSOR_TEST);
- else tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
+ if(TCLEAN){onlyLite=false;onlyAura=false;}
+ if(onlyLite&&!onlyAura&&fgR){var fx0=Math.max(0,Math.floor(fgR[0]*S)),fy0=Math.max(0,Math.floor(fgR[1]*S)),fx1=Math.min(W,Math.ceil(fgR[2]*S)),fy1=Math.min(H,Math.ceil(fgR[3]*S));
+  if(fx1>fx0&&fy1>fy0)pass2(fx0,H-fy1,fx1-fx0,fy1-fy0);onlyAura=true;}
+ if(onlyAura&&AURA){var bd=Math.round(72*S);pass2(0,H-bd,W,bd);pass2(0,0,W,bd);pass2(0,bd,bd,Math.max(1,H-2*bd));pass2(W-bd,bd,bd,Math.max(1,H-2*bd));}
+ else if(!onlyAura)pass2(null);
+ tgl.disable(tgl.SCISSOR_TEST);
  if(!tgShown){tgShown=true;TGC.style.display='block';document.documentElement.classList.add('gt');}
 }
 

@@ -183,7 +183,7 @@ function bake(which,mode,p0,p1,p2,w3){
 var bkCv=document.createElement('canvas'),bkCx=bkCv.getContext('2d'),bkGT=null;
 function bkGlt(){   /* зменшена копія шару скла віджетів (#glt) — основа розмитого фону під панелями */
  bkEnsure();var bsz=BK.w+':'+BK.h;if(bkGlt.sz!==bsz){bkGlt.sz=bsz;bkGlt.frozen=false;}if(bkGT&&bkGlt.frozen)return;bkGlt.frozen=true;if(bkCv.width!==BK.w||bkCv.height!==BK.h){bkCv.width=BK.w;bkCv.height=BK.h;}
- var ok=false;if(tgOK&&tgShown){try{bkCx.drawImage(TGC,0,0,BK.w,BK.h);ok=true;}catch(e){}}
+ var ok=false;if(tgOK&&tgShown){try{tgCleanShot(function(){bkCx.drawImage(TGC,0,0,BK.w,BK.h);});ok=true;}catch(e){}}
  if(!ok){bkCx.fillStyle='#050507';bkCx.fillRect(0,0,BK.w,BK.h);}
  if(!bkGT){bkGT=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,bkGT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
  gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,bkGT);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,bkCv);gl.activeTexture(gl.TEXTURE0);
@@ -787,7 +787,7 @@ function pfFrame(t){
   if(gap>36&&gap<5000&&PF.nlag<900&&!document.hidden){PF.nlag++;var c=PF.cur;LG('лаг','пауза '+Math.round(gap)+' мс | js кадр '+c.frame.toFixed(1)+' плитки '+c.tiles.toFixed(1)+' малюв. '+c.draw.toFixed(1)+' розмиття '+c.bake.toFixed(1)+' смуга '+c.strip.toFixed(1)+' атлас '+c.atlas.toFixed(1)+' | '+pfCtx());}}
  PF.lt=t;
  var ck=sel+'|'+(menu.on?menu.kind:'')+'|'+(typeof curSheet!=='undefined'&&curSheet?curSheet.kind:'')+'|'+mode;
- if(ck!==PF.ck){PF.ck=ck;LG('стан',pfCtx());}
+ PF.sn=(PF.sn||0)+1;if(ck!==PF.ck){var sd=t-(PF.st0||t);if(PF.st0&&sd>300)LG('fps','попередній стан: '+Math.round(1000*PF.sn/sd)+' к/с за '+(sd/1000).toFixed(1)+' с');PF.ck=ck;PF.st0=t;PF.sn=0;LG('стан',pfCtx());}
  if(!PF.t0)PF.t0=t;
  if(t-PF.t0>5000){
   if(PF.n>5&&!document.hidden){var parts=[];for(var k in PF.secs){var q=PF.secs[k];parts.push(k+' '+(q.sum/q.n).toFixed(1)+'/'+q.mx.toFixed(0));}
@@ -908,7 +908,9 @@ function frame(t){
  if(tkBase){tkY0=tickerEl.offsetTop-12;var ps0=performance.now();tkStripBuild();var psd=performance.now()-ps0;if(psd>1)pfS('strip',psd);}
  var tkOn=(tkBase&&tkStrip.ok)?1:0;
  if(tickerEl._gl!==tkOn){tickerEl._gl=tkOn;tickerEl.classList.toggle('tkgl',!!tkOn);dirty=true;}
- var otherMotion=dirty||gMov||moving||!settled||scrolling||mode||menuA>0.002||sheetA>0.002||recMoving||(boot.on&&boot.phase===2)||boot.warm===1;
+ var mg=menu.g,sg=sheetP.g,gkey=(menuA>0.002||sheetA>0.002)?[mg.cx,mg.cy,mg.hw,mg.hh,mg.r,mg.v,sg.cx,sg.cy,sg.hw,sg.hh,sg.r,sg.v,menuA,sheetA,scrimV,ghost,SH.on,SH.ready,SH.x,SH.y].map(function(q){return typeof q==='number'?q.toFixed(2):String(q);}).join(','):'';
+ var glassMov=gkey!==frame.gkey;frame.gkey=gkey;
+ var otherMotion=dirty||gMov||moving||!settled||scrolling||mode||glassMov||recMoving||(boot.on&&boot.phase===2)||boot.warm===1;
  if(otherMotion||tkOn){var pd0=performance.now();
   var e=Math.max(-0.25,Math.min(0.7,j+Math.abs(v)*0.00015));
   var IR=DR.height/2+3,hw=IR*1.3*(1+e),hh=IR/(1+e*0.7),cy=(DR.top+DR.height/2+off-R.y)*S;
