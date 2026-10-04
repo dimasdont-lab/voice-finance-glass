@@ -523,7 +523,9 @@ function hudOn(){
    'bg top '+Math.round(b.top)+' h '+Math.round(b.height)+'  VH '+Math.round(VH),
    'dock top '+Math.round(d.top)+' bot '+Math.round(d.bottom)+' | DR '+Math.round(DR.top),
    'gl top '+Math.round(c.top)+' bot '+Math.round(c.bottom)+'  island '+ISL+' cell '+gridCell().toFixed(1),
-   'html '+document.documentElement.clientHeight+' scrollY '+Math.round(scrollY)].join('\n');
+   'html '+document.documentElement.clientHeight+' scrollY '+Math.round(scrollY),
+   'dockY '+(dockY===null?'-':dockY.toFixed(1))+' lay '+(boot.lay?1:0)+' nz '+(boot.nz||0),
+   'vp(t,h,vv): '+vpLog.map(function(x){return x.join(',');}).join(' | ')].join('\n');
  },400);
 }
 var lpT=0,lpP=null;

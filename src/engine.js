@@ -425,6 +425,10 @@ function stepScroll(dt){
 }
 /* ---- скляне меню: Додатково / випадаючі списки ---- */
 function gridCell(){var k=Math.max(1,Math.round((VW/2-6)/GRID_CELL));return(VW/2-6)/k;}   /* клітинка ≈0,75 см, крайні лінії на 6 pt (~1 мм) від країв */
+var vpLastH=0,vpLastT=0,vpLog=[];
+function vpSample(t){var h=innerHeight;if(h!==vpLastH){vpLastH=h;vpLastT=t;vpLog.push([Math.round(t),h,Math.round(window.visualViewport?window.visualViewport.height:0)]);if(vpLog.length>14)vpLog.shift();}}
+var SAFEB=(function(){try{var q=document.createElement('div');q.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden';document.body.appendChild(q);var h=q.offsetHeight||0;q.remove();return h;}catch(e){return 0;}})();
+var dockY=null,dkLast=0;
 var BLS=4,gOX=0,gOY=0,fd={on:false,x0:0,y0:0,dx:0,dy:0};   /* fd — зсув пальця від точки дотику, сітка йде за ним */
 document.addEventListener('pointerdown',function(e){fd.on=true;fd.x0=e.clientX;fd.y0=e.clientY;fd.dx=0;fd.dy=0;},true);
 document.addEventListener('pointermove',function(e){if(fd.on){fd.dx=e.clientX-fd.x0;fd.dy=e.clientY-fd.y0;}},true);
@@ -496,11 +500,12 @@ function viewportNudge(){   /* iOS інколи віддає вікну заст
  m.setAttribute('content',c.replace(/viewport-fit=cover,?/,'')+',maximum-scale=1');
  setTimeout(function(){m.setAttribute('content',c);window.dispatchEvent(new Event('resize'));},80);
 }
-function bootGate(el){
+function bootGate(el,t){
  if(boot.lay)return;
- var sa=!!navigator.standalone,good=!sa||innerHeight>=screen.height-1;
- if(!good&&el>.4&&(boot.nz||0)<8&&el>(boot.nzT||0)){boot.nz=(boot.nz||0)+1;boot.nzT=el+.5;viewportNudge();}
- if((good||el>4.5)&&(fontsOK||el>4.5)&&ready&&el>.5){measure();tlAllStale();boot.lay=1;}
+ var sa=!!navigator.standalone,short=sa&&innerHeight<screen.height-1,stable=t-vpLastT>900;
+ if(short&&stable&&el>.6&&(boot.nz||0)<3&&el>(boot.nzT||0)){boot.nz=(boot.nz||0)+1;boot.nzT=el+1.2;viewportNudge();}
+ var done=stable&&(!short||((boot.nz||0)>=3&&el>(boot.nzT||0)));
+ if((done||el>5.5)&&(fontsOK||el>5.5)&&ready&&el>.6){measure();tlAllStale();boot.lay=1;}
 }
 function bootStep(t,dt){
  if(!boot.on)return;
@@ -509,7 +514,7 @@ function bootStep(t,dt){
  if(boot.phase<2){
   var h=window.__h2c,real=(h===1?.25:0)+.75*((full[0]?1:0)+(full[1]?1:0)+(full[2]?1:0))/3;
   if(h===-1&&el>2.5)real=1;
-  bootGate(el);if(!boot.lay)real=Math.min(real,.92);
+  bootGate(el,t);if(!boot.lay)real=Math.min(real,.92);
   var tgt=Math.min(real,el/boot.MIN);if(el>9)tgt=1;
   boot.p+=(tgt-boot.p)*(1-Math.exp(-dt*7));if(tgt>=1&&boot.p>.985)boot.p=1;
   var pp=Math.max(0,Math.min(1,boot.p)),sc=2.4*(1-Math.pow(pp,1.8));   /* логотип зменшується разом із завантаженням, наприкінці до нуля */
@@ -578,6 +583,11 @@ function stepSheet(dt){
 }
 function frame(t){
  requestAnimationFrame(frame);
+ vpSample(t);
+ {var bgH=bgEl.getBoundingClientRect().height,dty=bgH-72-14-SAFEB;
+  if(dockY===null)dockY=dty;
+  if(Math.abs(dty-dockY)>.3)dockY+=(dty-dockY)*(1-Math.exp(-Math.min(.05,Math.max(.001,(t-dkLast)/1000))*9));else dockY=dty;
+  dkLast=t;var dys=dockY.toFixed(2)+'px';if(dock._dy!==dys){dock._dy=dys;dock.style.setProperty('--dockTop',dys);}}
  {var bgR=bgEl.getBoundingClientRect(),dkR=dock.getBoundingClientRect(),ap=lastOff>.1?lastOff:0;
   if(Math.abs(bgR.height-VH)>.5||Math.abs(bgR.width-VW)>.5||Math.abs(dkR.top-ap-DR.top)>.6||Math.abs(dkR.left-DR.left)>.6)measure();}
  if(window.__lt){window.__fps=.9*(window.__fps||60)+.1*(1000/Math.max(1,t-window.__lt));}window.__lt=t;
