@@ -1,7 +1,7 @@
 /* ===== 7. Скляні віджети: окремий WebGL-шар під текстом. Малює фон із сіткою й плитки з заломленням сітки.
    Вкладене скло: кнопки «Доходи/Витрати», міні-картки (шар 1), круглі значки (шар 2), заповнення прогрес-барів (шар 3, свій колір).
    Скляні лінії графіків: ланцюжки капсул (до 4 ліній), колір лінії, заломлення сітки. Вимикаються разом із GLINES ===== */
-var TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
+var tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
 var GLASS_LINE_OK=false;
 var tgR=new Float32Array(TMAX*4),tgM=new Float32Array(TMAX*4),tgC=new Float32Array(TMAX*4);
 var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2]];
@@ -23,7 +23,7 @@ GLSL_BG,
 ' vec2 n=normalize(vec2(sdRB(px+vec2(e,0.)-R.xy,R.zw,Q)-sdRB(px-vec2(e,0.)-R.xy,R.zw,Q),sdRB(px+vec2(0.,e)-R.xy,R.zw,Q)-sdRB(px-vec2(0.,e)-R.xy,R.zw,Q))+1e-5);',
 ' vec2 of=n*pow(1.-t,2.2)*.6*m;float ab=.07*(.35+pow(1.-t,1.5));float zm=C.a>0.?.55:(M.w>.5?.96:.93);',
 ' vec2 za=R.xy+((px-of*(1.+ab))-R.xy)*zm,zb=R.xy+((px-of)-R.xy)*zm,zc=R.xy+((px-of*(1.-ab))-R.xy)*zm;',
-' float gbr=u_s*(.3+2.2*pow(1.-t,2.));vec3 ci=vec3(gbl(za,gbr).r,gbl(zb,gbr).g,gbl(zc,gbr).b);',
+' vec3 ci;if(t<.97){float gbr=u_s*(.25+1.6*pow(1.-t,2.));ci=vec3(gbl(za,gbr).r,gbl(zb,gbr).g,gbl(zc,gbr).b);}else ci=vec3(gradBg(za/u_s).r,gradBg(zb/u_s).g,gradBg(zc/u_s).b);',
 ' ci=mix(ci,M.y>0.?vec3(.03,.34,.15):vec3(.45,.05,.08),min(.45,abs(M.y)*.20));',
 ' if(C.a>0.)ci=mix(ci,C.rgb,C.a)*.9;',
 ' float rim=pow(1.-t,3.);float sp=pow(max(dot(n,normalize(vec2(-.6,-.8))),0.),3.)+.5*pow(max(dot(n,normalize(vec2(.6,.8))),0.),3.);',
@@ -65,7 +65,7 @@ nseg?(' for(int l=0;l<4;l++){if(float(l)>=u_nl||px.y<tkb)break;vec4 bb=u_lb[l];i
 '   if(dy>0.&&dy<H){float s=dy/H;float disp=H*.22*s*pow(1.-s,1.5);vec2 q=px-vec2(0.,disp);'+
 '    vec3 dl=vec3(gradBg((q-vec2(0.,disp*.25))/u_s).r,gradBg(q/u_s).g,gradBg((q+vec2(0.,disp*.25))/u_s).b)-gradBg(p);'+
 '    float ed=clamp((H-dy)/(1.5*u_s),0.,1.)*clamp(dy/u_s,0.,1.)*u_lc[l].a;'+
-'    col+=(dl+u_lc[l].rgb*.035*(1.-s)))*ed*u_br;}}'+
+'    col+=(dl+u_lc[l].rgb*.035*(1.-s))*ed*u_br;}}'+
 '  {float sd=best-li.z;if(sd>0.&&sd<30.*u_s)col+=bumpAt(px,normalize(px-cp+vec2(1e-5,0.)),sd)*u_br*u_lc[l].a;}'+
 '  float d=best-li.z;if(d<1.5*u_s){vec4 g=lineGlass(px,d,normalize(px-cp+vec2(1e-5,0.)),li.z,u_lc[l]);col=mix(col,g.rgb,g.a);}}'):'',
 ' if(u_tk.w>.5){float cyk=u_tk.x+u_tk.y*.5;float ay=abs(px.y-cyk);if(ay<u_tk.y*.5+60.*u_s){float dk=sdTick(px);if(dk<1.5*u_s){vec4 g=tickGlass(px,dk);col=mix(col,g.rgb,g.a);}else if(dk<30.*u_s&&ay<u_tk.y*.5+34.*u_s)col+=bumpAt(px,tickN(px),dk);}}',
@@ -75,7 +75,7 @@ nseg?(' for(int l=0;l<4;l++){if(float(l)>=u_nl||px.y<tkb)break;vec4 bb=u_lb[l];i
  if(!tgl)return;
  var maxV=tgl.getParameter(tgl.MAX_FRAGMENT_UNIFORM_VECTORS)||0;
  NSEG=maxV>=420?128:maxV>=300?64:0;   /* ланки ліній у uniform-масиві: скільки дозволяє GPU */
- function cs(t,q){var o=tgl.createShader(t);tgl.shaderSource(o,q);tgl.compileShader(o);if(!tgl.getShaderParameter(o,tgl.COMPILE_STATUS)){console.error(tgl.getShaderInfoLog(o));return null;}return o;}
+ function cs(t,q){var o=tgl.createShader(t);tgl.shaderSource(o,q);tgl.compileShader(o);if(!tgl.getShaderParameter(o,tgl.COMPILE_STATUS)){var lg=tgl.getShaderInfoLog(o),mm=/0:([0-9]+)/.exec(lg||'');console.error('tile',lg,mm?q.split(String.fromCharCode(10))[mm[1]-1]:'');return null;}return o;}
  var v=cs(tgl.VERTEX_SHADER,VS),f=cs(tgl.FRAGMENT_SHADER,mkTFS(NSEG));
  if(!f&&NSEG){NSEG=0;f=cs(tgl.FRAGMENT_SHADER,mkTFS(0));}
  if(!v||!f)return;
@@ -176,7 +176,7 @@ function drawTiles(){
  tgl.uniform2f(TGU.u_res,W,H);tgl.uniform2f(TGU.u_vp,VW,VH);tgl.uniform1f(TGU.u_s,S);tgl.uniform2f(TGU.u_go,gOX,gOY);tgl.uniform1f(TGU.u_isl,ISL);tgl.uniform1f(TGU.u_cell,gridCell());tgl.uniform3f(TGU.u_gcol,GCOL[0],GCOL[1],GCOL[2]);tgl.uniform1f(TGU.u_n,n);tgl.uniform1f(TGU.u_br,1-RD*v);
  var tkT=tickerEl.offsetTop,tkH=tickerEl.offsetHeight;tgl.uniform4f(TGU.u_tk,tkT*S,tkH*S,28*S,0);tgl.uniform4fv(TGU.u_r,tgR);tgl.uniform4fv(TGU.u_m,tgM);tgl.uniform4fv(TGU.u_c,tgC);
  if(NSEG){tgl.uniform4fv(TGU.u_sg,tgSG);tgl.uniform4fv(TGU.u_lb,tgLB);tgl.uniform4fv(TGU.u_li,tgLI);tgl.uniform4fv(TGU.u_lc,tgLC);tgl.uniform1f(TGU.u_nl,nl);tgl.uniform1f(TGU.u_am,AREA_MODE);}
- tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
+ tgDraws++;tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
  if(!tgShown){tgShown=true;TGC.style.display='block';document.documentElement.classList.add('gt');}
 }
 

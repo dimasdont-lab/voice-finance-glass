@@ -75,7 +75,7 @@ root.addEventListener('click',function(e){
   if(a==='back')app.back();
   else if(a==='tx')app.editTransaction(id);
   else if(a==='balance')nav.navigate('balanceAnalysis');
-  else if(a==='flow')nav.openOverlay('transactionList',{type:v==='expense'?'expense':'income'});
+  else if(a==='flow'){var fr=frect(t);growAnchor={x:fr.left+fr.width/2,y:fr.top+fr.height/2};nav.openOverlay('transactionList',{type:v==='expense'?'expense':'income'});}
   else if(a==='accs')app.toggleAccounts();
   else if(a==='addacc')app.openManualAccount('manual');
   else if(a==='acc')nav.openAccount(id);
@@ -195,7 +195,7 @@ function topSheet(){
 var safeB=0,safeT=0;
 (function(){var pr=document.createElement('div');pr.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden';document.body.appendChild(pr);safeB=pr.offsetHeight||0;
  pr.style.height='env(safe-area-inset-top,0px)';safeT=pr.offsetHeight||0;pr.remove();})();
-var sendAnchor=null;
+var sendAnchor=null,growAnchor=null;
 function curSheetOn(){return !!curSheet&&sheetP.on===1;}
 function layoutSheet(){
  if(!curSheet)return;
@@ -229,9 +229,9 @@ function showSheet(top){
  el.style.display='block';
  sheetP.el=el;curSheet={key:key,kind:top.kind,el:el,body:body,html:html};
  el.classList.remove('ghost');
- var grow=top.kind==='input'&&sendAnchor;
+ var anc=top.kind==='input'?sendAnchor:(top.kind==='transactionList'&&growAnchor)?growAnchor:null,grow=!!anc;growAnchor=null;
  sheetP.mode=grow?'grow':'rise';
- if(grow){sheetP.ax=sendAnchor.x;sheetP.ay=sendAnchor.y;}
+ if(grow){sheetP.ax=anc.x;sheetP.ay=anc.y;}
  sheetP.kind=top.kind;
  layoutSheet();
  if(!swap){sheetP.s=0;sheetP.vs=0;}

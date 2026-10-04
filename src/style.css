@@ -285,3 +285,5 @@ input[type=range]{width:100%;accent-color:#7cc}
 .gt .brow .chw{background:none;border-color:rgba(255,255,255,.06)}
 
 textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid var(--ln);border-radius:14px;color:inherit;font:13px/1.35 ui-monospace,Menlo,monospace;padding:10px;resize:none}
+
+#dock.dkc #btns{opacity:0}
