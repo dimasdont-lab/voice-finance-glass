@@ -309,11 +309,9 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 
 #fglow{display:none!important}
 
-/* скляні кнопки (налаштування, «Додатково») */
-#sheets .btnw,#menu .gbtn{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.04) 55%,rgba(255,255,255,.07));border:1px solid rgba(255,255,255,.14);
- box-shadow:inset 0 1px 1px rgba(255,255,255,.28),inset 0 -2px 6px rgba(0,0,0,.45),inset 0 0 14px rgba(255,255,255,.04),0 4px 14px rgba(0,0,0,.25);color:#fff}
-#sheets .btnw.pri{background:linear-gradient(180deg,rgba(255,120,128,.75),rgba(255,70,80,.5));border-color:rgba(255,170,175,.35)}
-#sheets .btnw:active,#menu .gbtn:active{filter:brightness(1.25)}
+/* скляні кнопки (налаштування, «Додатково», вікна): скло малює шейдер головного полотна; DOM дає лише текст */
+#sheets .btnw,#menu .gbtn{background:none!important;border:0!important;box-shadow:none!important;color:#fff}
+#sheets .btnw:active,#menu .gbtn:active{filter:brightness(1.3)}
 #menu .gbtn{display:block;width:calc(100% - 8px);margin:10px 4px 2px;height:46px;border-radius:23px;font-size:15px;font-weight:650;text-align:center}
-#menu .gbtn.red,#sheets .btnw.dng{color:#fff;background:linear-gradient(180deg,rgba(255,60,72,.55),rgba(200,20,35,.32) 55%,rgba(255,60,72,.42));border-color:rgba(255,120,128,.4);
- box-shadow:inset 0 1px 1px rgba(255,200,205,.4),inset 0 -2px 6px rgba(60,0,5,.5),inset 0 0 16px rgba(255,40,55,.25),0 4px 16px rgba(255,20,40,.18)}
+.cw{padding:6px 4px 2px;text-align:center}.cw h3{margin:4px 0 8px;font-size:20px}.cw p{margin:0 4px 14px;color:var(--mu);font-size:14px;line-height:1.4}
+.cwr{display:flex;gap:10px}.cwr .btnw{flex:1;margin-top:0;font-size:15px}

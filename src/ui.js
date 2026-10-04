@@ -1,6 +1,6 @@
 /* ===== 6. Інтерфейс: події, аркуші, скляні меню, синхронізація зі станом логіки ===== */
 var sheetsEl=document.getElementById('sheets'),scrimEl=document.getElementById('scrim'),toastEl=document.getElementById('toast');
-var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet'];
+var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet','confirmWipe'];
 var CURS=['PLN','EUR','USD','GBP'],curSheet=null,lastScreen='',toastT=0;
 
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){toastEl.classList.remove('on');},2200);}
@@ -64,7 +64,7 @@ menu.el.addEventListener('click',function(e){
  else if(m==='mpeople')nav.openPeople(v);
  else if(m==='malltx'){nav.closeOverlay('more');app.openAllTransactions();}
  else if(m==='msettings')nav.openOverlay('settings');
- else if(m==='mwipe'){var wb=e.target.closest('[data-m]');openDropdown(wb,[{v:'yes',l:'Так, стерти все'},{v:'no',l:'Скасувати'}],'',function(v2){if(v2!=='yes')return;try{fin.resetAll({confirmed:true});LG('ui','повний скид даних');toast('Усі записи стерто');}catch(err){toast(err.message||'Помилка');}});}
+ else if(m==='mwipe'){var wr=frect(b);growAnchor={x:wr.left+wr.width/2,y:wr.top+wr.height/2};nav.openOverlay('confirmWipe');}
 });
 
 /* ---------- сторінки: делегування подій ---------- */
@@ -137,6 +137,7 @@ function sheetHtml(kind,ov){
   return h;
  }
  if(kind==='marketSheet')return marketSheetHtml(ov.data&&ov.data.marketId);
+ if(kind==='confirmWipe')return'<div class="cw"><h3>Стерти всі дані?</h3><p>Ви насправді хочете видалити всі операції, борги, клієнтів і рахунки? Баланси почнуться з нуля. Це не можна скасувати.</p><div class="cwr"><button class="btnw" data-s="cancel">Не стирати</button><button class="btnw dng" data-s="wipeyes">Так, стерти все</button></div></div>';
  if(kind==='transactionList'){
   var cid=ov.data&&ov.data.categoryId,ty=ov.data&&ov.data.type,list=cid?fin.transactions({category:cid}):ty?fin.transactions({type:ty,limit:100}):fin.transactions({limit:100});
   return'<div class="sh"><span style="min-width:70px"></span><h3>'+esc(cid?catName(cid):ty?(ty==='income'?'Доходи':'Витрати'):'Усі операції')+'</h3><button class="ok" data-s="cancel">Закрити</button></div>'+
@@ -235,7 +236,7 @@ function showSheet(top){
  el.style.display='block';
  sheetP.el=el;curSheet={key:key,kind:top.kind,el:el,body:body,html:html};
  el.classList.remove('ghost');
- var anc=top.kind==='input'?sendAnchor:((top.kind==='transactionList'||top.kind==='marketSheet')&&growAnchor)?growAnchor:null,grow=!!anc;growAnchor=null;
+ var anc=top.kind==='input'?sendAnchor:((top.kind==='transactionList'||top.kind==='marketSheet'||top.kind==='confirmWipe')&&growAnchor)?growAnchor:null,grow=!!anc;growAnchor=null;
  sheetP.mode=grow?'grow':'rise';
  if(grow){sheetP.ax=anc.x;sheetP.ay=anc.y;}
  sheetP.kind=top.kind;
@@ -286,6 +287,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='cash')app.openManualAccount('cash');
   else if(s==='export')exportData();
   else if(s==='mper')setMarketPeriod(t.dataset.v);
+  else if(s==='wipeyes'){fin.resetAll({confirmed:true});LG('ui','повний скид даних');app.back();toast('Усі записи стерто');}
   else if(s==='logshare')logShare();
   else if(s==='synon')synToggle();
   else if(s==='syncgen')syGen();
