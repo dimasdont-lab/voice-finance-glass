@@ -702,6 +702,10 @@ function bootStep(t,dt){
  }
 }
 /* ---- спільна фізика скляної панелі: пружина появи, деформація за пальцем, відступ під верхнім вікном ---- */
+/* коефіцієнти руху країв при зсуві [верхній/лівий, нижній/правий] для додатного й від'ємного зсуву */
+var EF_DEF={xp:[.35,1],xn:[1,.35],yp:[.35,1],yn:[1,.35]};
+var EF_SHEET={xp:[.4,1],xn:[1,.4],yp:[1,.8],yn:[1.7,.1]};
+var EF_MORE={xp:[.3,.06],xn:[1.6,.1],yp:[.4,1],yn:[1,.4]};
 function panelStep(P,dt,L,k,dm,fade,bl){
  var tg=P.on?1:0,h=dt/2,q,d=P.def,t=P.tgt;
  for(q=0;q<2;q++){var a=k*(tg-P.s)-dm*P.vs;P.vs+=a*h;P.s+=P.vs*h;
@@ -710,8 +714,13 @@ function panelStep(P,dt,L,k,dm,fade,bl){
  var sc=Math.max(0,P.s),grow=P.mode==='grow',kk=kOf(L.v);
  var cx0=P.tx+P.tw/2,cy0=P.ty+P.th/2,Qx,Qy,Qs=grow?sc:1;
  if(grow){Qx=P.ax+(cx0-P.ax)*sc;Qy=P.ay+(cy0-P.ay)*sc;}else{Qx=cx0;Qy=cy0+(1-sc)*P.rise;}
- var cx=L.ox+kk*(Qx-L.ox)+L.tx*L.v+d.x,cy=L.oy+kk*(Qy-L.oy)+L.ty*L.v+d.y,s2=Qs*kk,sx=Math.max(1e-3,s2*(1+d.sx)),sy=Math.max(1e-3,s2*(1+d.sy));
- var hw=Math.max(.5,P.tw/2*sx),hh=Math.max(.5,P.th/2*sy),mn=Math.min(hw,hh);
+ var cx=L.ox+kk*(Qx-L.ox)+L.tx*L.v,cy=L.oy+kk*(Qy-L.oy)+L.ty*L.v,s2=Qs*kk,sx=Math.max(1e-3,s2*(1+d.sx)),sy=Math.max(1e-3,s2*(1+d.sy));
+ var hw=Math.max(.5,P.tw/2*sx),hh=Math.max(.5,P.th/2*sy);
+ var ef=P===sheetP?EF_SHEET:(P===menu&&menu.kind==='more')?EF_MORE:EF_DEF,kx=d.x>0?ef.xp:ef.xn,ky=d.y>0?ef.yp:ef.yn;
+ var ex0=cx-hw+d.x*kx[0],ex1=cx+hw+d.x*kx[1],ey0=cy-hh+d.y*ky[0],ey1=cy+hh+d.y*ky[1];
+ if(ex1-ex0<1)ex1=ex0+1;if(ey1-ey0<1)ey1=ey0+1;
+ cx=(ex0+ex1)/2;hw=Math.max(.5,(ex1-ex0)/2);cy=(ey0+ey1)/2;hh=Math.max(.5,(ey1-ey0)/2);sx=hw/Math.max(.5,P.tw/2);sy=hh/Math.max(.5,P.th/2);
+ var mn=Math.min(hw,hh);
  var rr=grow?Math.max(P.r*Math.min(sx,sy),mn*Math.max(0,1-s2*1.4)):P.r*Math.min(sx,sy);
  var cf=fade?1-Math.min(1,L.v*1.1):1,vis=(grow?Math.min(1,sc):Math.min(1,sc*3))*cf;
  var g=P.g;g.cx=cx;g.cy=cy;g.hw=hw;g.hh=hh;g.r=Math.max(.5,Math.min(rr,mn));g.v=Math.max(0,vis);
