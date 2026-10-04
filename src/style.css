@@ -2,7 +2,7 @@
  --tx:#f5f5f7;--mu:#9b9ba6;--mu2:#6d6d78;--ac:#ff7d83;--ac2:#ff454f;--gr:#66d896;--ln:rgba(255,255,255,.09)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;font-family:var(--f);color:var(--tx);-webkit-text-size-adjust:100%}
-html{background-color:#050507;background-image:linear-gradient(to right,rgba(148,148,148,.17) 1px,transparent 1px),linear-gradient(to bottom,rgba(148,148,148,.17) 1px,transparent 1px);background-size:var(--gc,48.75px) var(--gc,48.75px);background-position:var(--gx,0) var(--gy,0)}body{background:transparent}
+html{background-color:#050507;background-image:linear-gradient(to right,var(--glc,rgba(148,148,148,.17)) 1px,transparent 1px),linear-gradient(to bottom,var(--glc,rgba(148,148,148,.17)) 1px,transparent 1px);background-size:var(--gc,48.75px) var(--gc,48.75px);background-position:var(--gx,0) var(--gy,0)}body{background:transparent}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;text-align:inherit;cursor:pointer;-webkit-appearance:none;appearance:none}
 input{font:inherit;color:inherit}
 #bg{position:fixed;inset:0;z-index:-2;background:#050507}
@@ -205,3 +205,10 @@ input{font:inherit;color:inherit}
 /* у застосунку з іконки всі повноекранні шари й док прив'язані до фактичної висоти екрана (screen.height), щоб унизу не лишалось смуги */
 #bg,#pages,#sheets,#scrim,#edge,#menuShade{height:var(--appH,auto)}
 #dock{top:var(--dockTop,auto)}
+
+/* iOS «урізав» вікно (svh < lvh): документ висотою lvh, повноекранні шари й док — absolute, щоб малювались і в нижній смузі */
+html.lv,html.lv body{height:var(--appH)}
+html.lv #bg,html.lv #glt,html.lv #pages,html.lv #boot,html.lv #scrim,html.lv #edge,html.lv #menuShade,html.lv #dock,html.lv #gl{position:absolute}
+/* вкладене скло: кнопки «Доходи/Витрати», міні-картки, круглі значки стрілок */
+.gt .split>button{border-color:rgba(255,255,255,.06)}
+.gt .dot.up,.gt .dot.dn{background:none}

@@ -1,5 +1,6 @@
 function LG(a,b){if(window.__vfLog)try{window.__vfLog(a,b);}catch(e){}}   /* запис у журнал запуску (src/early-log.js) */
 LG('main','старт основного коду');
+var BAL_TREND=0;   /* тренд загального балансу: 1 вгору, -1 вниз, 0 рівно (колір віджета й сітки) */
 /* ===== 0. Логіка Voice Finance (finance-core / navigation / application) ===== */
 function mkStore(kind){
  try{var s=window[kind];s.setItem('__vf','1');s.removeItem('__vf');return s;}
@@ -96,6 +97,7 @@ function renderTicker(){
 function blocksHome(){
  var ix=app.getState().interaction,t=fin.totals(),g=fin.goals(),pts=fin.financialSeries('balance','1M');
  var first=pts.length?pts[0].value:t.balance,last=pts.length?pts[pts.length-1].value:first,ch=last-first,pc=first?ch/Math.abs(first)*100:0;
+ BAL_TREND=ch>0?1:ch<0?-1:0;
  var accs=fin.activeAccounts(),shown=ix.accountsExpanded?accs:accs.slice(0,3),tx=fin.recentTransactions(ix.homeQuery);
  var o=[];
  o.push(hdr('Гарного дня!',todayStr()));

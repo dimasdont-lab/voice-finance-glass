@@ -33,7 +33,7 @@ function moreHtml(){
  return h;
 }
 function openMore(){
- var w=Math.min(VW-28,360),el=menu.el;
+ var w=Math.round(Math.min(VW-28,360)*.82),el=menu.el;
  el.className='more';el.innerHTML=moreHtml();el.style.display='block';el.style.width=w+'px';el.style.height='auto';el.style.left='-9999px';
  var safeT=SAFE.t;
  var avail=DR.top-14-12-Math.max(safeT,20),h=Math.min(el.scrollHeight,avail);
