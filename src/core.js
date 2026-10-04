@@ -74,6 +74,9 @@ function glinesLabel(){return'Скляні лінії графіків: '+(GLINE
 function setGlassLines(on){GLINES=!!on;try{localStorage.setItem('vf-glines',on?'1':'0');}catch(e){}document.documentElement.classList.toggle('glines',GLINES);LG('ui','скляні лінії: '+(GLINES?'увімк.':'вимк.'));tlAllStale();renderPages();renderTicker();}
 /* скло під графіком: 1 — А (уся площа під лінією), 2 — Б (смуга під лінією), 0 — вимкнено. Перемикач у Налаштуваннях */
 /* райдужний живий ореол по контуру екрана (під склом), можна вимкнути в налаштуваннях */
+/* слід від жесту: повзунки в налаштуваннях (яскравість, ширина, тривалість) */
+var FGS=(function(){var d={i:56,w:62,l:30};try{var j=JSON.parse(localStorage.getItem('vf-fg')||'null');if(j)for(var k in d)if(typeof j[k]==='number')d[k]=j[k];}catch(e){}return d;})();
+function setFGS(k,v){FGS[k]=v;try{localStorage.setItem('vf-fg',JSON.stringify(FGS));}catch(e){}}
 var AURA=(function(){try{var v=localStorage.getItem('vf-aura');return v===null?1:+v?1:0;}catch(e){return 1;}})();
 function auraLabel(){return'Райдужний ореол екрана: '+(AURA?'увімкнено':'вимкнено');}
 function toggleAura(){AURA=AURA?0:1;try{localStorage.setItem('vf-aura',String(AURA));}catch(e){}LG('ui',auraLabel());}
