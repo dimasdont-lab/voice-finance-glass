@@ -332,6 +332,36 @@ export function createFinance({storage = null, storageKey = STORAGE_KEY, clock =
     state.debts = [];
     commit('data:clear',{});
   }
+  /** Додано у Voice Finance Glass (не в оригінальній логіці): імпорт даних з іншого пристрою.
+   * merge — об’єднання за id (нове додається, наявне не змінюється; видалення НЕ синхронізуються);
+   * replace — повна заміна операцій, боргів, рахунків і категорій даними з іншого пристрою. */
+  function importSnapshot(remote, {mode = 'merge'} = {}) {
+    if (!remote || typeof remote !== 'object') throw new TypeError('Некоректні дані синхронізації');
+    if (!['merge','replace'].includes(mode)) throw new RangeError('Некоректний режим синхронізації');
+    const incoming = normalizeState(remote);
+    if (mode === 'replace') {
+      state.transactions = incoming.transactions; state.debts = incoming.debts; state.accounts = incoming.accounts;
+      state.categories = incoming.categories; state.balanceSnapshots = incoming.balanceSnapshots;
+      commit('sync:replace',{});
+      return {mode,transactions:state.transactions.length,debts:state.debts.length,accounts:state.accounts.length};
+    }
+    const has = (list,id) => list.some(x => x.id === id);
+    const newAccounts = incoming.accounts.filter(a => !has(state.accounts,a.id));
+    const fresh = new Set(newAccounts.map(a => a.id));
+    state.accounts = [...state.accounts,...newAccounts];
+    state.categories = [...state.categories,...incoming.categories.filter(c => !has(state.categories,c.id))];
+    const txs = incoming.transactions.filter(t => !has(state.transactions,t.id));
+    const debts = incoming.debts.filter(d => !has(state.debts,d.id));
+    txs.forEach(t => {
+      const account = t.accountId ? state.accounts.find(a => a.id === t.accountId) : null;
+      if (account && !fresh.has(account.id)) account.currentBalance = Number(account.currentBalance || 0)+transactionEffect(t);
+    });
+    state.transactions = [...state.transactions,...txs];
+    state.debts = [...state.debts,...debts];
+    if (txs.length || debts.length || newAccounts.length) addSnapshot('sync',true);
+    commit('sync:merge',{});
+    return {mode,transactions:txs.length,debts:debts.length,accounts:newAccounts.length};
+  }
   const api = {
     get state() { return getState(); },getState,storageKey,
     subscribe(listener) { if (typeof listener !== 'function') throw new TypeError('Listener must be a function'); listeners.add(listener); return () => listeners.delete(listener); },
@@ -340,7 +370,7 @@ export function createFinance({storage = null, storageKey = STORAGE_KEY, clock =
     transactions,recentTransactions:(query = '') => transactions({query,limit:query?30:5}),
     categoryById:id => copy(categoryById(id)),categorySummary,debtTotals,debtGroups,personProfiles,personProfile,insights,goals,
     accountSnapshots,balanceAnalysis,activeAccounts:() => copy(state.accounts.filter(a => a.isActive)),
-    exportJSON:() => JSON.stringify(state,null,2),clearData,
+    exportJSON:() => JSON.stringify(state,null,2),clearData,importSnapshot,
     setMarketSelection(ids) { state.marketSelection=[...new Set(ids)].slice(0,20); commit('markets:select',{ids:state.marketSelection}); return [...state.marketSelection]; },
     // Goal/language are persisted settings in main's schema; no new UI is supplied.
     setGoal(value) { state.goal=positiveAmount(value); commit('goal:set',{goal:state.goal}); },

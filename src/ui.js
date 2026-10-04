@@ -148,7 +148,13 @@ function sheetHtml(kind,ov){
    '<button class="btnw" data-s="markets">Валюти в бігучій строці</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button>'+
    '<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="area">'+areaLabel()+'</button>'+
    '<div class="mkinfo" style="padding:12px 0 2px">Кольорове скло</div>'+
-   [['is','Значки: насиченість'],['ib','Значки: яскравість'],['bal','Віджет балансу: сила кольору']].map(function(q){return'<div class="fr"><label>'+q[1]+'</label><input type="range" min="0" max="100" data-cg="'+q[0]+'" value="'+CG[q[0]]+'"></div>';}).join('')+'<button class="btnw" data-s="cgreset">Скинути кольори скла</button><button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
+   [['is','Значки: насиченість'],['ib','Значки: яскравість'],['bal','Віджет балансу: сила кольору']].map(function(q){return'<div class="fr"><label>'+q[1]+'</label><input type="range" min="0" max="100" data-cg="'+q[0]+'" value="'+CG[q[0]]+'"></div>';}).join('')+'<button class="btnw" data-s="cgreset">Скинути кольори скла</button><div class="mkinfo" style="padding:14px 0 4px">Синхронізація між пристроями (шифрована)</div>'+
+   '<div class="fr"><label>Ключ синхронізації (однаковий на всіх пристроях)</label><input data-sy="key" autocomplete="off" autocapitalize="characters" spellcheck="false" value="'+esc(syGetKey())+'" placeholder="XXXX-XXXX-XXXX-XXXX"></div>'+
+   '<button class="btnw" data-s="syncgen">Створити новий ключ</button><button class="btnw" data-s="syncexp">Зашифрувати й поділитися даними</button>'+
+   '<div class="fr"><label>Код з іншого пристрою</label><textarea data-sy="code" rows="3" autocomplete="off" spellcheck="false" placeholder="VFSYNC1...."></textarea></div>'+
+   '<button class="btnw" data-s="syncmerge">Об’єднати з кодом (додати нове)</button><button class="btnw" data-s="syncreplace">Замінити мої дані даними з коду</button>'+
+   '<div class="mkinfo" style="padding:4px 0 8px">Дані шифруються на пристрої (AES-256-GCM, ключ із вашого ключа); код можна безпечно надіслати собі в Нотатки чи месенджер. Видалення при об’єднанні не переноситься.</div>'+
+   '<button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
    '<div class="mkinfo" style="padding-top:10px">Збірка: '+esc(window.__VF_BUILD||'?')+(navigator.standalone&&window.__vfFirstH&&screen.height-window.__vfFirstH>=40?'<br><span style="color:var(--ac)">Цей запуск почався з вікном '+window.__vfFirstH+' замість '+screen.height+': iOS відкрив застосунок з геометрією старої іконки. Видаліть іконку з робочого столу, оновіть сторінку в Safari й додайте іконку знову.</span>':'')+'</div>'+
    '<button class="btnw" data-s="export">Експорт JSON</button><button class="btnw" data-s="seed">Додати тестові дані для перегляду</button>'+
    '<button class="btnw dng" data-s="clear">Очистити операції та борги</button><div class="err" data-err></div>';
@@ -274,6 +280,10 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='cash')app.openManualAccount('cash');
   else if(s==='export')exportData();
   else if(s==='logshare')logShare();
+  else if(s==='syncgen')syGen();
+  else if(s==='syncexp')syExport();
+  else if(s==='syncmerge')syImport('merge');
+  else if(s==='syncreplace')syImport('replace');
   else if(s==='logcopy')logCopy();
   else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
   else if(s==='area'){cycleArea();t.textContent=areaLabel();sheetStale();}
@@ -605,3 +615,30 @@ fitSoon();
 
 /* повзунки кольорового скла */
 document.getElementById('sheets').addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.cg){setCG(t.dataset.cg,+t.value);tlAll();}});
+
+/* ---------- синхронізація між пристроями: шифрований код (AES-256-GCM, PBKDF2) ---------- */
+var SYE=new TextEncoder(),SYD=new TextDecoder();
+function syGetKey(){try{return localStorage.getItem('vf-synckey')||'';}catch(e){return'';}}
+function sySetKey(k){try{localStorage.setItem('vf-synckey',k);}catch(e){}}
+function b64u(u){var s='';for(var i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function unb64u(t){t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';var s=atob(t),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;}
+function syKeyFrom(pass,salt){return crypto.subtle.importKey('raw',SYE.encode(pass),'PBKDF2',false,['deriveKey']).then(function(km){return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:250000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);});}
+function syEncrypt(pass,obj){var salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+ return syKeyFrom(pass,salt).then(function(k){return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,SYE.encode(JSON.stringify(obj)));}).then(function(ct){return'VFSYNC1.'+b64u(salt)+'.'+b64u(iv)+'.'+b64u(new Uint8Array(ct));});}
+function syDecrypt(pass,code){var p=String(code).trim().split('.');if(p[0]!=='VFSYNC1'||p.length!==4)return Promise.reject(new Error('Це не код синхронізації'));
+ return syKeyFrom(pass,unb64u(p[1])).then(function(k){return crypto.subtle.decrypt({name:'AES-GCM',iv:unb64u(p[2])},k,unb64u(p[3]));}).then(function(pt){return JSON.parse(SYD.decode(pt));},function(){throw new Error('Невірний ключ або код пошкоджено');});}
+function syField(n){var e=curSheet&&curSheet.body.querySelector('[data-sy="'+n+'"]');return e?e.value:'';}
+function syNeedKey(){var k=syField('key').trim().toUpperCase();if(k.length<8){toast('Спершу введіть або створіть ключ (мінімум 8 символів)');return'';}sySetKey(k);return k;}
+function syGen(){var A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',r=crypto.getRandomValues(new Uint8Array(16)),k='';for(var i=0;i<16;i++){k+=A[r[i]%32];if(i%4===3&&i<15)k+='-';}
+ var e=curSheet.body.querySelector('[data-sy="key"]');if(e)e.value=k;sySetKey(k);sheetStale();toast('Ключ створено. Збережіть його: на інших пристроях введіть такий самий');}
+function syExport(){var k=syNeedKey();if(!k)return;var st=fin.getState();
+ syEncrypt(k,{app:'voice-finance-glass',v:1,at:new Date().toISOString(),data:{transactions:st.transactions,debts:st.debts,accounts:st.accounts,categories:st.categories,balanceSnapshots:st.balanceSnapshots}}).then(function(code){
+  LG('sync','експорт, символів '+code.length);
+  if(navigator.share){navigator.share({text:code,title:'Voice Finance — код синхронізації'}).catch(function(){});}
+  else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(function(){toast('Код скопійовано');},function(){toast('Не вдалося скопіювати');});}
+ }).catch(function(e){toast('Помилка шифрування: '+(e.message||e));});}
+function syImport(mode){var k=syNeedKey();if(!k)return;var code=syField('code');if(!code.trim()){toast('Вставте код з іншого пристрою');return;}
+ syDecrypt(k,code).then(function(o){if(!o||o.app!=='voice-finance-glass'||!o.data)throw new Error('Невідомий формат коду');
+  var r=fin.importSnapshot(o.data,{mode:mode});LG('sync','імпорт '+mode+' '+JSON.stringify(r));
+  toast(mode==='merge'?'Додано: операцій '+r.transactions+', боргів '+r.debts+', рахунків '+r.accounts:'Дані замінено: операцій '+r.transactions);
+ }).catch(function(e){toast(e.message||String(e));});}
