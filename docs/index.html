@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-04 06:19 UTC';
+<script>window.__VF_BUILD='2026-10-04 06:25 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -378,6 +378,8 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 .brow .chw{display:block;flex:0 0 40%;width:40%;padding:4px 0}
 .brow .chw .spark{display:block;width:100%;height:36px;flex:none}
 .brow .chev{align-self:center;margin-left:2px}
+
+#fglow{position:fixed;left:0;top:0;width:100%;height:100%;z-index:18;pointer-events:none;mix-blend-mode:screen}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -388,7 +390,7 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 <div id="mcross"><i></i><b></b></div>
 <div id="edge"></div>
 <div id="sheets"></div>
-<canvas id="gl"></canvas>
+<canvas id="fglow"></canvas><canvas id="gl"></canvas>
 <div id="menuShade"></div>
 <div id="menu"></div>
 <div id="dock"><div id="btns">
@@ -3688,9 +3690,9 @@ GLSL_BG,
 'vec3 gbl(vec2 q,float r){return(gradBg(q/u_s)*2.+gradBg((q+vec2(r,0.))/u_s)+gradBg((q-vec2(r,0.))/u_s)+gradBg((q+vec2(0.,r))/u_s)+gradBg((q-vec2(0.,r))/u_s))/6.;}',
 'vec4 gly(vec2 q,vec4 R,vec4 G){float gz=abs(G.z);if(gz<1.)return vec4(0.);float gs=max(.05,R.z/(gz*.25*u_s));vec2 l=(q-R.xy)/u_s*2./gs;if(G.z<0.)l-=clamp(u_go,-14.,14.)*.5;if(abs(l.x)>gz*.5+52.||abs(l.y)>G.w*.5+52.)return vec4(0.);return texture2D(u_ga,(G.xy+vec2(gz,G.w)*.5+l)/u_gas);}',
 'vec4 glassAt(vec2 px,vec4 R,vec4 M,vec4 C,float dm,vec4 G){',
-' float Q=M.x;float m=(M.w>.5?18.:36.)*u_s;float t=clamp(-dm/(.6*m),0.,1.);float e=1.5;',
+' float Q=M.x;float gk=abs(G.z)>1.?1.:0.;float m=(M.w>.5?(gk>0.?22.:18.):36.)*u_s;float t=clamp(-dm/(.6*m),0.,1.);float e=1.5;',
 ' vec2 n=normalize(vec2(sdRB(px+vec2(e,0.)-R.xy,R.zw,Q)-sdRB(px-vec2(e,0.)-R.xy,R.zw,Q),sdRB(px+vec2(0.,e)-R.xy,R.zw,Q)-sdRB(px-vec2(0.,e)-R.xy,R.zw,Q))+1e-5);',
-' vec2 of=n*pow(1.-t,2.2)*.6*m;float ab=.07*(.35+pow(1.-t,1.5));float zm=C.a>0.?.55:(M.w>.5?.96:.93);',
+' vec2 of=n*pow(1.-t,2.2)*(gk>0.?.5:.6)*m;float ab=.07*(.35+pow(1.-t,1.5));float zm=C.a>0.?.55:(M.w>.5?.96:.93);',
 ' vec2 za=R.xy+((px-of*(1.+ab))-R.xy)*zm,zb=R.xy+((px-of)-R.xy)*zm,zc=R.xy+((px-of*(1.-ab))-R.xy)*zm;',
 ' vec3 ci;if(t<.97){float gbr=u_s*(.25+1.6*pow(1.-t,2.));ci=vec3(gbl(za,gbr).r,gbl(zb,gbr).g,gbl(zc,gbr).b);}else ci=vec3(gradBg(za/u_s).r,gradBg(zb/u_s).g,gradBg(zc/u_s).b);',
 ' ci=mix(ci,M.y>0.?vec3(.03,.34,.15):vec3(.45,.05,.08),min(.45,abs(M.y)*.20));',
@@ -4800,5 +4802,21 @@ function synToggle(){
 fin.subscribe(function(ev){if(!SYN.on||synApplying||/^sync:/.test(ev.type))return;clearTimeout(synPT);synPT=setTimeout(function(){synPT=0;synPush();},2000);});
 setInterval(function(){if(SYN.on&&!document.hidden)synPull(false);},8000);
 document.addEventListener('visibilitychange',function(){if(SYN.on&&!document.hidden)synPull(false);});
+
+/* ---------- світіння за пальцем: легкий насичений слід кольору балансу, що гасне ---------- */
+var FGc=document.getElementById('fglow'),FGx=FGc&&FGc.getContext('2d'),FGp=[],FGraf=0,FGdown=false,FGlast={x:0,y:0};
+function fgSize(){if(!FGc)return;var w=Math.round(innerWidth/2),h=Math.round(innerHeight/2);if(FGc.width!==w||FGc.height!==h){FGc.width=w;FGc.height=h;}}
+function fgCol(){return BAL_TREND>0?'30,255,110':BAL_TREND<0?'255,36,48':'150,190,255';}
+function fgAdd(x,y){var l=FGlast;if(FGp.length&&Math.hypot(x-l.x,y-l.y)<7)return;FGlast={x:x,y:y};FGp.push({x:x,y:y,t:performance.now()});if(FGp.length>60)FGp.shift();if(!FGraf)FGraf=requestAnimationFrame(fgStep);}
+function fgStep(){
+ FGraf=0;if(!FGc)return;fgSize();var now=performance.now(),LIFE=1500,c=FGx;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,FGc.width,FGc.height);c.globalCompositeOperation='lighter';
+ FGp=FGp.filter(function(p){return now-p.t<LIFE;});
+ var col=fgCol();
+ FGp.forEach(function(p){var a=1-(now-p.t)/LIFE;a=a*a*.34;var r=44,g=c.createRadialGradient(p.x/2,p.y/2,0,p.x/2,p.y/2,r/2);g.addColorStop(0,'rgba('+col+','+a.toFixed(3)+')');g.addColorStop(1,'rgba('+col+',0)');c.fillStyle=g;c.fillRect(p.x/2-r/2,p.y/2-r/2,r,r);});
+ if(FGp.length||FGdown)FGraf=requestAnimationFrame(fgStep);
+}
+document.addEventListener('pointerdown',function(e){if(e.target.closest&&e.target.closest('input,textarea'))return;FGdown=true;fgAdd(e.clientX,e.clientY);},true);
+document.addEventListener('pointermove',function(e){if(FGdown||e.buttons)fgAdd(e.clientX,e.clientY);},true);
+['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){FGdown=false;},true);});
 
 })();</script></body></html>

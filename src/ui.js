@@ -745,3 +745,19 @@ function synToggle(){
 fin.subscribe(function(ev){if(!SYN.on||synApplying||/^sync:/.test(ev.type))return;clearTimeout(synPT);synPT=setTimeout(function(){synPT=0;synPush();},2000);});
 setInterval(function(){if(SYN.on&&!document.hidden)synPull(false);},8000);
 document.addEventListener('visibilitychange',function(){if(SYN.on&&!document.hidden)synPull(false);});
+
+/* ---------- світіння за пальцем: легкий насичений слід кольору балансу, що гасне ---------- */
+var FGc=document.getElementById('fglow'),FGx=FGc&&FGc.getContext('2d'),FGp=[],FGraf=0,FGdown=false,FGlast={x:0,y:0};
+function fgSize(){if(!FGc)return;var w=Math.round(innerWidth/2),h=Math.round(innerHeight/2);if(FGc.width!==w||FGc.height!==h){FGc.width=w;FGc.height=h;}}
+function fgCol(){return BAL_TREND>0?'30,255,110':BAL_TREND<0?'255,36,48':'150,190,255';}
+function fgAdd(x,y){var l=FGlast;if(FGp.length&&Math.hypot(x-l.x,y-l.y)<7)return;FGlast={x:x,y:y};FGp.push({x:x,y:y,t:performance.now()});if(FGp.length>60)FGp.shift();if(!FGraf)FGraf=requestAnimationFrame(fgStep);}
+function fgStep(){
+ FGraf=0;if(!FGc)return;fgSize();var now=performance.now(),LIFE=1500,c=FGx;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,FGc.width,FGc.height);c.globalCompositeOperation='lighter';
+ FGp=FGp.filter(function(p){return now-p.t<LIFE;});
+ var col=fgCol();
+ FGp.forEach(function(p){var a=1-(now-p.t)/LIFE;a=a*a*.34;var r=44,g=c.createRadialGradient(p.x/2,p.y/2,0,p.x/2,p.y/2,r/2);g.addColorStop(0,'rgba('+col+','+a.toFixed(3)+')');g.addColorStop(1,'rgba('+col+',0)');c.fillStyle=g;c.fillRect(p.x/2-r/2,p.y/2-r/2,r,r);});
+ if(FGp.length||FGdown)FGraf=requestAnimationFrame(fgStep);
+}
+document.addEventListener('pointerdown',function(e){if(e.target.closest&&e.target.closest('input,textarea'))return;FGdown=true;fgAdd(e.clientX,e.clientY);},true);
+document.addEventListener('pointermove',function(e){if(FGdown||e.buttons)fgAdd(e.clientX,e.clientY);},true);
+['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){FGdown=false;},true);});

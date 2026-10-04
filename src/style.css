@@ -304,3 +304,5 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 .brow .chw{display:block;flex:0 0 40%;width:40%;padding:4px 0}
 .brow .chw .spark{display:block;width:100%;height:36px;flex:none}
 .brow .chev{align-self:center;margin-left:2px}
+
+#fglow{position:fixed;left:0;top:0;width:100%;height:100%;z-index:18;pointer-events:none;mix-blend-mode:screen}
