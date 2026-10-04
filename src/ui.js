@@ -746,18 +746,25 @@ fin.subscribe(function(ev){if(!SYN.on||synApplying||/^sync:/.test(ev.type))retur
 setInterval(function(){if(SYN.on&&!document.hidden)synPull(false);},8000);
 document.addEventListener('visibilitychange',function(){if(SYN.on&&!document.hidden)synPull(false);});
 
-/* ---------- світіння за пальцем: легкий насичений слід кольору балансу, що гасне ---------- */
-var FGc=document.getElementById('fglow'),FGx=FGc&&FGc.getContext('2d'),FGp=[],FGraf=0,FGdown=false,FGlast={x:0,y:0};
-function fgSize(){if(!FGc)return;var w=Math.round(innerWidth/2),h=Math.round(innerHeight/2);if(FGc.width!==w||FGc.height!==h){FGc.width=w;FGc.height=h;}}
-function fgCol(){return BAL_TREND>0?'30,255,110':BAL_TREND<0?'255,36,48':'150,190,255';}
-function fgAdd(x,y){var l=FGlast;if(FGp.length&&Math.hypot(x-l.x,y-l.y)<7)return;FGlast={x:x,y:y};FGp.push({x:x,y:y,t:performance.now()});if(FGp.length>60)FGp.shift();if(!FGraf)FGraf=requestAnimationFrame(fgStep);}
+/* ---------- світіння за пальцем: суцільний насичений лазерний слід кольору балансу; малюється в текстуру, яку скло плиток заломлює ---------- */
+var FGc=document.getElementById('fglow'),FGx=FGc&&FGc.getContext('2d'),FGp=[],FGraf=0,FGdown=false;
+function fgSize(){if(!FGc)return;var w=Math.max(8,Math.round(VW/4)),h=Math.max(8,Math.round(VH/4));if(FGc.width!==w||FGc.height!==h){FGc.width=w;FGc.height=h;}}
+function fgCol(){return BAL_TREND>0?[40,255,90]:BAL_TREND<0?[255,10,30]:[90,170,255];}
+function fgAdd(x,y,brk){FGp.push({x:x,y:y,t:performance.now(),b:!!brk});if(FGp.length>90)FGp.shift();kickFg();}
+function kickFg(){if(!FGraf)FGraf=requestAnimationFrame(fgStep);}
 function fgStep(){
- FGraf=0;if(!FGc)return;fgSize();var now=performance.now(),LIFE=1500,c=FGx;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,FGc.width,FGc.height);c.globalCompositeOperation='lighter';
+ FGraf=0;if(!FGc)return;fgSize();var now=performance.now(),LIFE=1700,c=FGx,k=.25;
  FGp=FGp.filter(function(p){return now-p.t<LIFE;});
- var col=fgCol();
- FGp.forEach(function(p){var a=1-(now-p.t)/LIFE;a=a*a*.34;var r=44,g=c.createRadialGradient(p.x/2,p.y/2,0,p.x/2,p.y/2,r/2);g.addColorStop(0,'rgba('+col+','+a.toFixed(3)+')');g.addColorStop(1,'rgba('+col+',0)');c.fillStyle=g;c.fillRect(p.x/2-r/2,p.y/2-r/2,r,r);});
+ c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-over';c.fillStyle='#000';c.fillRect(0,0,FGc.width,FGc.height);
+ var col=fgCol();c.globalCompositeOperation='lighter';c.lineCap='round';c.lineJoin='round';
+ for(var i=1;i<FGp.length;i++){var a=FGp[i-1],b=FGp[i];if(b.b)continue;var age=1-(now-b.t)/LIFE;age=Math.max(0,age);var al=Math.pow(age,1.6);
+  c.strokeStyle='rgba('+col[0]+','+col[1]+','+col[2]+','+(al*.9).toFixed(3)+')';c.lineWidth=(20*k)*(.5+.5*age);c.shadowColor='rgb('+col[0]+','+col[1]+','+col[2]+')';c.shadowBlur=18*k;
+  c.beginPath();c.moveTo(a.x*k,a.y*k);c.lineTo(b.x*k,b.y*k);c.stroke();}
+ if(FGp.length===1){var p=FGp[0],g=c.createRadialGradient(p.x*k,p.y*k,0,p.x*k,p.y*k,16*k);g.addColorStop(0,'rgba('+col+',.9)');g.addColorStop(1,'rgba('+col+',0)');c.fillStyle=g;c.fillRect(p.x*k-16*k,p.y*k-16*k,32*k,32*k);}
+ c.shadowBlur=0;
+ FGact=FGp.length>0?1:0;FGgen++;dirty=true;
  if(FGp.length||FGdown)FGraf=requestAnimationFrame(fgStep);
 }
-document.addEventListener('pointerdown',function(e){if(e.target.closest&&e.target.closest('input,textarea'))return;FGdown=true;fgAdd(e.clientX,e.clientY);},true);
-document.addEventListener('pointermove',function(e){if(FGdown||e.buttons)fgAdd(e.clientX,e.clientY);},true);
-['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){FGdown=false;},true);});
+document.addEventListener('pointerdown',function(e){if(e.target.closest&&e.target.closest('input,textarea'))return;FGdown=true;fgAdd(e.clientX,e.clientY,true);},true);
+document.addEventListener('pointermove',function(e){if(!(FGdown||e.buttons))return;var ev=e.getCoalescedEvents?e.getCoalescedEvents():null;if(ev&&ev.length){ev.forEach(function(q){fgAdd(q.clientX,q.clientY,false);});}else fgAdd(e.clientX,e.clientY,false);},true);
+['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){FGdown=false;kickFg();},true);});

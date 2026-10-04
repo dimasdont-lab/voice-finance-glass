@@ -306,3 +306,5 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 .brow .chev{align-self:center;margin-left:2px}
 
 #fglow{position:fixed;left:0;top:0;width:100%;height:100%;z-index:18;pointer-events:none;mix-blend-mode:screen}
+
+#fglow{display:none!important}
