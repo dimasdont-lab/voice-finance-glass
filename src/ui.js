@@ -147,7 +147,7 @@ function sheetHtml(kind,ov){
    '<div class="fr"><label>Місячний ліміт, zł</label><input data-g="goal" inputmode="decimal" value="'+esc(g)+'" autocomplete="off"></div>'+
    '<button class="btnw" data-s="goal">Зберегти ліміт</button>'+
    '<button class="btnw" data-s="markets">Валюти в бігучій строці</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button>'+
-   '<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="area">'+areaLabel()+'</button>'+
+   '<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="area">'+areaLabel()+'</button><button class="btnw" data-s="aura">'+auraLabel()+'</button>'+
    '<div class="mkinfo" style="padding:12px 0 2px">Кольорове скло</div>'+
    [['is','Значки: насиченість'],['ib','Значки: яскравість'],['bal','Віджет балансу: сила кольору']].map(function(q){return'<div class="fr"><label>'+q[1]+'</label><input type="range" min="0" max="100" data-cg="'+q[0]+'" value="'+CG[q[0]]+'"></div>';}).join('')+'<button class="btnw" data-s="cgreset">Скинути кольори скла</button><div class="mkinfo" style="padding:14px 0 4px">Синхронізація між пристроями (шифрована)</div>'+
    '<div class="fr"><label>Ключ синхронізації (однаковий на всіх пристроях)</label><input data-sy="key" autocomplete="off" autocapitalize="characters" spellcheck="false" value="'+esc(syGetKey())+'" placeholder="XXXX-XXXX-XXXX-XXXX"></div>'+
@@ -293,6 +293,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='syncreplace')syImport('replace');
   else if(s==='logcopy')logCopy();
   else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
+  else if(s==='aura'){toggleAura();t.textContent=auraLabel();sheetStale();}
   else if(s==='area'){cycleArea();t.textContent=areaLabel();sheetStale();}
   else if(s==='glines'){setGlassLines(!GLINES);t.textContent=glinesLabel();sheetStale();}
   else if(s==='seed'){seedDemo();toast('Додано тестові дані');}
@@ -756,12 +757,11 @@ function fgStep(){
  FGraf=0;if(!FGc)return;fgSize();var now=performance.now(),LIFE=2200,c=FGx,k=.25;
  FGp=FGp.filter(function(p){return now-p.t<LIFE;});
  c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-over';c.fillStyle='#000';c.fillRect(0,0,FGc.width,FGc.height);
- var col=fgCol(),RED=BAL_TREND<0;c.globalCompositeOperation='lighten';c.lineCap='round';c.lineJoin='round';
- for(var i=1;i<FGp.length;i++){var a=FGp[i-1],b=FGp[i];if(b.b)continue;var age=1-(now-b.t)/LIFE;age=Math.max(0,age);var al=Math.pow(age,1.6),wf=1-Math.min(1,b.v/2.5)*.55;
-  c.strokeStyle='rgba('+col[0]+','+col[1]+','+col[2]+','+(al*.42).toFixed(3)+')';c.lineWidth=(40*k)*wf*(.5+.5*age);c.shadowColor='rgba('+col[0]+','+col[1]+','+col[2]+','+(al*.5).toFixed(3)+')';c.shadowBlur=30*k;
-  c.beginPath();c.moveTo(a.x*k,a.y*k);c.lineTo(b.x*k,b.y*k);c.stroke();}
- if(FGp.length===1){var p=FGp[0],g=c.createRadialGradient(p.x*k,p.y*k,0,p.x*k,p.y*k,16*k);g.addColorStop(0,'rgba('+col+',.9)');g.addColorStop(1,'rgba('+col+',0)');c.fillStyle=g;c.fillRect(p.x*k-16*k,p.y*k-16*k,32*k,32*k);}
- c.shadowBlur=0;
+ var col=fgCol(),cs=col[0]+','+col[1]+','+col[2];c.globalCompositeOperation='lighten';
+ function stamp(x,y,age,v){var al=Math.pow(Math.max(0,age),1.5),r=(50*(1-Math.min(1,v/3)*.3)*(.5+.5*age))*k;if(al<.01||r<1)return;var g=c.createRadialGradient(x*k,y*k,0,x*k,y*k,r);g.addColorStop(0,'rgba('+cs+','+(al*.5).toFixed(3)+')');g.addColorStop(.45,'rgba('+cs+','+(al*.22).toFixed(3)+')');g.addColorStop(1,'rgba('+cs+',0)');c.fillStyle=g;c.fillRect(x*k-r,y*k-r,r*2,r*2);}
+ for(var i=0;i<FGp.length;i++){var b=FGp[i],ageB=1-(now-b.t)/LIFE;
+  if(i>0&&!b.b){var a=FGp[i-1],ageA=1-(now-a.t)/LIFE,d=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(d/9));for(var s2=1;s2<=n;s2++){var f=s2/n;stamp(a.x+(b.x-a.x)*f,a.y+(b.y-a.y)*f,ageA+(ageB-ageA)*f,b.v);}}
+  else stamp(b.x,b.y,ageB,b.v);}
  FGact=FGp.length>0?1:0;FGgen++;dirty=true;
  if(FGp.length||FGdown)FGraf=requestAnimationFrame(fgStep);
 }

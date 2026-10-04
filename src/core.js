@@ -73,6 +73,10 @@ document.documentElement.classList.toggle('glines',GLINES);
 function glinesLabel(){return'Скляні лінії графіків: '+(GLINES?'увімкнено':'вимкнено');}
 function setGlassLines(on){GLINES=!!on;try{localStorage.setItem('vf-glines',on?'1':'0');}catch(e){}document.documentElement.classList.toggle('glines',GLINES);LG('ui','скляні лінії: '+(GLINES?'увімк.':'вимк.'));tlAllStale();renderPages();renderTicker();}
 /* скло під графіком: 1 — А (уся площа під лінією), 2 — Б (смуга під лінією), 0 — вимкнено. Перемикач у Налаштуваннях */
+/* райдужний живий ореол по контуру екрана (під склом), можна вимкнути в налаштуваннях */
+var AURA=(function(){try{var v=localStorage.getItem('vf-aura');return v===null?1:+v?1:0;}catch(e){return 1;}})();
+function auraLabel(){return'Райдужний ореол екрана: '+(AURA?'увімкнено':'вимкнено');}
+function toggleAura(){AURA=AURA?0:1;try{localStorage.setItem('vf-aura',String(AURA));}catch(e){}LG('ui',auraLabel());}
 var AREA_MODE=(function(){try{var v=localStorage.getItem('vf-area');return v===null?0:+v||0;}catch(e){return 0;}})();
 /* кольорове скло: повзунки в налаштуваннях (насиченість і яскравість значків, сила кольору балансу) */
 var CG=(function(){var d={is:40,ib:45,bal:45};try{var j=JSON.parse(localStorage.getItem('vf-cg')||'null');if(j)for(var k in d)if(typeof j[k]==='number')d[k]=j[k];}catch(e){}return d;})();
