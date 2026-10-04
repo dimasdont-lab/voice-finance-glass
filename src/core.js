@@ -19,6 +19,7 @@ function mv(n,c){return VF.formatMovement(n,c||'PLN');}
 var CAT_COL=['#ff7d83','#66d896','#7aa7ff','#ffc46b','#c38bff','#5fd4e8','#ff9f6b','#9be15d','#f08bd0'];
 function hashCol(id){var h=0,s=String(id);for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return CAT_COL[h%CAT_COL.length];}
 function rgba(hex,a){var n=parseInt(hex.slice(1),16);return'rgba('+(n>>16)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
+var COIN_SVG='<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><ellipse cx="12" cy="6" rx="7" ry="2.6"/><path d="M5 6v4c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6M5 10v4c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-4M5 14v4c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-4"/></svg>',PLUS_SVG='<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
 function icon(name,col){var c=col||hashCol(name);return'<i class="ic" style="background:'+rgba(c,.2)+';color:'+c+'">'+esc(String(name||'•').trim().charAt(0).toUpperCase())+'</i>';}
 function catName(id){var c=fin.categoryById(id);return c&&c.name?c.name:'Інше';}
 function chev(){return'<svg viewBox="0 0 12 12"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg>';}
@@ -54,7 +55,12 @@ document.documentElement.classList.toggle('glines',GLINES);
 function glinesLabel(){return'Скляні лінії графіків: '+(GLINES?'увімкнено':'вимкнено');}
 function setGlassLines(on){GLINES=!!on;try{localStorage.setItem('vf-glines',on?'1':'0');}catch(e){}document.documentElement.classList.toggle('glines',GLINES);LG('ui','скляні лінії: '+(GLINES?'увімк.':'вимк.'));tlAllStale();renderPages();renderTicker();}
 /* скло під графіком: 1 — А (уся площа під лінією), 2 — Б (смуга під лінією), 0 — вимкнено. Перемикач у Налаштуваннях */
-var AREA_MODE=(function(){try{var v=localStorage.getItem('vf-area');return v===null?1:+v||0;}catch(e){return 1;}})();
+var AREA_MODE=(function(){try{var v=localStorage.getItem('vf-area');return v===null?0:+v||0;}catch(e){return 0;}})();
+/* кольорове скло: повзунки в налаштуваннях (насиченість і яскравість значків, сила кольору балансу) */
+var CG=(function(){var d={is:40,ib:45,bal:45};try{var j=JSON.parse(localStorage.getItem('vf-cg')||'null');if(j)for(var k in d)if(typeof j[k]==='number')d[k]=j[k];}catch(e){}return d;})();
+function applyCG(){var st=document.documentElement.style;st.setProperty('--cgs',(CG.is/100*2.5).toFixed(2));st.setProperty('--cgb',(.45+CG.ib*.009).toFixed(2));}
+function setCG(k,v){CG[k]=v;try{localStorage.setItem('vf-cg',JSON.stringify(CG));}catch(e){}applyCG();}
+applyCG();
 function areaLabel(){return'Скло під графіком: '+(AREA_MODE===1?'площа (А)':AREA_MODE===2?'смуга (Б)':'вимкнено');}
 function cycleArea(){AREA_MODE=AREA_MODE===1?2:AREA_MODE===2?0:1;try{localStorage.setItem('vf-area',String(AREA_MODE));}catch(e){}LG('ui',areaLabel());dirty=true;}
 function lineSvg(d,col,w,ex,glass){
@@ -65,10 +71,10 @@ function ptsAttr(xy){var st=Math.max(1,Math.ceil(xy.length/40)),o=[];for(var i=0
 function spark(points,id){
  var v=(points||[]).map(function(p){return p.value;}).filter(isFinite);
  if(v.length<2)v=[0,0];
- var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),rg=mx-mn||1,W=320,H=84,pad=6,col=v[v.length-1]>=v[0]?'#66d896':'#ff7d83';
+ var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),rg=mx-mn||1,W=320,H=84,pad=6,col=v[v.length-1]>=v[0]?'#66d896':'#ff7d83',scol=v[v.length-1]>=v[0]?'#0fe468':'#ff2e42';
  var xy=v.map(function(y,i){return[(i/(v.length-1))*W,pad+(H-2*pad)*(1-(y-mn)/rg)];});
  var d=xy.map(function(p,i){return(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' ');
- return'<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" data-pts="'+ptsAttr(xy)+'" data-vb="'+W+','+H+'" data-col="'+col+'" data-lw="4.2"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".38"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#g'+id+')"/>'+lineSvg(d,col,2.4,'',true)+'</svg>';
+ return'<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" data-pts="'+ptsAttr(xy)+'" data-vb="'+W+','+H+'" data-col="'+col+'" data-lw="4.2"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+scol+'" stop-opacity=".26"/><stop offset="1" stop-color="'+scol+'" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#g'+id+')"/>'+lineSvg(d,col,2.4,'',true)+'</svg>';
 }
 function txRow(t,first){
  var cat=catName(t.category),title=t.client||(t.note&&t.note.length<34?t.note:cat),inc=t.type==='income';
@@ -114,14 +120,13 @@ function blocksHome(){
  var ix=app.getState().interaction,t=fin.totals(),g=fin.goals(),pts=fin.financialSeries('balance','1M');
  var first=pts.length?pts[0].value:t.balance,last=pts.length?pts[pts.length-1].value:first,ch=last-first,pc=first?ch/Math.abs(first)*100:0;
  BAL_TREND=ch>0?1:ch<0?-1:0;
- var accs=fin.activeAccounts(),shown=ix.accountsExpanded?accs:accs.slice(0,3),tx=fin.recentTransactions(ix.homeQuery);
+ var accs=fin.activeAccounts(),shown=ix.accountsExpanded?accs:accs.slice(0,4),tx=fin.recentTransactions(ix.homeQuery);
  var o=[];
  o.push(hdr('Гарного дня!',todayStr()));
  o.push(searchBlock('home','Пошук операцій'));
- o.push(B_('tile bal '+(ch>0?'up':ch<0?'dn':''),'<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>'+esc(pctTxt(pc))+' · 30 днів</span></div>'+spark(pts,'h')+'</div>'+
-  '<div class="split"><button data-act="flow" data-v="income"><i class="dot up">↑</i><div><span class="lbl">Доходи</span><b>'+esc(money(t.income))+'</b></div></button><button data-act="flow" data-v="expense"><i class="dot dn">↓</i><div><span class="lbl">Витрати</span><b>'+esc(money(t.expense))+'</b></div></button></div>'));
- o.push(B_('tile','<div class="th"><h2>Рахунки</h2>'+(accs.length>3?'<button data-act="accs">'+(ix.accountsExpanded?'Згорнути':'Усі ›')+'</button>':'<button data-act="addacc">Додати</button>')+'</div>'+
-  (shown.length?shown.map(function(a,i){return'<button class="row'+(i?'':' first')+'" data-act="acc" data-id="'+esc(a.id)+'">'+icon(a.displayName||a.bankName,hashCol(a.id))+'<div class="rc"><b>'+esc(a.displayName||a.bankName)+'</b><span>'+esc(a.bankName||a.accountType||'Рахунок')+'</span></div><em>'+esc(money(a.currentBalance,a.currency))+'</em></button>';}).join(''):'<div class="empty">Рахунків поки немає. Додайте ручний рахунок або готівку — банк підключати не обов’язково.</div>')));
+ o.push(B_('tile bal '+(ch>0?'up':ch<0?'dn':''),'<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="brow"><div class="bl"><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>('+esc(pctTxt(pc))+') за 30 днів</span></div></div><div class="chw">'+spark(pts,'h')+'<i class="chev">›</i></div></div></div>'+
+  '<div class="split"><button data-act="flow" data-v="income"><i class="dot up">↑</i><div><span class="lbl">Доходи</span><b>'+esc(money(t.income))+'</b></div></button><span class="vd"></span><button data-act="flow" data-v="expense"><i class="dot dn">↓</i><div><span class="lbl">Витрати</span><b>'+esc(money(t.expense))+'</b></div></button></div>'));
+ o.push(B_('accs','<div class="th"><h2>Рахунки</h2>'+(accs.length>4?'<button data-act="accs">'+(ix.accountsExpanded?'Згорнути':'Усі ›')+'</button>':'')+'</div><div class="arow">'+shown.map(function(a){var cash=a.accountType==='cash'||a.type==='cash',nm=a.displayName||a.bankName||'Рахунок',neg=a.currentBalance<0;return'<button class="ab" data-act="acc" data-id="'+esc(a.id)+'"><i class="aic"'+(cash?'':' style="color:'+hashCol(a.id)+'"')+'>'+(cash?COIN_SVG:esc(String(nm).trim().charAt(0).toUpperCase()))+'</i><span class="an">'+esc(nm)+'</span><span class="aa'+(neg?' neg':'')+'">'+esc(money(a.currentBalance,a.currency))+'</span></button>';}).join('')+'<button class="ab" data-act="addacc"><i class="aic plus">'+PLUS_SVG+'</i><span class="an mu">Додати</span></button></div>'));
  o.push(B_('tile','<div class="th"><h2>'+(ix.homeQuery?'Результати':'Останні операції')+'</h2><button data-act="alltx">Усі</button></div>'+
   (tx.length?tx.map(function(x,i){return txRow(x,i===0);}).join(''):'<div class="empty">'+(ix.homeQuery?'Нічого не знайдено.':'Операцій поки немає. Натисніть «Ввід» і напишіть, наприклад: <b>кава 25 зл</b>.')+'</div>')));
  o.push(B_('tile','<div class="lbl">Місячний ліміт витрат</div><div class="mid">'+esc(money(g.limit))+'</div><div class="bar"><i style="width:'+g.percent.toFixed(1)+'%"></i></div><div class="cap">Витрачено '+esc(money(g.expense))+' · '+esc(pctTxt(g.percent))+' ліміту</div>'));

@@ -75,7 +75,7 @@ root.addEventListener('click',function(e){
   if(a==='back')app.back();
   else if(a==='tx')app.editTransaction(id);
   else if(a==='balance')nav.navigate('balanceAnalysis');
-  else if(a==='flow')nav.openFlow(v);
+  else if(a==='flow')nav.openOverlay('transactionList',{type:v==='expense'?'expense':'income'});
   else if(a==='accs')app.toggleAccounts();
   else if(a==='addacc')app.openManualAccount('manual');
   else if(a==='acc')nav.openAccount(id);
@@ -136,8 +136,8 @@ function sheetHtml(kind,ov){
   return h;
  }
  if(kind==='transactionList'){
-  var cid=ov.data&&ov.data.categoryId,list=cid?fin.transactions({category:cid}):fin.transactions({limit:100});
-  return'<div class="sh"><span style="min-width:70px"></span><h3>'+esc(cid?catName(cid):'Усі операції')+'</h3><button class="ok" data-s="cancel">Закрити</button></div>'+
+  var cid=ov.data&&ov.data.categoryId,ty=ov.data&&ov.data.type,list=cid?fin.transactions({category:cid}):ty?fin.transactions({type:ty,limit:100}):fin.transactions({limit:100});
+  return'<div class="sh"><span style="min-width:70px"></span><h3>'+esc(cid?catName(cid):ty?(ty==='income'?'Доходи':'Витрати'):'Усі операції')+'</h3><button class="ok" data-s="cancel">Закрити</button></div>'+
    (list.length?list.slice(0,100).map(function(x,i){return txRow(x,i===0).replace('data-act="tx"','data-s="tx"');}).join(''):'<div class="empty">Операцій немає.</div>');
  }
  if(kind==='settings'){
@@ -146,7 +146,9 @@ function sheetHtml(kind,ov){
    '<div class="fr"><label>Місячний ліміт, zł</label><input data-g="goal" inputmode="decimal" value="'+esc(g)+'" autocomplete="off"></div>'+
    '<button class="btnw" data-s="goal">Зберегти ліміт</button>'+
    '<button class="btnw" data-s="markets">Валюти в бігучій строці</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button>'+
-   '<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="area">'+areaLabel()+'</button><button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
+   '<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="area">'+areaLabel()+'</button>'+
+   '<div class="mkinfo" style="padding:12px 0 2px">Кольорове скло</div>'+
+   [['is','Значки: насиченість'],['ib','Значки: яскравість'],['bal','Віджет балансу: сила кольору']].map(function(q){return'<div class="fr"><label>'+q[1]+'</label><input type="range" min="0" max="100" data-cg="'+q[0]+'" value="'+CG[q[0]]+'"></div>';}).join('')+'<button class="btnw" data-s="cgreset">Скинути кольори скла</button><button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
    '<div class="mkinfo" style="padding-top:10px">Збірка: '+esc(window.__VF_BUILD||'?')+(navigator.standalone&&window.__vfFirstH&&screen.height-window.__vfFirstH>=40?'<br><span style="color:var(--ac)">Цей запуск почався з вікном '+window.__vfFirstH+' замість '+screen.height+': iOS відкрив застосунок з геометрією старої іконки. Видаліть іконку з робочого столу, оновіть сторінку в Safari й додайте іконку знову.</span>':'')+'</div>'+
    '<button class="btnw" data-s="export">Експорт JSON</button><button class="btnw" data-s="seed">Додати тестові дані для перегляду</button>'+
    '<button class="btnw dng" data-s="clear">Очистити операції та борги</button><div class="err" data-err></div>';
@@ -273,6 +275,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='export')exportData();
   else if(s==='logshare')logShare();
   else if(s==='logcopy')logCopy();
+  else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
   else if(s==='area'){cycleArea();t.textContent=areaLabel();sheetStale();}
   else if(s==='glines'){setGlassLines(!GLINES);t.textContent=glinesLabel();sheetStale();}
   else if(s==='seed'){seedDemo();toast('Додано тестові дані');}
@@ -590,3 +593,15 @@ function longPress(r){
 }
 /* трекпад/колесо над тікером — прокручує тікер */
 tickerEl.addEventListener('wheel',function(e){e.preventDefault();tkOff+=e.deltaX+e.deltaY;tkVel=0;tkPause=performance.now()+700;},{passive:false});
+
+/* текст у віджетах стискається під ширину свого боксу й ніколи не виходить за межі */
+var FIT_SEL='.big,.mid,.split b,.mini b,.aa',fitQ=0;
+function fitOne(el){el.style.fontSize='';var w=el.clientWidth;if(!w)return;var sw=el.scrollWidth;if(sw>w+.5){var fs=parseFloat(getComputedStyle(el).fontSize)||16;el.style.fontSize=Math.max(10,Math.floor(fs*w/sw*10)/10-.1)+'px';}}
+function fitAll(){fitQ=0;[].forEach.call(root.querySelectorAll(FIT_SEL),fitOne);}
+function fitSoon(){if(!fitQ)fitQ=requestAnimationFrame(fitAll);}
+new MutationObserver(fitSoon).observe(root,{childList:true,subtree:true,characterData:true});
+window.addEventListener('resize',fitSoon);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitSoon);
+fitSoon();
+
+/* повзунки кольорового скла */
+document.getElementById('sheets').addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.cg){setCG(t.dataset.cg,+t.value);tlAll();}});
