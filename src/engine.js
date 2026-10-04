@@ -1,6 +1,15 @@
 var cv=document.getElementById('gl');
 var gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,powerPreference:'high-performance'})||cv.getContext('experimental-webgl');
-var ISL=(function(){try{var q=document.createElement('div');q.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden';document.body.appendChild(q);var h=q.offsetHeight||0;q.remove();return(h>=40||/[?&]island/.test(location.search))?1:0;}catch(e){return 0;}})();
+var ISL=0;   /* оновлюється щокадру з живої безпечної зони */
+/* Причина збоїв запуску на iPhone (за діагностикою): iOS у застосунку з іконки інколи лишає сторінку «прокрученою» на висоту статус-бару (scrollY=-62, visualViewport.offsetTop=-62).
+   Тоді getBoundingClientRect() закріплених елементів зсунутий на +62 відносно того, де вони намальовані: скло дока опинялось нижче кнопок, крапля вилітала нижче логотипа.
+   Тому: 1) повертаємо scroll у 0; 2) усі виміри закріплених елементів ідуть через frect(), яка компенсує зсув; 3) безпечні зони читаються наживо. */
+var spT=document.createElement('div'),spB=document.createElement('div'),SAFE={t:0,b:0},SO=0;
+spT.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none';
+spB.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none';
+document.body.appendChild(spT);document.body.appendChild(spB);
+function liveEnv(){SAFE.t=spT.offsetHeight||0;SAFE.b=spB.offsetHeight||0;ISL=(SAFE.t>=40||/[?&]island/.test(location.search))?1:0;var y=window.scrollY||window.pageYOffset||0;SO=y<0?y:0;}
+function frect(el){liveEnv();var r=el.getBoundingClientRect();return{left:r.left,right:r.right,width:r.width,height:r.height,top:r.top+SO,bottom:r.bottom+SO};}
 var GRID_CELL=45;   /* ≈5 мм на iPhone (CSS-пікселі) */
 var GLSL_BG=['vec3 blob(vec3 c,vec2 n,vec2 ce,vec2 r,vec3 col){float a=clamp(1.-length((n-ce)/r)/0.7,0.,1.);return mix(c,col,a);}',
  'float gridL(vec2 p){vec2 q=abs(fract(p/u_cell+.5)-.5)*u_cell;return 1.-smoothstep(.0,1.,min(q.x,q.y));}',
@@ -272,9 +281,10 @@ new MutationObserver(function(recs){recs.forEach(function(r){
 
 /* ===== 4. Розміри (кешуються, не читаються щокадру) ===== */
 var fullMode=false,wantFull=false;
+function rootGrid(){var gc=gridCell(),st=document.documentElement.style;st.setProperty('--gc',gc.toFixed(2)+'px');st.setProperty('--gx',((VW/2)%gc).toFixed(2)+'px');st.setProperty('--gy',((VH/2)%gc).toFixed(2)+'px');}
 function measure(){
  var pt=dock.style.transform;dock.style.transform='none';
- var d=dock.getBoundingClientRect(),b=bgEl.getBoundingClientRect(),M=34;
+ var d=frect(dock),b=bgEl.getBoundingClientRect(),M=34;
  dock.style.transform=pt;
  var S2=Math.min(window.devicePixelRatio||1,2),x0,y0,w,h;
  if(fullMode){x0=0;y0=0;w=Math.ceil(b.width);h=Math.ceil(b.height);}
@@ -287,7 +297,7 @@ function measure(){
  if(!fullMode&&!document.documentElement.style.getPropertyValue('--appH')){cv.style.top='auto';cv.style.bottom=(b.height-y0-h)+'px';}else{cv.style.bottom='auto';cv.style.top=y0+'px';}
  cv.width=Math.round(w*S);cv.height=Math.round(h*S);gl.viewport(0,0,cv.width,cv.height);
  if(wChanged){T.forEach(drop);P.forEach(drop);T=[];P=[];B=[];full=[];asm=[];needSync=allSync();}
- dirty=true;ready=true;
+ dirty=true;ready=true;rootGrid();
 }
 window.addEventListener('resize',measure);window.addEventListener('orientationchange',function(){setTimeout(measure,250);});
 if(window.visualViewport)window.visualViewport.addEventListener('resize',measure);
@@ -311,7 +321,7 @@ var pill={x:0,y:0,hw:0,hh:0,vx:0,vy:0,vw:0,vh:0,van:0},hide=1,lastOff=-1,baseKbd
 var GAP=46,NK=44;     /* відступ над клавіатурою; ширина «перешийка» поверхневого натягу */
 var touchDev=('ontouchstart' in window)||(navigator.maxTouchPoints>0);
 function kbEstimate(){var w=Math.min(window.innerWidth,screen.width||window.innerWidth);return Math.round(336+(w-393)*0.27);}   /* висота клавіатури iPhone з рядком підказок */
-function vvm(){var vv=window.visualViewport;return vv?{t:vv.offsetTop,l:vv.offsetLeft,w:vv.width,h:vv.height}:{t:0,l:0,w:VW,h:VH};}
+function vvm(){var vv=window.visualViewport;return vv?{t:Math.max(0,vv.offsetTop),l:vv.offsetLeft,w:vv.width,h:vv.height}:{t:0,l:0,w:VW,h:VH};}
 function hideOff(){return VH-DR.top+24;}
 function pillTarget(){
  if(mode===1){
@@ -427,7 +437,6 @@ function stepScroll(dt){
 function gridCell(){var k=Math.max(1,Math.round((VW/2-6)/GRID_CELL));return(VW/2-6)/k;}   /* клітинка ≈0,75 см, крайні лінії на 6 pt (~1 мм) від країв */
 var vpLastH=0,vpLastT=0,vpLog=[];
 function vpSample(t){var h=innerHeight;if(h!==vpLastH){vpLastH=h;vpLastT=t;vpLog.push([Math.round(t),h,Math.round(window.visualViewport?window.visualViewport.height:0)]);if(vpLog.length>14)vpLog.shift();}}
-var SAFEB=(function(){try{var q=document.createElement('div');q.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden';document.body.appendChild(q);var h=q.offsetHeight||0;q.remove();return h;}catch(e){return 0;}})();
 var dockY=null,dkLast=0;
 var BLS=4,gOX=0,gOY=0,fd={on:false,x0:0,y0:0,dx:0,dy:0};   /* fd — зсув пальця від точки дотику, сітка йде за ним */
 document.addEventListener('pointerdown',function(e){fd.on=true;fd.x0=e.clientX;fd.y0=e.clientY;fd.dx=0;fd.dy=0;},true);
@@ -494,17 +503,20 @@ function rrPts(cx,cy,hw,hh,r,n){
 function smooth01(a,b,x){var t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);}
 var fontsOK=!(document.fonts&&document.fonts.ready);
 if(!fontsOK)document.fonts.ready.then(function(){fontsOK=true;});
-function viewportNudge(){   /* iOS інколи віддає вікну застосунку меншу висоту, ніж екран: перевстановлюємо meta viewport, щоб розкладка перерахувалась */
+function viewportNudge(n){
  var m=document.querySelector('meta[name=viewport]');if(!m)return;
- var c=m.getAttribute('content');
- m.setAttribute('content',c.replace(/viewport-fit=cover,?/,'')+',maximum-scale=1');
- setTimeout(function(){m.setAttribute('content',c);window.dispatchEvent(new Event('resize'));},80);
+ var c=m.getAttribute('content'),fire=function(){window.dispatchEvent(new Event('resize'));};
+ if(n===1){var m2=document.createElement('meta');m2.setAttribute('name','viewport');m2.setAttribute('content',c);m.parentNode.replaceChild(m2,m);}
+ else if(n===2){m.setAttribute('content',c.replace(/viewport-fit=cover,?/,'')+',maximum-scale=1');setTimeout(function(){m.setAttribute('content',c);fire();},350);}
+ else{var sb=document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]');if(sb){sb.setAttribute('content','default');setTimeout(function(){sb.setAttribute('content','black-translucent');fire();},350);}}
+ fire();
 }
 function bootGate(el,t){
  if(boot.lay)return;
  var sa=!!navigator.standalone,short=sa&&innerHeight<screen.height-1,stable=t-vpLastT>900;
- if(short&&stable&&el>.6&&(boot.nz||0)<3&&el>(boot.nzT||0)){boot.nz=(boot.nz||0)+1;boot.nzT=el+1.2;viewportNudge();}
+ if(short&&stable&&el>.6&&(boot.nz||0)<3&&el>(boot.nzT||0)){boot.nz=(boot.nz||0)+1;boot.nzT=el+1.2;viewportNudge(boot.nz);}
  var done=stable&&(!short||((boot.nz||0)>=3&&el>(boot.nzT||0)));
+ if(done&&short){var rl=false;try{rl=sessionStorage.getItem('vf-rl');}catch(e){}if(!rl){try{sessionStorage.setItem('vf-rl','1');}catch(e){}location.reload();return;}}   /* одне перезавантаження на запуск: iOS після нього інколи віддає повну висоту */
  if((done||el>5.5)&&(fontsOK||el>5.5)&&ready&&el>.6){measure();tlAllStale();boot.lay=1;}
 }
 function bootStep(t,dt){
@@ -523,7 +535,7 @@ function bootStep(t,dt){
   if(boot.phase===0&&boot.p>=1){boot.phase=1;boot.t1=t;boot.wrap.classList.add('p1');boot.warm=1;dirty=true;}
   else if(boot.phase===1&&t-boot.t1>330){
    boot.phase=2;boot.t2=t;boot.wrap.classList.add('p2');
-   var r=boot.logo.getBoundingClientRect();boot.cx=r.left+r.width/2;boot.cy=r.top+r.height/2;introStart(t);
+   var r=frect(boot.logo);boot.cx=r.left+r.width/2;boot.cy=r.top+r.height/2;introStart(t);
    cv.style.opacity=1;dirty=true;
   }
  }
@@ -584,11 +596,12 @@ function stepSheet(dt){
 function frame(t){
  requestAnimationFrame(frame);
  vpSample(t);
- {var bgH=bgEl.getBoundingClientRect().height,dty=bgH-72-14-SAFEB;
+ {liveEnv();if(SO<-.5&&mode!==1)window.scrollTo(0,0);
+  var bgH=bgEl.getBoundingClientRect().height,dty=bgH-72-14-SAFE.b;
   if(dockY===null)dockY=dty;
   if(Math.abs(dty-dockY)>.3)dockY+=(dty-dockY)*(1-Math.exp(-Math.min(.05,Math.max(.001,(t-dkLast)/1000))*9));else dockY=dty;
   dkLast=t;var dys=dockY.toFixed(2)+'px';if(dock._dy!==dys){dock._dy=dys;dock.style.setProperty('--dockTop',dys);}}
- {var bgR=bgEl.getBoundingClientRect(),dkR=dock.getBoundingClientRect(),ap=lastOff>.1?lastOff:0;
+ {var bgR=bgEl.getBoundingClientRect(),dkR=frect(dock),ap=lastOff>.1?lastOff:0;
   if(Math.abs(bgR.height-VH)>.5||Math.abs(bgR.width-VW)>.5||Math.abs(dkR.top-ap-DR.top)>.6||Math.abs(dkR.left-DR.left)>.6)measure();}
  if(window.__lt){window.__fps=.9*(window.__fps||60)+.1*(1000/Math.max(1,t-window.__lt));}window.__lt=t;
  var dt=Math.min(Math.max((t-last)/1000,0),1/30);last=t;

@@ -100,7 +100,7 @@ function mcrossHide(){mcrossEl.style.display='none';}
 function mcrossAt(e){
  var el=e.target.closest&&e.target.closest('.mchart[data-mkc]');
  if(!el||!mkP.draw){mcrossHide();return;}
- var r=el.getBoundingClientRect(),fr=clamp((e.clientX-r.left)/r.width,0,1),dr=mkP.draw,p=dr[Math.round(fr*(dr.length-1))];
+ var r=frect(el),fr=clamp((e.clientX-r.left)/r.width,0,1),dr=mkP.draw,p=dr[Math.round(fr*(dr.length-1))];
  var x=r.left+fr*r.width,lab=mcrossEl.lastChild;
  mcrossEl.style.display='block';mcrossEl.style.left=x+'px';mcrossEl.style.top=r.top+'px';mcrossEl.style.height=r.height+'px';
  lab.textContent=mkFmt(p.v)+' · '+mkDate(p.t,mkP.period);
