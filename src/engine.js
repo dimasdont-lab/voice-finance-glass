@@ -118,7 +118,7 @@ function mkTex(w,h){var t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
 var dummy=mkTex(1,1);
 
 /* ===== розмиття фону під скляними вікнами: заздалегідь розмиті копії сторінок і аркуша (без шуму від випадкової вибірки) ===== */
-var BKS=.25,BK={w:0,h:0,pg:null,sh:null,tmp:null};
+var BKS=.5,BK={w:0,h:0,pg:null,sh:null,tmp:null};
 var BKPREC=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif'];
 var BKFS=BKPREC.concat(['uniform vec2 u_res;uniform vec2 u_vp;uniform sampler2D u_t0;uniform sampler2D u_t1;uniform sampler2D u_t2;uniform vec4 u_p0;uniform vec4 u_p1;uniform vec4 u_p2;uniform vec3 u_w;uniform float u_mode;',
 'vec4 pageS(sampler2D tx,vec4 P,float W0,vec2 p){',
@@ -152,9 +152,9 @@ function bake(which,mode,p0,p1,p2,w3){
  gl.uniform4f(BU.u_p0,p0[0],p0[1],p0[2],p0[3]);gl.uniform4f(BU.u_p1,p1[0],p1[1],p1[2],p1[3]);gl.uniform4f(BU.u_p2,p2[0],p2[1],p2[2],p2[3]);gl.uniform3f(BU.u_w,w3[0],w3[1],w3[2]);
  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
  gl.useProgram(blP);gl.uniform2f(BL.u_res,BK.w,BK.h);gl.activeTexture(gl.TEXTURE0);
- for(var it=0;it<2;it++){
-  gl.bindFramebuffer(gl.FRAMEBUFFER,BK.tmp.f);gl.bindTexture(gl.TEXTURE_2D,BK[which].t);gl.uniform2f(BL.u_dir,1/BK.w,0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
-  gl.bindFramebuffer(gl.FRAMEBUFFER,BK[which].f);gl.bindTexture(gl.TEXTURE_2D,BK.tmp.t);gl.uniform2f(BL.u_dir,0,1/BK.h);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+ for(var it=0;it<3;it++){
+  gl.bindFramebuffer(gl.FRAMEBUFFER,BK.tmp.f);gl.bindTexture(gl.TEXTURE_2D,BK[which].t);gl.uniform2f(BL.u_dir,2/BK.w,0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,BK[which].f);gl.bindTexture(gl.TEXTURE_2D,BK.tmp.t);gl.uniform2f(BL.u_dir,0,2/BK.h);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
  }
 }
 var bkCv=document.createElement('canvas'),bkCx=bkCv.getContext('2d'),bkGT=null;
@@ -308,7 +308,7 @@ function measure(){
  var wChanged=Math.abs(b.width-VW)>.5;
  if(ready&&!wChanged&&S2===S&&Math.abs(b.height-VH)<.5&&x0===R.x&&y0===R.y&&w===R.w&&h===R.h)return;
  S=S2;VW=b.width;VH=b.height;R={x:x0,y:y0,w:w,h:h};
- cv.style.left=x0+'px';cv.style.width=w+'px';cv.style.height=h+'px';
+ cv.style.left=x0+'px';cv.style.width=w+'px';cv.style.height=h+'px';cv.style.zIndex=fullMode?'24':'';
  if(!fullMode&&!document.documentElement.style.getPropertyValue('--appH')){cv.style.top='auto';cv.style.bottom=(b.height-y0-h)+'px';}else{cv.style.bottom='auto';cv.style.top=y0+'px';}
  cv.width=Math.round(w*S);cv.height=Math.round(h*S);gl.viewport(0,0,cv.width,cv.height);
  if(wChanged){T.forEach(drop);P.forEach(drop);T=[];P=[];B=[];full=[];asm=[];needSync=allSync();}
@@ -465,7 +465,21 @@ root.addEventListener('pointermove',function(e){
 function spUp(e){if(sp&&e.pointerId===sp.id){if(sp.h)hsEnd(e.type==='pointercancel');sp=null;}}
 root.addEventListener('pointerup',spUp);root.addEventListener('pointercancel',spUp);
 root.addEventListener('click',function(e){if(performance.now()-hsAt<350){e.stopPropagation();e.preventDefault();}},true);   /* після свайпу клік не спрацьовує */
-root.addEventListener('wheel',function(e){e.preventDefault();sIdx=sel;sMax=maxScroll(sel);sy[sel]=Math.max(0,Math.min(sMax,sy[sel]+e.deltaY));sv=0;},{passive:false});
+var WH={x:0,on:0,tm:0,ft:0};
+root.addEventListener('wheel',function(e){
+ e.preventDefault();
+ var ax=Math.abs(e.deltaX),ay=Math.abs(e.deltaY);
+ fd.on=true;fd.dx=Math.max(-160,Math.min(160,fd.dx-e.deltaX*.5));fd.dy=Math.max(-120,Math.min(120,fd.dy-e.deltaY*.3));
+ clearTimeout(WH.ft);WH.ft=setTimeout(function(){fd.on=false;fd.dx=fd.dy=0;},180);
+ if((WH.on||ax>ay*1.2)&&(WH.on||tabSwipeOk())){
+  if(!WH.on){WH.on=1;WH.x=0;HS.on=1;HS.x0=0;HS.vx=0;}
+  WH.x-=e.deltaX;var c=sel-WH.x/VW;if(c<0)c=-rbz(-c);else if(c>2)c=2+rbz(c-2);
+  HS.ca=c;HS.lx=WH.x;HS.vx=.6*HS.vx+.4*(-e.deltaX/16);
+  clearTimeout(WH.tm);WH.tm=setTimeout(function(){WH.on=0;hsEnd(false);},140);
+  return;
+ }
+ sIdx=sel;sMax=maxScroll(sel);sy[sel]=Math.max(0,Math.min(sMax,sy[sel]+e.deltaY));sv=0;
+},{passive:false});
 function stepScroll(dt){
  var i=sIdx,y=sy[i],act=!!sp;
  if(!sp){
@@ -539,7 +553,7 @@ function applyRec(el,o){
 }
 /* ---- екран завантаження ---- */
 var boot={on:1,hold:1,phase:0,t0:0,t1:0,t2:0,p:0,cx:0,cy:0,rmax:0,r:0,r0:0,DUR:(/[?&]slowboot/.test(location.search)?14:2.4),MIN:1.8,warm:0,
- el:document.getElementById('boot'),bar:document.querySelector('#boot .bbar i'),wrap:document.querySelector('#boot .bwrap'),logo:document.querySelector('#boot .blogo')};
+ el:document.getElementById('boot'),bar:document.querySelector('#boot .bbar i'),wrap:document.querySelector('#boot .bwrap'),logo:document.querySelector('#boot .blogo'),ring:document.querySelector('#boot .bring')};
 function rrPts(cx,cy,hw,hh,r,n){
  var p=[],k,i,a,cs=[[cx+hw-r,cy-hh+r,-90],[cx+hw-r,cy+hh-r,0],[cx-hw+r,cy+hh-r,90],[cx-hw+r,cy-hh+r,180]];
  for(k=0;k<4;k++)for(i=0;i<=n;i++){a=(cs[k][2]+90*i/n)*Math.PI/180;p.push((cs[k][0]+r*Math.cos(a)).toFixed(1)+'px '+(cs[k][1]+r*Math.sin(a)).toFixed(1)+'px');}
@@ -565,7 +579,8 @@ function bootStep(t,dt){
   var tgt=Math.min(real,el/boot.MIN);if(el>9)tgt=1;
   boot.p+=(tgt-boot.p)*(1-Math.exp(-dt*7));if(tgt>=1&&boot.p>.985)boot.p=1;
   var pp=Math.max(0,Math.min(1,boot.p)),sc=2.4*(1-Math.pow(pp,1.8));   /* логотип зменшується разом із завантаженням, наприкінці до нуля */
-  boot.logo.style.transform='scale('+sc.toFixed(4)+')';boot.wrap.style.setProperty('--gs',(.45+.55*sc/2.4).toFixed(3));
+  boot.logo.style.transform='scale('+sc.toFixed(4)+')';var gsT=sc/2.4;if(boot.gs===undefined)boot.gs=gsT;boot.gs+=(gsT-boot.gs)*(1-Math.exp(-dt*14));if(gsT===0&&boot.gs<.01)boot.gs=0;
+  var ws=boot.wrap.style;ws.setProperty('--gs',boot.gs.toFixed(3));ws.setProperty('--rs',(boot.gs*1.1).toFixed(3));ws.setProperty('--ro',Math.min(1,boot.gs*1.6).toFixed(3));ws.setProperty('--rr',(t*.012%360).toFixed(1)+'deg');
   if(el>.25&&!boot.lit){boot.lit=1;boot.el.classList.add('lit');}
   if(boot.phase===0&&boot.p>=1){boot.phase=1;boot.t1=t;LG('boot','фаза 1: логотип зник, '+Math.round(el*1000)+' мс від старту анімації');boot.wrap.classList.add('p1');boot.warm=1;dirty=true;}
   else if(boot.phase===1&&t-boot.t1>330){
@@ -583,6 +598,9 @@ function bootStep(t,dt){
   boot.g={cx:cx,cy:cy,hw:gw,hh:gh,r:Math.max(.5,Math.min(rr,gw,gh)),v:1-smooth01(.68,1,u)};
   var hp=rrPts(cx,cy,Math.max(.5,hw-1.5),Math.max(.5,hh-1.5),Math.max(.5,rr-1.5),12);
   boot.el.style.clipPath='polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,'+hp.join(',')+','+hp[0]+')';
+  var ro=smooth01(.03,.09,u)*(1-smooth01(.6,1,u)),pad=12+18*e;
+  if(boot.ring){var rs=boot.ring.style;rs.opacity=ro.toFixed(3);rs.left=(cx-gw-pad).toFixed(1)+'px';rs.top=(cy-gh-pad).toFixed(1)+'px';rs.width=(2*(gw+pad)).toFixed(1)+'px';rs.height=(2*(gh+pad)).toFixed(1)+'px';rs.borderRadius=(Math.min(gw,gh,rr)+pad).toFixed(1)+'px';}
+  var ws2=boot.wrap.style;ws2.setProperty('--rs',(.5+4.2*e).toFixed(3));ws2.setProperty('--ro',(smooth01(.02,.1,u)*(1-smooth01(.45,.9,u))).toFixed(3));ws2.setProperty('--rr',(t*.012%360).toFixed(1)+'deg');
   if(u>=.55)boot.hold=0;
   if(u>=1){LG('boot','кінець завантаження');boot.on=0;boot.el.style.display='none';dirty=true;}
  }

@@ -36,7 +36,7 @@ function openMore(){
  var w=Math.round(Math.min(VW-28,360)*.82),el=menu.el;
  el.className='more';el.innerHTML=moreHtml();el.style.display='block';el.style.width=w+'px';el.style.height='auto';el.style.left='-9999px';
  var safeT=SAFE.t;
- var avail=DR.top-14-12-Math.max(safeT,20),h=Math.min(el.scrollHeight,avail);
+ var avail=DR.top-14-12-Math.max(safeT,20)-60,h=Math.min(el.scrollHeight,avail);
  var c=cells(),ax=c.cx(slotOf[3]),ay=DR.top+DR.height/2;
  showMenu('more',el.innerHTML,{x:DR.left+DR.width-w,y:DR.top-12-h,w:w,h:h},ax,ay,62);
  menu.shade.style.bottom='auto';menu.shade.style.height=Math.max(0,DR.top-4)+'px';
@@ -192,7 +192,7 @@ function curSheetOn(){return !!curSheet&&sheetP.on===1;}
 function layoutSheet(){
  if(!curSheet)return;
  var el=curSheet.el,body=curSheet.body,m=vvm(),kb=(VH-(m.t+m.h))>100,w=Math.min(VW-20,520);
- var bottom=m.t+m.h-10-(kb?0:SAFE.b),maxH=Math.max(200,bottom-Math.max(SAFE.t,14)-10);
+ var bottom=m.t+m.h-10-(kb?0:SAFE.b),maxH=Math.max(200,bottom-Math.max(SAFE.t,14)-60);
  el.style.width=w+'px';el.style.height='auto';body.style.height='auto';
  var h=Math.min(body.scrollHeight,maxH);
  el.style.height=h+'px';body.style.height='100%';
@@ -567,3 +567,26 @@ LG('main','інтерфейс ініціалізовано');
   location.replace(location.pathname+'?b='+encodeURIComponent(m[1]));
  }).catch(function(e){LG('update','перевірка оновлення не вдалась: '+e);});
 })();
+
+/* утримання на операції або боргу: меню «Редагувати / Видалити» (видалення з підтвердженням) */
+var LP={t:0,el:null,x:0,y:0,fired:0};
+root.addEventListener('pointerdown',function(e){
+ var r=e.target.closest&&e.target.closest('[data-act=tx],[data-act=dperson],[data-act=dedit]');if(!r)return;
+ LP.el=r;LP.x=e.clientX;LP.y=e.clientY;LP.fired=0;clearTimeout(LP.t);
+ LP.t=setTimeout(function(){if(LP.el!==r)return;LP.fired=1;longPress(r);},520);
+});
+root.addEventListener('pointermove',function(e){if(LP.el&&Math.hypot(e.clientX-LP.x,e.clientY-LP.y)>8){clearTimeout(LP.t);LP.el=null;}});
+['pointerup','pointercancel'].forEach(function(n){root.addEventListener(n,function(){clearTimeout(LP.t);LP.el=null;});});
+root.addEventListener('click',function(e){if(LP.fired){LP.fired=0;e.stopPropagation();e.preventDefault();}},true);
+function longPress(r){
+ var a=r.dataset.act,id=r.dataset.id,isTx=a==='tx';LG('ui','утримання: '+a+' '+id);
+ openDropdown(r,[{v:'edit',l:'Редагувати'},{v:'del',l:'Видалити'}],'',function(v){
+  if(v==='edit'){try{if(isTx)app.editTransaction(id);else app.editDebt(id);}catch(err){toast(err.message||'Помилка');}return;}
+  setTimeout(function(){openDropdown(r,[{v:'yes',l:isTx?'Так, видалити операцію':'Так, видалити борг'},{v:'no',l:'Скасувати'}],'',function(v2){
+   if(v2!=='yes')return;
+   try{if(isTx)fin.deleteTransaction(id);else fin.deleteDebt(id);toast('Видалено');}catch(err){toast(err.message||'Помилка');}
+  });},250);
+ });
+}
+/* трекпад/колесо над тікером — прокручує тікер */
+tickerEl.addEventListener('wheel',function(e){e.preventDefault();tkOff+=e.deltaX+e.deltaY;tkVel=0;tkPause=performance.now()+700;},{passive:false});

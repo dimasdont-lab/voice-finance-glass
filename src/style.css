@@ -129,15 +129,20 @@ input{font:inherit;color:inherit}
 #boot{position:fixed;inset:0;width:var(--sw,auto);height:var(--sh,auto);z-index:15;background:#050507}
 #boot .bwrap{position:absolute;left:50%;top:46%;width:0;height:0}
 #boot .bglow{position:absolute;left:-170px;top:-170px;width:340px;height:340px;border-radius:50%;opacity:0;transform:scale(var(--gs,1));
- background:radial-gradient(closest-side,rgba(255,64,76,.7),rgba(255,50,64,.26) 48%,rgba(255,40,60,0) 76%);filter:blur(8px);
- animation:bGlowIn 1.2s ease-out .5s forwards;transition:transform .3s cubic-bezier(.3,0,.2,1),opacity .3s,filter .3s}
+ background:radial-gradient(circle,rgba(255,236,236,1) 0,rgba(255,52,52,1) 9%,rgba(255,0,24,.9) 19%,rgba(235,0,22,.42) 40%,rgba(200,0,18,0) 68%);mix-blend-mode:screen;
+ animation:bGlowIn 1.2s ease-out .5s forwards;transition:opacity .3s}
+#boot .bglow::after{content:"";position:absolute;left:-70px;top:-70px;right:-70px;bottom:-70px;border-radius:50%;background:radial-gradient(circle,rgba(255,0,24,.6),rgba(255,0,24,0) 62%);filter:blur(18px)}
+#boot .brays{position:absolute;left:-270px;top:-270px;width:540px;height:540px;border-radius:50%;pointer-events:none;opacity:var(--ro,0);transform:scale(var(--rs,1)) rotate(var(--rr,0deg));
+ background:repeating-conic-gradient(from 0deg,rgba(255,34,44,.65) 0deg 2.2deg,rgba(255,34,44,0) 2.2deg 10deg);mix-blend-mode:screen;filter:blur(1.2px);
+ -webkit-mask-image:radial-gradient(circle,transparent 0,transparent 15%,#000 22%,rgba(0,0,0,.5) 42%,transparent 68%);mask-image:radial-gradient(circle,transparent 0,transparent 15%,#000 22%,rgba(0,0,0,.5) 42%,transparent 68%)}
+#boot .bring{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;opacity:0;
+ box-shadow:0 0 0 2px rgba(255,90,90,.95),0 0 16px 6px rgba(255,20,30,.95),0 0 56px 20px rgba(255,0,20,.62),0 0 140px 44px rgba(220,0,20,.32)}
 #boot .blogo{position:absolute;left:-58px;top:-58px;width:116px;height:116px;border-radius:26px;overflow:hidden;opacity:1;transform:scale(2.4);will-change:transform;
  box-shadow:0 0 0 1px rgba(255,255,255,.1)}
 #boot.lit .blogo{box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 36px rgba(255,70,80,.4);transition:box-shadow .7s ease-out}
 #boot .blogo img{display:block;width:100%;height:100%}
 #boot .bbar{display:none}
-#boot .bwrap.p1 .bglow{animation:none;opacity:.95;transform:scale(.4);filter:blur(8px) brightness(1.8)}
-#boot .bwrap.p2 .bglow{animation:none;opacity:0;transform:scale(2.7);filter:blur(14px);transition:transform 1s cubic-bezier(.2,.7,.3,1),opacity .9s ease-out .1s,filter 1s}
+#boot .bwrap.p2 .bglow{opacity:0;transition:opacity .12s}
 #boot .bwrap.p1 .blogo,#boot .bwrap.p2 .blogo{opacity:0}
 #boot .bwrap.p1 .bbar,#boot .bwrap.p2 .bbar{opacity:0}
 /* перший кадр = заставка iOS (apple-touch-startup-image): логотип одразу великий, потім плавно зменшується до звичного розміру. Значення 2.4 має збігатися з tools/make-splash.ps1 */
@@ -216,3 +221,13 @@ html.lv #bg,html.lv #glt,html.lv #pages,html.lv #boot,html.lv #scrim,html.lv #ed
 /* ---------- скляні лінії графіків і прогрес-бари: малює WebGL-шар плиток (html.glines.gt). Вимкнення — у Налаштуваннях ---------- */
 html.glines.gt .bar i,html.glines.gt .cat .b i{background:transparent!important}
 html.glines.gt .bar,html.glines.gt .cat .b{background:rgba(255,255,255,.05);box-shadow:inset 0 1px 2px rgba(0,0,0,.45)}
+
+/* скляні значки з літерою і кнопки сортування / «+ Борг»: скло малює шар плиток */
+.gt .page .ic{background:none!important}
+.gt .page .pillb{background:none;border-color:rgba(255,255,255,.07)}
+.page .row{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+
+/* тікер на всю ширину: скло з виворотними закругленнями до країв екрана малює шар плиток; вміст сторінок зникає під тікером */
+.gt #ticker{left:0;right:0;border-radius:0;border:0;background:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.gt #topblur{display:none}
+.gt #pages{-webkit-mask-image:linear-gradient(to bottom,transparent 0,transparent calc(env(safe-area-inset-top,0px) + 64px),#000 calc(env(safe-area-inset-top,0px) + 78px));mask-image:linear-gradient(to bottom,transparent 0,transparent calc(env(safe-area-inset-top,0px) + 64px),#000 calc(env(safe-area-inset-top,0px) + 78px))}
