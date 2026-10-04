@@ -146,7 +146,7 @@ function sheetHtml(kind,ov){
    '<div class="fr"><label>Місячний ліміт, zł</label><input data-g="goal" inputmode="decimal" value="'+esc(g)+'" autocomplete="off"></div>'+
    '<button class="btnw" data-s="goal">Зберегти ліміт</button>'+
    '<button class="btnw" data-s="markets">Валюти в бігучій строці</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button>'+
-   '<button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
+   '<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
    '<div class="mkinfo" style="padding-top:10px">Збірка: '+esc(window.__VF_BUILD||'?')+(navigator.standalone&&window.__vfFirstH&&screen.height-window.__vfFirstH>=40?'<br><span style="color:var(--ac)">Цей запуск почався з вікном '+window.__vfFirstH+' замість '+screen.height+': iOS відкрив застосунок з геометрією старої іконки. Видаліть іконку з робочого столу, оновіть сторінку в Safari й додайте іконку знову.</span>':'')+'</div>'+
    '<button class="btnw" data-s="export">Експорт JSON</button><button class="btnw" data-s="seed">Додати тестові дані для перегляду</button>'+
    '<button class="btnw dng" data-s="clear">Очистити операції та борги</button><div class="err" data-err></div>';
@@ -273,6 +273,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='export')exportData();
   else if(s==='logshare')logShare();
   else if(s==='logcopy')logCopy();
+  else if(s==='glines'){setGlassLines(!GLINES);t.textContent=glinesLabel();sheetStale();}
   else if(s==='seed'){seedDemo();toast('Додано тестові дані');}
   else if(s==='clear'){if(!delArm){delArm=1;t.textContent='Натисніть ще раз: очистити все';sheetStale();setTimeout(function(){delArm=0;},3500);}else{delArm=0;app.clearData({confirmed:true});toast('Очищено');}}
   else if(s==='delcat'){fin.deleteCategory(t.dataset.id);}

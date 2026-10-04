@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-04 00:55 UTC';
+<script>window.__VF_BUILD='2026-10-04 01:01 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -286,6 +286,15 @@ html.lv #bg,html.lv #glt,html.lv #pages,html.lv #boot,html.lv #scrim,html.lv #ed
 /* вкладене скло: кнопки «Доходи/Витрати», міні-картки, круглі значки стрілок */
 .gt .split>button{border-color:rgba(255,255,255,.06)}
 .gt .dot.up,.gt .dot.dn{background:none}
+
+/* ---------- скляні прогрес-бари (вимикаються разом зі скляними лініями: html.glines) ---------- */
+html.glines .bar,html.glines .cat .b{background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(255,255,255,.07));box-shadow:inset 0 1px 2px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.07)}
+html.glines .bar{height:12px;border-radius:6px}
+html.glines .cat .b{height:10px;border-radius:5px}
+html.glines .bar i,html.glines .cat .b i{position:relative;border-radius:inherit;opacity:.88}
+html.glines .bar i{background:linear-gradient(90deg,rgba(255,154,158,.8),rgba(255,69,79,.85));box-shadow:0 0 10px rgba(255,90,100,.35)}
+html.glines .bar i::after,html.glines .cat .b i::after{content:"";position:absolute;left:0;top:0;right:0;bottom:0;border-radius:inherit;
+ background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.1) 45%,rgba(255,255,255,0) 60%,rgba(0,0,0,.12));box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -2369,13 +2378,29 @@ function setBlocks(i,list){
 function B_(c,h){return{c:c,h:h};}
 
 function todayStr(){return new Date().toLocaleDateString('uk-UA',{weekday:'long',day:'numeric',month:'long'});}
+/* ---- скляні лінії графіків і прогрес-барів. ВІДМІНИТИ: у Налаштуваннях кнопка «Скляні лінії графіків»,
+   або назавжди — замінити GLINES_DEFAULT на false. Усі стилі під html.glines у style.css ---- */
+var GLINES_DEFAULT=true;
+var GLINES=(function(){try{var v=localStorage.getItem('vf-glines');return v===null?GLINES_DEFAULT:v==='1';}catch(e){return GLINES_DEFAULT;}})();
+document.documentElement.classList.toggle('glines',GLINES);
+function glinesLabel(){return'Скляні лінії графіків: '+(GLINES?'увімкнено':'вимкнено');}
+function setGlassLines(on){GLINES=!!on;try{localStorage.setItem('vf-glines',on?'1':'0');}catch(e){}document.documentElement.classList.toggle('glines',GLINES);LG('ui','скляні лінії: '+(GLINES?'увімк.':'вимк.'));renderPages();renderTicker();}
+function lineSvg(d,col,w,ex){
+ var a=' fill="none" stroke-linejoin="round" stroke-linecap="round"'+(ex||'');
+ if(!GLINES)return'<path d="'+d+'"'+a+' stroke="'+col+'" stroke-width="'+w+'"/>';
+ /* скляна трубка: ореол, тіло, світле ядро, блік зверху */
+ return'<path d="'+d+'"'+a+' stroke="'+col+'" stroke-opacity=".16" stroke-width="'+(w*3.4).toFixed(1)+'"/>'+
+  '<path d="'+d+'"'+a+' stroke="'+col+'" stroke-opacity=".55" stroke-width="'+(w*1.7).toFixed(1)+'"/>'+
+  '<path d="'+d+'"'+a+' stroke="#fff" stroke-opacity=".28" stroke-width="'+(w*.8).toFixed(1)+'"/>'+
+  '<path d="'+d+'"'+a+' stroke="#fff" stroke-opacity=".7" stroke-width="'+(w*.4).toFixed(2)+'" transform="translate(0,-'+(w*.45).toFixed(2)+')"/>';
+}
 function spark(points,id){
  var v=(points||[]).map(function(p){return p.value;}).filter(isFinite);
  if(v.length<2)v=[0,0];
  var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),rg=mx-mn||1,W=320,H=84,pad=6,col=v[v.length-1]>=v[0]?'#66d896':'#ff7d83';
  var xy=v.map(function(y,i){return[(i/(v.length-1))*W,pad+(H-2*pad)*(1-(y-mn)/rg)];});
  var d=xy.map(function(p,i){return(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' ');
- return'<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".38"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#g'+id+')"/><path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+ return'<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".38"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#g'+id+')"/>'+lineSvg(d,col,2.4,'')+'</svg>';
 }
 function txRow(t,first){
  var cat=catName(t.category),title=t.client||(t.note&&t.note.length<34?t.note:cat),inc=t.type==='income';
@@ -2402,7 +2427,7 @@ function sparkMini(v,up){
  if(!v)return'<svg class="sp" viewBox="0 0 54 26" width="54" height="26"></svg>';
  var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),rg=mx-mn||1,W=54,H=26,p=3;
  var pts=v.map(function(y,i){return(i/(v.length-1)*W).toFixed(1)+','+(p+(H-2*p)*(1-(y-mn)/rg)).toFixed(1);}).join(' ');
- return'<svg class="sp" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'"><polyline fill="none" stroke="'+(up?'#66d896':'#ff7d83')+'" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" points="'+pts+'"/></svg>';
+ return'<svg class="sp" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'">'+lineSvg('M'+pts.split(' ').join(' L'),up?'#66d896':'#ff7d83',1.8,'')+'</svg>';
 }
 function renderTicker(){
  var ids=MK.selection,d=MK.data,items=ids.filter(function(id){return d[id]&&isFinite(d[id].value);}).map(function(id){
@@ -3445,7 +3470,7 @@ function mkChartHtml(pts,up){
  var d='M'+xy.join(' L');
  var grid='';for(i=0;i<3;i++){var gy=(pd+(H-2*pd)*i/2).toFixed(1);grid+='<line x1="0" x2="'+W+'" y1="'+gy+'" y2="'+gy+'" stroke="rgba(255,255,255,.08)" stroke-width="1" vector-effect="non-scaling-stroke"/>';}
  return'<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="mpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".32"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+grid+
-  '<path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#mpg)"/><path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>'+
+  '<path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#mpg)"/>'+lineSvg(d,col,2.2,' vector-effect="non-scaling-stroke"')+'</svg>'+
   '<span class="mx">'+esc(mkFmt(mx))+'</span><span class="mn">'+esc(mkFmt(mn))+'</span>';
 }
 function blocksMarket(){
@@ -3631,7 +3656,7 @@ function sheetHtml(kind,ov){
    '<div class="fr"><label>Місячний ліміт, zł</label><input data-g="goal" inputmode="decimal" value="'+esc(g)+'" autocomplete="off"></div>'+
    '<button class="btnw" data-s="goal">Зберегти ліміт</button>'+
    '<button class="btnw" data-s="markets">Валюти в бігучій строці</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button>'+
-   '<button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
+   '<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
    '<div class="mkinfo" style="padding-top:10px">Збірка: '+esc(window.__VF_BUILD||'?')+(navigator.standalone&&window.__vfFirstH&&screen.height-window.__vfFirstH>=40?'<br><span style="color:var(--ac)">Цей запуск почався з вікном '+window.__vfFirstH+' замість '+screen.height+': iOS відкрив застосунок з геометрією старої іконки. Видаліть іконку з робочого столу, оновіть сторінку в Safari й додайте іконку знову.</span>':'')+'</div>'+
    '<button class="btnw" data-s="export">Експорт JSON</button><button class="btnw" data-s="seed">Додати тестові дані для перегляду</button>'+
    '<button class="btnw dng" data-s="clear">Очистити операції та борги</button><div class="err" data-err></div>';
@@ -3758,6 +3783,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='export')exportData();
   else if(s==='logshare')logShare();
   else if(s==='logcopy')logCopy();
+  else if(s==='glines'){setGlassLines(!GLINES);t.textContent=glinesLabel();sheetStale();}
   else if(s==='seed'){seedDemo();toast('Додано тестові дані');}
   else if(s==='clear'){if(!delArm){delArm=1;t.textContent='Натисніть ще раз: очистити все';sheetStale();setTimeout(function(){delArm=0;},3500);}else{delArm=0;app.clearData({confirmed:true});toast('Очищено');}}
   else if(s==='delcat'){fin.deleteCategory(t.dataset.id);}

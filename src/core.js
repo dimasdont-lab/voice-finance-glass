@@ -46,13 +46,29 @@ function setBlocks(i,list){
 function B_(c,h){return{c:c,h:h};}
 
 function todayStr(){return new Date().toLocaleDateString('uk-UA',{weekday:'long',day:'numeric',month:'long'});}
+/* ---- скляні лінії графіків і прогрес-барів. ВІДМІНИТИ: у Налаштуваннях кнопка «Скляні лінії графіків»,
+   або назавжди — замінити GLINES_DEFAULT на false. Усі стилі під html.glines у style.css ---- */
+var GLINES_DEFAULT=true;
+var GLINES=(function(){try{var v=localStorage.getItem('vf-glines');return v===null?GLINES_DEFAULT:v==='1';}catch(e){return GLINES_DEFAULT;}})();
+document.documentElement.classList.toggle('glines',GLINES);
+function glinesLabel(){return'Скляні лінії графіків: '+(GLINES?'увімкнено':'вимкнено');}
+function setGlassLines(on){GLINES=!!on;try{localStorage.setItem('vf-glines',on?'1':'0');}catch(e){}document.documentElement.classList.toggle('glines',GLINES);LG('ui','скляні лінії: '+(GLINES?'увімк.':'вимк.'));renderPages();renderTicker();}
+function lineSvg(d,col,w,ex){
+ var a=' fill="none" stroke-linejoin="round" stroke-linecap="round"'+(ex||'');
+ if(!GLINES)return'<path d="'+d+'"'+a+' stroke="'+col+'" stroke-width="'+w+'"/>';
+ /* скляна трубка: ореол, тіло, світле ядро, блік зверху */
+ return'<path d="'+d+'"'+a+' stroke="'+col+'" stroke-opacity=".16" stroke-width="'+(w*3.4).toFixed(1)+'"/>'+
+  '<path d="'+d+'"'+a+' stroke="'+col+'" stroke-opacity=".55" stroke-width="'+(w*1.7).toFixed(1)+'"/>'+
+  '<path d="'+d+'"'+a+' stroke="#fff" stroke-opacity=".28" stroke-width="'+(w*.8).toFixed(1)+'"/>'+
+  '<path d="'+d+'"'+a+' stroke="#fff" stroke-opacity=".7" stroke-width="'+(w*.4).toFixed(2)+'" transform="translate(0,-'+(w*.45).toFixed(2)+')"/>';
+}
 function spark(points,id){
  var v=(points||[]).map(function(p){return p.value;}).filter(isFinite);
  if(v.length<2)v=[0,0];
  var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),rg=mx-mn||1,W=320,H=84,pad=6,col=v[v.length-1]>=v[0]?'#66d896':'#ff7d83';
  var xy=v.map(function(y,i){return[(i/(v.length-1))*W,pad+(H-2*pad)*(1-(y-mn)/rg)];});
  var d=xy.map(function(p,i){return(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' ');
- return'<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".38"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#g'+id+')"/><path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+ return'<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".38"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#g'+id+')"/>'+lineSvg(d,col,2.4,'')+'</svg>';
 }
 function txRow(t,first){
  var cat=catName(t.category),title=t.client||(t.note&&t.note.length<34?t.note:cat),inc=t.type==='income';
@@ -79,7 +95,7 @@ function sparkMini(v,up){
  if(!v)return'<svg class="sp" viewBox="0 0 54 26" width="54" height="26"></svg>';
  var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),rg=mx-mn||1,W=54,H=26,p=3;
  var pts=v.map(function(y,i){return(i/(v.length-1)*W).toFixed(1)+','+(p+(H-2*p)*(1-(y-mn)/rg)).toFixed(1);}).join(' ');
- return'<svg class="sp" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'"><polyline fill="none" stroke="'+(up?'#66d896':'#ff7d83')+'" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" points="'+pts+'"/></svg>';
+ return'<svg class="sp" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'">'+lineSvg('M'+pts.split(' ').join(' L'),up?'#66d896':'#ff7d83',1.8,'')+'</svg>';
 }
 function renderTicker(){
  var ids=MK.selection,d=MK.data,items=ids.filter(function(id){return d[id]&&isFinite(d[id].value);}).map(function(id){

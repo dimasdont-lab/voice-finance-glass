@@ -72,7 +72,7 @@ function mkChartHtml(pts,up){
  var d='M'+xy.join(' L');
  var grid='';for(i=0;i<3;i++){var gy=(pd+(H-2*pd)*i/2).toFixed(1);grid+='<line x1="0" x2="'+W+'" y1="'+gy+'" y2="'+gy+'" stroke="rgba(255,255,255,.08)" stroke-width="1" vector-effect="non-scaling-stroke"/>';}
  return'<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><defs><linearGradient id="mpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".32"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+grid+
-  '<path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#mpg)"/><path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>'+
+  '<path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#mpg)"/>'+lineSvg(d,col,2.2,' vector-effect="non-scaling-stroke"')+'</svg>'+
   '<span class="mx">'+esc(mkFmt(mx))+'</span><span class="mn">'+esc(mkFmt(mn))+'</span>';
 }
 function blocksMarket(){
