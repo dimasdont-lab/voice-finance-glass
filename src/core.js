@@ -53,6 +53,10 @@ var GLINES=(function(){try{var v=localStorage.getItem('vf-glines');return v===nu
 document.documentElement.classList.toggle('glines',GLINES);
 function glinesLabel(){return'Скляні лінії графіків: '+(GLINES?'увімкнено':'вимкнено');}
 function setGlassLines(on){GLINES=!!on;try{localStorage.setItem('vf-glines',on?'1':'0');}catch(e){}document.documentElement.classList.toggle('glines',GLINES);LG('ui','скляні лінії: '+(GLINES?'увімк.':'вимк.'));tlAllStale();renderPages();renderTicker();}
+/* скло під графіком: 1 — А (уся площа під лінією), 2 — Б (смуга під лінією), 0 — вимкнено. Перемикач у Налаштуваннях */
+var AREA_MODE=(function(){try{var v=localStorage.getItem('vf-area');return v===null?1:+v||0;}catch(e){return 1;}})();
+function areaLabel(){return'Скло під графіком: '+(AREA_MODE===1?'площа (А)':AREA_MODE===2?'смуга (Б)':'вимкнено');}
+function cycleArea(){AREA_MODE=AREA_MODE===1?2:AREA_MODE===2?0:1;try{localStorage.setItem('vf-area',String(AREA_MODE));}catch(e){}LG('ui',areaLabel());dirty=true;}
 function lineSvg(d,col,w,ex,glass){
  if(GLINES&&glass&&GLASS_LINE_OK)return'';   /* лінію малює WebGL-шар як скляну трубку (tiles.js) */
  return'<path d="'+d+'" fill="none" stroke-linejoin="round" stroke-linecap="round"'+(ex||'')+' stroke="'+col+'" stroke-width="'+w+'"/>';
