@@ -48,5 +48,6 @@ ${r('src/ui.js')}
 
 fs.mkdirSync(path.join(root, 'docs'), {recursive: true});
 fs.writeFileSync(path.join(root, 'docs/index.html'), html);
+fs.writeFileSync(path.join(root, 'docs/version.txt'), BUILD);
 console.log('build', BUILD);
 console.log('docs/index.html', (html.length / 1024).toFixed(0) + ' KB');

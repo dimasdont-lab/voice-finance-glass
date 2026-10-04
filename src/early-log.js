@@ -43,8 +43,8 @@
  [300,1000,2500,5000,9000].forEach(function(t){setTimeout(function(){probe(t+'ms');},t);});
  /* вибірка щокадру перші 8 с: пишемо лише зміни */
  var last='',fr=0,T0=performance.now();
- (function tick(){var s=snap();fr++;if(s!==last){last=s;log('кадр#'+fr,s);}if(performance.now()-T0<8000)requestAnimationFrame(tick);else log('вибірка-кінець','кадрів '+fr);})();
- var sv=setInterval(save,1000);setTimeout(function(){clearInterval(sv);save();},16000);
+ (function tick(){fr++;if(fr%4===1){var s=snap();if(s!==last){last=s;log('кадр#'+fr,s);}}if(performance.now()-T0<8000)requestAnimationFrame(tick);else log('вибірка-кінець','кадрів '+fr);})();
+ var sv=setInterval(save,3000);setTimeout(function(){clearInterval(sv);save();},16000);
  /* живий рядок на екрані під час запуску (якщо діагностику ввімкнено) — для запису екрана */
  if(dbg){var mk=function(){if(ov||!document.body)return;ov=document.createElement('pre');ov.style.cssText='position:fixed;left:6px;right:6px;bottom:calc(env(safe-area-inset-bottom,0px) + 100px);z-index:100;margin:0;padding:5px 7px;border-radius:8px;background:rgba(0,0,0,.8);color:#ff0;font:10px/1.3 ui-monospace,Menlo,monospace;pointer-events:none;white-space:pre-wrap';document.body.appendChild(ov);ov.textContent=snap();};
   document.addEventListener('DOMContentLoaded',mk,true);setTimeout(mk,0);setTimeout(function(){if(ov){ov.remove();ov=null;}},12000);}

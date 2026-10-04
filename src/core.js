@@ -138,7 +138,7 @@ function renderTicker(){
   html='<div class="tmsg">'+esc(msg)+'</div>';
  }else{var one=items.join(''),all='';for(var i=0;i<MK_COPIES;i++)all+=one;html=all;loop='1';}
  if(tickerTrk._h===html)return;
- tickerTrk._h=html;tickerTrk.innerHTML=html;if(loop)tickerTrk.dataset.loop=loop;else delete tickerTrk.dataset.loop;
+ tickerTrk._h=html;tickerTrk._ver=(tickerTrk._ver||0)+1;tickerTrk.innerHTML=html;if(loop)tickerTrk.dataset.loop=loop;else delete tickerTrk.dataset.loop;
 }
 /* ---- Дім ---- */
 function blocksHome(){

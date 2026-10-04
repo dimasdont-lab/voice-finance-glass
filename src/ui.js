@@ -585,13 +585,18 @@ LG('main','інтерфейс ініціалізовано');
 /* автооновлення: iOS тримає сторінку в кеші до 10 хв; при запуску беремо свіжу копію без кешу, і якщо збірка новіша — один раз перезавантажуємось за новою адресою */
 (function(){
  try{if(sessionStorage.getItem('vf-upd'))return;}catch(e){}
- fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){
-  var m=t.match(/__VF_BUILD='([^']+)'/);if(!m||m[1]===window.__VF_BUILD)return;
-  LG('update','є нова збірка '+m[1]+' (зараз '+window.__VF_BUILD+'): перезавантаження');
-  try{sessionStorage.setItem('vf-upd','1');}catch(e){}
-  if(window.__vfSave)window.__vfSave();
-  location.replace(location.pathname+'?b='+encodeURIComponent(m[1]));
- }).catch(function(e){LG('update','перевірка оновлення не вдалась: '+e);});
+ function chk(){
+  if(boot.on){setTimeout(chk,400);return;}
+  var base=location.pathname.replace(/[^\/]*$/,'');
+  fetch(base+'version.txt?check='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();}).then(function(t){
+   var v=String(t).trim();if(!v||v===window.__VF_BUILD)return;
+   LG('update','є нова збірка '+v+' (зараз '+window.__VF_BUILD+'): перезавантаження');
+   try{sessionStorage.setItem('vf-upd','1');}catch(e){}
+   if(window.__vfSave)window.__vfSave();
+   location.replace(location.pathname+'?b='+encodeURIComponent(v));
+  }).catch(function(e){LG('update','перевірка оновлення не вдалась: '+e);});
+ }
+ chk();
 })();
 
 /* утримання на операції або боргу: меню «Редагувати / Видалити» (видалення з підтвердженням) */
