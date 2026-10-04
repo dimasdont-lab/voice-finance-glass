@@ -550,3 +550,14 @@ tickerEl.addEventListener('pointermove',function(e){if(lpP&&Math.hypot(e.clientX
 ['pointerup','pointercancel'].forEach(function(n){tickerEl.addEventListener(n,function(){clearTimeout(lpT);});});
 if(/[?&]debug/.test(location.search)||(function(){try{return localStorage.getItem('vf-debug');}catch(e){return null;}})())hudOn();
 LG('main','інтерфейс ініціалізовано');
+/* автооновлення: iOS тримає сторінку в кеші до 10 хв; при запуску беремо свіжу копію без кешу, і якщо збірка новіша — один раз перезавантажуємось за новою адресою */
+(function(){
+ try{if(sessionStorage.getItem('vf-upd'))return;}catch(e){}
+ fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){
+  var m=t.match(/__VF_BUILD='([^']+)'/);if(!m||m[1]===window.__VF_BUILD)return;
+  LG('update','є нова збірка '+m[1]+' (зараз '+window.__VF_BUILD+'): перезавантаження');
+  try{sessionStorage.setItem('vf-upd','1');}catch(e){}
+  if(window.__vfSave)window.__vfSave();
+  location.replace(location.pathname+'?b='+encodeURIComponent(m[1]));
+ }).catch(function(e){LG('update','перевірка оновлення не вдалась: '+e);});
+})();

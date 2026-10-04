@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-04 00:52 UTC';
+<script>window.__VF_BUILD='2026-10-04 00:55 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -4035,5 +4035,16 @@ tickerEl.addEventListener('pointermove',function(e){if(lpP&&Math.hypot(e.clientX
 ['pointerup','pointercancel'].forEach(function(n){tickerEl.addEventListener(n,function(){clearTimeout(lpT);});});
 if(/[?&]debug/.test(location.search)||(function(){try{return localStorage.getItem('vf-debug');}catch(e){return null;}})())hudOn();
 LG('main','інтерфейс ініціалізовано');
+/* автооновлення: iOS тримає сторінку в кеші до 10 хв; при запуску беремо свіжу копію без кешу, і якщо збірка новіша — один раз перезавантажуємось за новою адресою */
+(function(){
+ try{if(sessionStorage.getItem('vf-upd'))return;}catch(e){}
+ fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}).then(function(r){return r.text();}).then(function(t){
+  var m=t.match(/__VF_BUILD='([^']+)'/);if(!m||m[1]===window.__VF_BUILD)return;
+  LG('update','є нова збірка '+m[1]+' (зараз '+window.__VF_BUILD+'): перезавантаження');
+  try{sessionStorage.setItem('vf-upd','1');}catch(e){}
+  if(window.__vfSave)window.__vfSave();
+  location.replace(location.pathname+'?b='+encodeURIComponent(m[1]));
+ }).catch(function(e){LG('update','перевірка оновлення не вдалась: '+e);});
+})();
 
 })();</script></body></html>
