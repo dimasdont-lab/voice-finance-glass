@@ -415,19 +415,47 @@ function step(h,target){
 var sy=[],ly=[],sv=0,sIdx=0,sMax=0,sp=null,lastMotion=0,scrimV=0,scrimT=0;
 for(var qq=0;qq<NP;qq++)sy.push(0);
 function maxScroll(i){return Math.max(0,inn[i].offsetHeight-VH);}
+/* ---- перегортання вкладок дока свайпом: Аналітика ↔ Борги ↔ Дім → «Додатково». Сторінки їдуть за пальцем ---- */
+var HS={on:0,ca:0,x0:0,vx:0,lx:0,lt:0},hsAt=0;
+function tabSwipeOk(){return sel<=2&&!nav.getState().overlays.length&&mode!==1&&!boot.on&&!menu.on&&!sheetOn;}
+function rbz(x){return x/(1+x*4)*.6;}   /* гумовий опір за крайніми вкладками */
+function hsMove(e){
+ var dx=e.clientX-HS.x0,c=sel-dx/VW;
+ if(c<0)c=-rbz(-c);else if(c>2)c=2+rbz(c-2);
+ HS.ca=c;var dt=Math.max(1,e.timeStamp-HS.lt);HS.vx=.6*HS.vx+.4*((e.clientX-HS.lx)/dt);HS.lx=e.clientX;HS.lt=e.timeStamp;
+}
+function hsEnd(cancel){
+ var dx=HS.lx-HS.x0,v=HS.vx,go=0;HS.on=0;hsAt=performance.now();
+ if(!cancel){
+  if(dx<-VW*.22||(dx<-30&&v<-.45))go=1;else if(dx>VW*.22||(dx>30&&v>.45))go=-1;
+  if(go===1){if(sel<2)actTab(sel+1);else actTab(3);}       /* з «Дім» свайп ліворуч відкриває «Додатково» */
+  else if(go===-1&&sel>0)actTab(sel-1);
+ }
+ LG('swipe','вкладки: dx '+Math.round(dx)+' v '+v.toFixed(2)+' → '+(go===1?'вперед':go===-1?'назад':'на місці'));
+}
 root.addEventListener('pointerdown',function(e){
  if(Math.abs(sel-ca)>0.02)return;
- sIdx=sel;sMax=maxScroll(sel);sv=0;sp={id:e.pointerId,y:e.clientY,t:e.timeStamp,start:e.clientY,cap:false,tg:e.target};
+ sIdx=sel;sMax=maxScroll(sel);sv=0;sp={id:e.pointerId,x0:e.clientX,y:e.clientY,t:e.timeStamp,start:e.clientY,cap:false,h:false,tg:e.target};
 });
 root.addEventListener('pointermove',function(e){
  if(!sp||e.pointerId!==sp.id)return;
- if(!sp.cap){if(Math.abs(e.clientY-sp.start)<6)return;sp.cap=true;try{sp.tg.setPointerCapture(e.pointerId);}catch(_){}}
+ if(sp.h){hsMove(e);return;}
+ if(!sp.cap){
+  var ddx=e.clientX-sp.x0,ddy=e.clientY-sp.start;
+  if(Math.abs(ddx)>10&&Math.abs(ddx)>Math.abs(ddy)*1.3&&tabSwipeOk()&&!(e.target.closest&&e.target.closest('.mchart'))){
+   sp.h=true;HS.on=1;HS.x0=e.clientX;HS.ca=sel;HS.vx=0;HS.lx=e.clientX;HS.lt=e.timeStamp;
+   try{sp.tg.setPointerCapture(e.pointerId);}catch(_){}
+   hsMove(e);return;
+  }
+  if(Math.abs(ddy)<6)return;sp.cap=true;try{sp.tg.setPointerCapture(e.pointerId);}catch(_){}
+ }
  var i=sIdx,dy=e.clientY-sp.y,dt=Math.max(e.timeStamp-sp.t,1),y=sy[i];
  var o=y<0?-y:(y>sMax?y-sMax:0),f=(o>0&&((y<0&&dy>0)||(y>sMax&&dy<0)))?1/(1+o/60):1;
  sy[i]=y-dy*f;sv=0.6*sv+0.4*(-dy/dt*1000);sp.y=e.clientY;sp.t=e.timeStamp;
 });
-function spUp(e){if(sp&&e.pointerId===sp.id)sp=null;}
+function spUp(e){if(sp&&e.pointerId===sp.id){if(sp.h)hsEnd(e.type==='pointercancel');sp=null;}}
 root.addEventListener('pointerup',spUp);root.addEventListener('pointercancel',spUp);
+root.addEventListener('click',function(e){if(performance.now()-hsAt<350){e.stopPropagation();e.preventDefault();}},true);   /* після свайпу клік не спрацьовує */
 root.addEventListener('wheel',function(e){e.preventDefault();sIdx=sel;sMax=maxScroll(sel);sy[sel]=Math.max(0,Math.min(sMax,sy[sel]+e.deltaY));sv=0;},{passive:false});
 function stepScroll(dt){
  var i=sIdx,y=sy[i],act=!!sp;
@@ -605,7 +633,8 @@ function frame(t){
  if(window.__lt){window.__fps=.9*(window.__fps||60)+.1*(1000/Math.max(1,t-window.__lt));}window.__lt=t;
  var dt=Math.min(Math.max((t-last)/1000,0),1/30);last=t;
  var da=sel-ca,moving=false,i;
- if(Math.abs(da)>0.0005){ca+=da*(1-Math.exp(-dt*9));moving=true;}else if(da!==0){ca=sel;moving=true;}
+ if(HS.on){ca=HS.ca;moving=true;}
+ else if(Math.abs(da)>0.0005){ca+=da*(1-Math.exp(-dt*9));moving=true;}else if(da!==0){ca=sel;moving=true;}
  for(i=0;i<NP;i++){var o=i-ca,vis=Math.abs(o)<1,st=vis?'translate3d('+(o*100)+'%,0,0)':'none';
   if(pstyle[i]!==st){pstyle[i]=st;pg[i].style.visibility=vis?'visible':'hidden';inn[i].style.willChange=vis?'transform':'auto';if(vis)pg[i].style.transform=st;}}
  var fl=Math.max(0,Math.min(NP-1,Math.floor(ca))),f2=fl+1;

@@ -412,23 +412,27 @@ bindG(sheetsEl,function(){return(sheetP.on&&curSheet&&!(menu.on&&menu.kind==='dd
 document.addEventListener('click',function(e){if(TG.moved&&(menu.el.contains(e.target)||sheetsEl.contains(e.target))){e.stopPropagation();e.preventDefault();TG.moved=false;}},true);
 window.__dbg=function(){return{ms:menu.s,mo:menu.on,ss:sheetP.s,so:sheetP.on,rp:rec.pg.v,boot:boot.on,bp:boot.phase,fps:window.__fps||0,ca:ca,sel:sel};};
 
-/* ---------- свайп зліва направо від краю — «назад», як в iOS ---------- */
-var EB={on:0,x0:0,y0:0,t0:0,dx:0,P:null};
+/* ---------- свайп від лівого краю праворуч або від правого краю ліворуч — «назад».
+   Працює лише там, де є куди повертатись (вікно, меню або детальна сторінка); на вкладках дока свайп перегортає вкладки ---------- */
+var EB={on:0,x0:0,y0:0,t0:0,dx:0,P:null,side:1};
+function canBack(){var st=nav.getState();return st.overlays.length>0||PAGE_OF[st.screen]>2||menu.on;}
 document.addEventListener('touchstart',function(e){
- var t=e.touches[0];if(e.touches.length!==1||t.clientX>26||mode===1){EB.on=0;return;}
- EB.on=1;EB.x0=t.clientX;EB.y0=t.clientY;EB.t0=e.timeStamp;EB.dx=0;
+ var t=e.touches[0];if(e.touches.length!==1||mode===1){EB.on=0;return;}
+ var side=t.clientX<=26?1:t.clientX>=VW-26?-1:0;
+ if(!side||!canBack()){EB.on=0;return;}
+ EB.on=1;EB.side=side;EB.x0=t.clientX;EB.y0=t.clientY;EB.t0=e.timeStamp;EB.dx=0;
  EB.P=(menu.on&&menu.kind==='dd')?menu:(sheetP.on&&curSheet)?sheetP:menu.on?menu:null;
 },{passive:true});
 document.addEventListener('touchmove',function(e){
  if(!EB.on)return;var t=e.touches[0];if(!t)return;var dx=t.clientX-EB.x0,dy=t.clientY-EB.y0;
  if(Math.abs(dy)>Math.abs(dx)*1.2&&Math.abs(dy)>16){EB.on=0;if(EB.P){EB.P.tgt.x=0;}return;}
- EB.dx=dx;if(EB.P&&dx>0){EB.P.tgt.x=Math.min(90,dx*.45);}
+ EB.dx=dx;var sd=dx*EB.side;if(EB.P&&sd>0){EB.P.tgt.x=EB.side*Math.min(90,sd*.45);}
 },{passive:true});
 function edgeEnd(e){
  if(!EB.on)return;EB.on=0;
- var dx=EB.dx,dt=Math.max(1,e.timeStamp-EB.t0);
+ var sd=EB.dx*EB.side,dt=Math.max(1,e.timeStamp-EB.t0);
  if(EB.P)EB.P.tgt.x=0;
- if(dx>70||(dx>34&&dx/dt>.55)){TG.moved=true;
+ if(sd>70||(sd>34&&sd/dt>.55)){TG.moved=true;LG('swipe','назад від '+(EB.side>0?'лівого':'правого')+' краю');
   try{if(menu.on&&menu.kind==='dd')closeMenu();else app.back();}catch(err){console.error(err);}
  }
 }
