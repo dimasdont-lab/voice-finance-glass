@@ -29,7 +29,7 @@ function moreHtml(){
   return s+'<button class="mr" data-m="mpeople" data-v="'+dir+'"><span class="t" style="color:rgba(255,255,255,.75)">Усі ›</span></button>';
  }
  h+=people('Клієнти',m.clients,'receivable');h+=people('Кредитори',m.creditors,'owed');
- h+='<div class="mh">Додатково</div><button class="mr" data-m="malltx"><span class="t">Усі операції</span></button><button class="mr" data-m="msettings"><span class="t">Налаштування</span></button>';
+ h+='<div class="mh">Додатково</div><button class="mr" data-m="malltx"><span class="t">Усі операції</span></button><button class="gbtn" data-m="msettings">Налаштування</button><button class="gbtn red" data-m="mwipe">Стерти всі записи</button>';
  return h;
 }
 function openMore(){
@@ -64,6 +64,7 @@ menu.el.addEventListener('click',function(e){
  else if(m==='mpeople')nav.openPeople(v);
  else if(m==='malltx'){nav.closeOverlay('more');app.openAllTransactions();}
  else if(m==='msettings')nav.openOverlay('settings');
+ else if(m==='mwipe'){var wb=e.target.closest('[data-m]');openDropdown(wb,[{v:'yes',l:'Так, стерти все'},{v:'no',l:'Скасувати'}],'',function(v2){if(v2!=='yes')return;try{fin.resetAll({confirmed:true});LG('ui','повний скид даних');toast('Усі записи стерто');}catch(err){toast(err.message||'Помилка');}});}
 });
 
 /* ---------- сторінки: делегування подій ---------- */

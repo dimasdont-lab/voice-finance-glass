@@ -335,6 +335,14 @@ export function createFinance({storage = null, storageKey = STORAGE_KEY, clock =
   /** Додано у Voice Finance Glass (не в оригінальній логіці): імпорт даних з іншого пристрою.
    * merge — об’єднання за id (нове додається, наявне не змінюється; видалення НЕ синхронізуються);
    * replace — повна заміна операцій, боргів, рахунків і категорій даними з іншого пристрою. */
+  /** Додано у Voice Finance Glass: повний скид записів — операції, борги (а з ними й клієнти/кредитори), рахунки, знімки балансу; категорії повертаються до стандартних.
+   * Налаштування (ліміт, мова, вибір ринків) зберігаються. Вимагає явного підтвердження. */
+  function resetAll({confirmed = false} = {}) {
+    if (!confirmed) throw new Error('Потрібне підтвердження');
+    state.transactions = []; state.debts = []; state.accounts = []; state.balanceSnapshots = []; state.categories = copy(DEFAULT_CATEGORIES);
+    commit('data:reset',{});
+    return true;
+  }
   function importSnapshot(remote, {mode = 'merge'} = {}) {
     if (!remote || typeof remote !== 'object') throw new TypeError('Некоректні дані синхронізації');
     if (!['merge','replace'].includes(mode)) throw new RangeError('Некоректний режим синхронізації');
@@ -370,7 +378,7 @@ export function createFinance({storage = null, storageKey = STORAGE_KEY, clock =
     transactions,recentTransactions:(query = '') => transactions({query,limit:query?30:5}),
     categoryById:id => copy(categoryById(id)),categorySummary,debtTotals,debtGroups,personProfiles,personProfile,insights,goals,
     accountSnapshots,balanceAnalysis,activeAccounts:() => copy(state.accounts.filter(a => a.isActive)),
-    exportJSON:() => JSON.stringify(state,null,2),clearData,importSnapshot,
+    exportJSON:() => JSON.stringify(state,null,2),clearData,importSnapshot,resetAll,
     setMarketSelection(ids) { state.marketSelection=[...new Set(ids)].slice(0,20); commit('markets:select',{ids:state.marketSelection}); return [...state.marketSelection]; },
     // Goal/language are persisted settings in main's schema; no new UI is supplied.
     setGoal(value) { state.goal=positiveAmount(value); commit('goal:set',{goal:state.goal}); },

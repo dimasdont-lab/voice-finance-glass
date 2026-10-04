@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-04 17:07 UTC';
+<script>window.__VF_BUILD='2026-10-04 19:04 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -382,6 +382,15 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 #fglow{position:fixed;left:0;top:0;width:100%;height:100%;z-index:18;pointer-events:none;mix-blend-mode:screen}
 
 #fglow{display:none!important}
+
+/* скляні кнопки (налаштування, «Додатково») */
+#sheets .btnw,#menu .gbtn{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.04) 55%,rgba(255,255,255,.07));border:1px solid rgba(255,255,255,.14);
+ box-shadow:inset 0 1px 1px rgba(255,255,255,.28),inset 0 -2px 6px rgba(0,0,0,.45),inset 0 0 14px rgba(255,255,255,.04),0 4px 14px rgba(0,0,0,.25);color:#fff}
+#sheets .btnw.pri{background:linear-gradient(180deg,rgba(255,120,128,.75),rgba(255,70,80,.5));border-color:rgba(255,170,175,.35)}
+#sheets .btnw:active,#menu .gbtn:active{filter:brightness(1.25)}
+#menu .gbtn{display:block;width:calc(100% - 8px);margin:10px 4px 2px;height:46px;border-radius:23px;font-size:15px;font-weight:650;text-align:center}
+#menu .gbtn.red,#sheets .btnw.dng{color:#fff;background:linear-gradient(180deg,rgba(255,60,72,.55),rgba(200,20,35,.32) 55%,rgba(255,60,72,.42));border-color:rgba(255,120,128,.4);
+ box-shadow:inset 0 1px 1px rgba(255,200,205,.4),inset 0 -2px 6px rgba(60,0,5,.5),inset 0 0 16px rgba(255,40,55,.25),0 4px 16px rgba(255,20,40,.18)}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -848,6 +857,16 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
       state.debts = [];
       commit("data:clear", {});
     }
+    function resetAll({ confirmed = false } = {}) {
+      if (!confirmed) throw new Error("\u041F\u043E\u0442\u0440\u0456\u0431\u043D\u0435 \u043F\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043D\u043D\u044F");
+      state.transactions = [];
+      state.debts = [];
+      state.accounts = [];
+      state.balanceSnapshots = [];
+      state.categories = copy(DEFAULT_CATEGORIES);
+      commit("data:reset", {});
+      return true;
+    }
     function importSnapshot(remote, { mode = "merge" } = {}) {
       if (!remote || typeof remote !== "object") throw new TypeError("\u041D\u0435\u043A\u043E\u0440\u0435\u043A\u0442\u043D\u0456 \u0434\u0430\u043D\u0456 \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u0456\u0437\u0430\u0446\u0456\u0457");
       if (!["merge", "replace"].includes(mode)) throw new RangeError("\u041D\u0435\u043A\u043E\u0440\u0435\u043A\u0442\u043D\u0438\u0439 \u0440\u0435\u0436\u0438\u043C \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u0456\u0437\u0430\u0446\u0456\u0457");
@@ -915,6 +934,7 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
       exportJSON: () => JSON.stringify(state, null, 2),
       clearData,
       importSnapshot,
+      resetAll,
       setMarketSelection(ids) {
         state.marketSelection = [...new Set(ids)].slice(0, 20);
         commit("markets:select", { ids: state.marketSelection });
@@ -4211,7 +4231,7 @@ function moreHtml(){
   return s+'<button class="mr" data-m="mpeople" data-v="'+dir+'"><span class="t" style="color:rgba(255,255,255,.75)">Усі ›</span></button>';
  }
  h+=people('Клієнти',m.clients,'receivable');h+=people('Кредитори',m.creditors,'owed');
- h+='<div class="mh">Додатково</div><button class="mr" data-m="malltx"><span class="t">Усі операції</span></button><button class="mr" data-m="msettings"><span class="t">Налаштування</span></button>';
+ h+='<div class="mh">Додатково</div><button class="mr" data-m="malltx"><span class="t">Усі операції</span></button><button class="gbtn" data-m="msettings">Налаштування</button><button class="gbtn red" data-m="mwipe">Стерти всі записи</button>';
  return h;
 }
 function openMore(){
@@ -4246,6 +4266,7 @@ menu.el.addEventListener('click',function(e){
  else if(m==='mpeople')nav.openPeople(v);
  else if(m==='malltx'){nav.closeOverlay('more');app.openAllTransactions();}
  else if(m==='msettings')nav.openOverlay('settings');
+ else if(m==='mwipe'){var wb=e.target.closest('[data-m]');openDropdown(wb,[{v:'yes',l:'Так, стерти все'},{v:'no',l:'Скасувати'}],'',function(v2){if(v2!=='yes')return;try{fin.resetAll({confirmed:true});LG('ui','повний скид даних');toast('Усі записи стерто');}catch(err){toast(err.message||'Помилка');}});}
 });
 
 /* ---------- сторінки: делегування подій ---------- */

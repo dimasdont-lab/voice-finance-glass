@@ -25,3 +25,15 @@ test('importSnapshot replace swaps data and rejects bad mode', () => {
   assert.throws(() => b.importSnapshot({}, {mode:'x'}), RangeError);
   assert.throws(() => b.importSnapshot(null), TypeError);
 });
+
+test('resetAll requires confirmation and wipes all records', () => {
+  const a = mk();
+  a.addManualAccount({type:'cash',name:'Готівка',balance:50});
+  a.saveTransaction({type:'income',amount:10});
+  a.saveDebt({direction:'receivable',person:'Марта',amount:5});
+  assert.throws(() => a.resetAll());
+  a.resetAll({confirmed:true});
+  const s = a.getState();
+  assert.equal(s.transactions.length,0); assert.equal(s.debts.length,0); assert.equal(s.accounts.length,0);
+  assert.equal(a.totals().balance,0);
+});
