@@ -163,7 +163,7 @@ function introStart(t){
   if(side===0){sx=-VW*1.15;sy0=r*VH*.7;}else if(side===1){sx=VW*1.15;sy0=r*VH*.7;}else if(side===2){sy0=VH*1.05;sx=r*VW*1.2;}else{sy0=-VH*.95;sx=r*VW*1.2;}
   var len=Math.hypot(sx,sy0)||1,nx=-sy0/len,ny=sx/len,bend=(Math.random()<.5?-1:1)*(.3+Math.random()*.35)*len;
   return{el:it.el,sx:sx,sy:sy0,cx:sx*.5+nx*bend,cy:sy0*.5+ny*bend,rot:(Math.random()-.5)*16,
-   delay:.45+rank*.16+Math.random()*.22,dur:1.25+Math.random()*.4};   /* починають, коли скло вже розгортається */
+   delay:.37*boot.DUR+rank*.16+Math.random()*.22,dur:1.25+Math.random()*.4};   /* старт, коли скляна форма розкрилась ~на 20% розміру (крива 4u³: u≈0,37 тривалості) */
  });
  intro.on=1;intro.t0=t;
 }
