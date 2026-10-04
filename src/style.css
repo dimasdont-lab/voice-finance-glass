@@ -296,3 +296,7 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 .gt .gxh{-webkit-text-fill-color:transparent}
 .brow .chw{height:54px;padding:4px 8px 4px 10px}
 .brow .chw .spark{height:36px}
+
+/* стрілки й літери в кружечках лишаються поверх скла без заломлення */
+.gt .gxh .dot,.gt .gxh .ic{-webkit-text-fill-color:currentColor}
+.gt .gxh svg.spark{opacity:0}

@@ -1,5 +1,23 @@
 function LG(a,b){if(window.__vfLog)try{window.__vfLog(a,b);}catch(e){}}   /* запис у журнал запуску (src/early-log.js) */
 LG('main','старт основного коду');
+/* математика в тексті: «500 плюс 800 мінус 300 плюс 12 помножити на 3» → 1036 (спершу множення й ділення) */
+var CALC_NUM='\\d{1,3}(?:\\s\\d{3})+(?:[.,]\\d+)?|\\d+(?:[.,]\\d+)?';
+var CALC_OPW='плюс|додати|мінус|минус|відняти|помножити на|помножить на|множити на|ділити на|поділити на|розділити на|разделить на|поделить на|делить на|умножить на|умножити на|plus|minus|times|multiplied by|divided by';
+var CALC_RE=new RegExp('('+CALC_NUM+')((?:\\s*(?:(?:'+CALC_OPW+')|[+*×/÷]|\\s[-−–xхX:]\\s)\\s*(?:'+CALC_NUM+'))+)','giu');
+function calcOp(t){t=t.toLowerCase();if(/^(плюс|додати|plus|\+)$/.test(t))return'+';if(/^(мінус|минус|відняти|minus|-|−|–)$/.test(t))return'-';if(/^(ділити|поділити|розділити|разделить|поделить|делить|divided|\/|÷|:)/.test(t))return'/';return'*';}
+function calcText(text){
+ var str=String(text==null?'':text);
+ return str.replace(CALC_RE,function(m){
+  var parts=m.match(new RegExp(CALC_NUM+'|'+CALC_OPW+'|[+*×/÷\\-−–xхX:]','giu'));if(!parts||parts.length<3)return m;
+  var nums=[],ops=[];
+  parts.forEach(function(p,i){if(i%2===0)nums.push(parseFloat(p.replace(/\s/g,'').replace(',','.')));else ops.push(calcOp(p));});
+  if(nums.length!==ops.length+1||nums.some(function(n){return!isFinite(n);}))return m;
+  var n2=[nums[0]],o2=[];
+  for(var i=0;i<ops.length;i++){if(ops[i]==='*'||ops[i]==='/'){var a=n2.pop(),b=nums[i+1];if(ops[i]==='/'&&b===0)return m;n2.push(ops[i]==='*'?a*b:a/b);}else{o2.push(ops[i]);n2.push(nums[i+1]);}}
+  var r=n2[0];for(var j=0;j<o2.length;j++)r=o2[j]==='+'?r+n2[j+1]:r-n2[j+1];
+  r=Math.abs(Math.round(r*100)/100);return String(r);
+ });
+}
 var BAL_TREND=0;   /* тренд загального балансу: 1 вгору, -1 вниз, 0 рівно (колір віджета й сітки) */
 /* ===== 0. Логіка Voice Finance (finance-core / navigation / application) ===== */
 function mkStore(kind){

@@ -154,6 +154,10 @@ function sheetHtml(kind,ov){
    '<button class="btnw" data-s="syncgen">Створити новий ключ</button><button class="btnw" data-s="syncexp">Зашифрувати й поділитися даними</button>'+
    '<div class="fr"><label>Код з іншого пристрою</label><textarea data-sy="code" rows="3" autocomplete="off" spellcheck="false" placeholder="VFSYNC1...."></textarea></div>'+
    '<button class="btnw" data-s="syncmerge">Об’єднати з кодом (додати нове)</button><button class="btnw" data-s="syncreplace">Замінити мої дані даними з коду</button>'+
+   '<div class="mkinfo" style="padding:12px 0 4px">Автосинхронізація в реальному часі (приватний GitHub Gist)</div>'+
+   '<div class="fr"><label>GitHub-токен (право gist)</label><input data-sy="tok" type="password" autocomplete="off" value="'+esc(SYN.tok)+'"></div>'+
+   '<div class="fr"><label>ID gist (на першому пристрої порожньо)</label><input data-sy="gid" autocomplete="off" spellcheck="false" value="'+esc(SYN.id)+'"></div>'+
+   '<button class="btnw" data-s="synon">'+(SYN.on?'Вимкнути автосинхронізацію':'Увімкнути автосинхронізацію')+'</button><div class="mkinfo" data-sy-st style="padding:4px 0 8px">'+esc(synSt||(SYN.on?'Увімкнено':'Вимкнено'))+'</div>'+
    '<div class="mkinfo" style="padding:4px 0 8px">Дані шифруються на пристрої (AES-256-GCM, ключ із вашого ключа); код можна безпечно надіслати собі в Нотатки чи месенджер. Видалення при об’єднанні не переноситься.</div>'+
    '<button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
    '<div class="mkinfo" style="padding-top:10px">Збірка: '+esc(window.__VF_BUILD||'?')+(navigator.standalone&&window.__vfFirstH&&screen.height-window.__vfFirstH>=40?'<br><span style="color:var(--ac)">Цей запуск почався з вікном '+window.__vfFirstH+' замість '+screen.height+': iOS відкрив застосунок з геометрією старої іконки. Видаліть іконку з робочого столу, оновіть сторінку в Safari й додайте іконку знову.</span>':'')+'</div>'+
@@ -282,6 +286,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='export')exportData();
   else if(s==='mper')setMarketPeriod(t.dataset.v);
   else if(s==='logshare')logShare();
+  else if(s==='synon')synToggle();
   else if(s==='syncgen')syGen();
   else if(s==='syncexp')syExport();
   else if(s==='syncmerge')syImport('merge');
@@ -324,7 +329,7 @@ function submitDrop(val){
  if(val===undefined)val=inp.value;
  inp.value='';updSend();
  var r=frect(sendBtn);sendAnchor={x:r.left+r.width/2,y:r.top+r.height/2};
- if(String(val).trim()){try{app.submitInput(val);}catch(err){console.error(err);}}
+ if(String(val).trim()){try{app.submitInput(calcText(val));}catch(err){console.error(err);}}
  sendDown=false;inp.blur();
 }
 function onDropClosed(){
@@ -612,9 +617,9 @@ tickerEl.addEventListener('wheel',function(e){e.preventDefault();tkOff+=e.deltaX
 /* текст у віджетах стискається під ширину свого боксу й ніколи не виходить за межі */
 var FIT_SEL='.big,.mid,.split b,.mini b,.aa',fitQ=0;
 function fitOne(el){el.style.fontSize='';var w=el.clientWidth;if(!w)return;var sw=el.scrollWidth;if(sw>w+.5){var fs=parseFloat(getComputedStyle(el).fontSize)||16;el.style.fontSize=Math.max(10,Math.floor(fs*w/sw*10)/10-.1)+'px';}}
-function fitAll(){fitQ=0;[].forEach.call(root.querySelectorAll(FIT_SEL),fitOne);}
+function fitAll(){fitQ=0;[].forEach.call(root.querySelectorAll(FIT_SEL),fitOne);}   /* виконується синхронно після зміни DOM, до малювання: скло й текст не розходяться */
 function fitSoon(){if(!fitQ)fitQ=requestAnimationFrame(fitAll);}
-new MutationObserver(fitSoon).observe(root,{childList:true,subtree:true,characterData:true});
+new MutationObserver(function(){fitAll();tlAllStale();dirty=true;}).observe(root,{childList:true,subtree:true,characterData:true});
 window.addEventListener('resize',fitSoon);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitSoon);
 fitSoon();
 
@@ -700,3 +705,37 @@ document.addEventListener('pointerdown',prDown,true);
 document.addEventListener('pointermove',function(e){if(PRd&&Math.hypot(e.clientX-PRd.x,e.clientY-PRd.y)>9)prUp(true);},true);
 
 function mkSheetRefresh(){if(!curSheet||curSheet.kind!=='marketSheet')return;var h=sheetHtml('marketSheet',{data:{marketId:mkP.id}});if(h!==curSheet.html){curSheet.html=h;curSheet.body.innerHTML=h;layoutSheet();sheetStale();}}
+
+/* ---------- автосинхронізація: знімок усіх даних шифрується ключем і лежить у приватному gist; останній запис перемагає ---------- */
+var SYN=(function(){var d={on:0,id:'',tok:'',dev:'',at:0,init:0};try{var j=JSON.parse(localStorage.getItem('vf-gist')||'null');if(j)d=Object.assign(d,j);}catch(e){}if(!d.dev)d.dev=Math.random().toString(36).slice(2,10);return d;})();
+var synBusy=0,synPT=0,synApplying=0,synSt='',synTick=0;
+function synSave(){try{localStorage.setItem('vf-gist',JSON.stringify(SYN));}catch(e){}}
+function synStat(m){synSt=m;var e=curSheet&&curSheet.body.querySelector('[data-sy-st]');if(e)e.textContent=m;}
+function synApi(method,path,body){return fetch('https://api.github.com'+path,{method:method,headers:{'Authorization':'Bearer '+SYN.tok,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:body?JSON.stringify(body):undefined}).then(function(r){if(!r.ok)throw new Error('GitHub '+r.status);return r.json();});}
+function synPayload(){var st=fin.getState();return{app:'voice-finance-glass',v:2,dev:SYN.dev,at:Date.now(),data:{transactions:st.transactions,debts:st.debts,accounts:st.accounts,categories:st.categories,balanceSnapshots:st.balanceSnapshots}};}
+function synPush(){
+ if(!SYN.on||synBusy)return;var key=syGetKey();if(!key||!SYN.tok)return;synBusy=1;var pl=synPayload();
+ return syEncrypt(key,pl).then(function(code){var body={files:{'vf-sync.txt':{content:code}}};
+  if(!SYN.id){body.public=false;body.description='Voice Finance sync';return synApi('POST','/gists',body).then(function(g){SYN.id=g.id;});}
+  return synApi('PATCH','/gists/'+SYN.id,body);
+ }).then(function(){SYN.at=pl.at;synSave();synBusy=0;synStat('Синхронізовано '+new Date().toLocaleTimeString('uk-UA'));}).catch(function(e){synBusy=0;synStat('Помилка надсилання: '+(e.message||e));});
+}
+function synPull(first){
+ if(!SYN.on||!SYN.id||synBusy||synPT)return Promise.resolve();var key=syGetKey();if(!key||!SYN.tok)return Promise.resolve();synBusy=1;
+ return synApi('GET','/gists/'+SYN.id).then(function(g){var f=g.files&&g.files['vf-sync.txt'];if(!f||!f.content)return null;return syDecrypt(key,f.content);}).then(function(o){
+  synBusy=0;if(!o||!o.data)return;
+  if(first){synApplying=1;try{fin.importSnapshot(o.data,{mode:'merge'});}finally{synApplying=0;}SYN.at=o.at;synSave();return;}
+  if(o.dev!==SYN.dev&&o.at>SYN.at){synApplying=1;try{fin.importSnapshot(o.data,{mode:'replace'});}finally{synApplying=0;}SYN.at=o.at;synSave();synStat('Оновлено з іншого пристрою '+new Date().toLocaleTimeString('uk-UA'));}
+ }).catch(function(e){synBusy=0;synStat('Помилка отримання: '+(e.message||e));});
+}
+function synToggle(){
+ if(SYN.on){SYN.on=0;synSave();synStat('Вимкнено');return;}
+ var key=syGetKey();if(!key){toast('Спершу створіть ключ синхронізації вище');return;}
+ SYN.tok=syField('tok').trim();SYN.id=syField('gid').trim();if(!SYN.tok){toast('Введіть GitHub-токен');return;}
+ SYN.on=1;SYN.at=0;synSave();synStat('Підключення…');
+ var go=function(){return synPush().then(function(){synStat('Увімкнено. ID gist: '+SYN.id);});};
+ if(SYN.id)synPull(true).then(go);else go();
+}
+fin.subscribe(function(ev){if(!SYN.on||synApplying||/^sync:/.test(ev.type))return;clearTimeout(synPT);synPT=setTimeout(function(){synPT=0;synPush();},2000);});
+setInterval(function(){if(SYN.on&&!document.hidden)synPull(false);},8000);
+document.addEventListener('visibilitychange',function(){if(SYN.on&&!document.hidden)synPull(false);});

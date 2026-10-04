@@ -82,7 +82,69 @@ const MERCHANTS=[
   {canonical:'OpenAI',aliases:['openai','open ai','опенай','оупен ай'],category:'subscriptions'},
   {canonical:'Apple',aliases:['apple','епл','эпл'],category:'tech'},
   {canonical:'IKEA',aliases:['ikea','икеа','ікеа'],category:'home'},
-  {canonical:'DaVinci Resolve',aliases:['davinci','da vinci','davinci resolve','давінчі','да винчи','да вінчі'],category:'business'}
+  {canonical:'DaVinci Resolve',aliases:['davinci','da vinci','davinci resolve','давінчі','да винчи','да вінчі'],category:'business'},
+  {canonical:'Kaufland',aliases:['kaufland','кауфланд'],category:'groceries'},
+  {canonical:'Netto',aliases:['netto','нетто'],category:'groceries'},
+  {canonical:'Dino',aliases:['dino','дино'],category:'groceries'},
+  {canonical:'Stokrotka',aliases:['stokrotka','стокротка'],category:'groceries'},
+  {canonical:'Carrefour Express',aliases:['carrefour express','карфур експрес'],category:'groceries'},
+  {canonical:'Silpo',aliases:['silpo','сільпо','сильпо'],category:'groceries'},
+  {canonical:'ATB',aliases:['атб','atb'],category:'groceries'},
+  {canonical:'Novus',aliases:['novus','новус'],category:'groceries'},
+  {canonical:'Rossmann',aliases:['rossmann','росман'],category:'other'},
+  {canonical:'Hebe',aliases:['hebe','хебе'],category:'other'},
+  {canonical:'Pepco',aliases:['pepco','пепко'],category:'other'},
+  {canonical:'Action',aliases:['action','екшн'],category:'other'},
+  {canonical:'Zara',aliases:['zara','зара'],category:'other'},
+  {canonical:'H&M',aliases:['h&m','hm','аш енд ем'],category:'other'},
+  {canonical:'Reserved',aliases:['reserved','резервед'],category:'other'},
+  {canonical:'Decathlon',aliases:['decathlon','декатлон'],category:'other'},
+  {canonical:'Leroy Merlin',aliases:['leroy merlin','леруа мерлен','леруа'],category:'home'},
+  {canonical:'Castorama',aliases:['castorama','касторама'],category:'home'},
+  {canonical:'OBI',aliases:['obi','оби'],category:'home'},
+  {canonical:'Jysk',aliases:['jysk','юск','юськ'],category:'home'},
+  {canonical:'Media Markt',aliases:['media markt','mediamarkt','медіа маркт','медиа маркт'],category:'tech'},
+  {canonical:'RTV Euro AGD',aliases:['rtv euro agd','euro rtv agd','euro agd'],category:'tech'},
+  {canonical:'x-kom',aliases:['x-kom','xkom','ікском'],category:'tech'},
+  {canonical:'Allegro',aliases:['allegro','алегро'],category:'other'},
+  {canonical:'Rozetka',aliases:['rozetka','розетка'],category:'tech'},
+  {canonical:'Amazon',aliases:['amazon','амазон'],category:'other'},
+  {canonical:'AliExpress',aliases:['aliexpress','аліекспрес','алиэкспресс'],category:'other'},
+  {canonical:'McDonald\'s',aliases:['mcdonalds','mcdonald\'s','макдональдс','макдак','макдоналдс'],category:'food'},
+  {canonical:'KFC',aliases:['kfc','кфс','кфц'],category:'food'},
+  {canonical:'Burger King',aliases:['burger king','бургер кінг','бургер кинг'],category:'food'},
+  {canonical:'Starbucks',aliases:['starbucks','старбакс'],category:'food'},
+  {canonical:'Costa Coffee',aliases:['costa coffee','коста кофе','коста'],category:'food'},
+  {canonical:'Domino\'s',aliases:['dominos','domino\'s','доміно піца'],category:'food'},
+  {canonical:'Glovo',aliases:['glovo','глово'],category:'food'},
+  {canonical:'Wolt',aliases:['wolt','вольт'],category:'food'},
+  {canonical:'Pyszne.pl',aliases:['pyszne','pyszne.pl','пишне'],category:'food'},
+  {canonical:'Orlen',aliases:['orlen','орлен'],category:'transport'},
+  {canonical:'Shell',aliases:['shell','шелл'],category:'transport'},
+  {canonical:'BP',aliases:['bp station','бп'],category:'transport'},
+  {canonical:'WOG',aliases:['wog','вог'],category:'transport'},
+  {canonical:'OKKO',aliases:['okko','окко'],category:'transport'},
+  {canonical:'FlixBus',aliases:['flixbus','фліксбас','флікс'],category:'transport'},
+  {canonical:'Ryanair',aliases:['ryanair','райнейр'],category:'travel'},
+  {canonical:'Wizz Air',aliases:['wizz air','wizzair','візз','віз ейр'],category:'travel'},
+  {canonical:'LOT',aliases:['lot polish','pol lot','lot airlines'],category:'travel'},
+  {canonical:'Google One',aliases:['google one','гугл ван'],category:'subscriptions'},
+  {canonical:'iCloud',aliases:['icloud','айклауд'],category:'subscriptions'},
+  {canonical:'YouTube Premium',aliases:['youtube premium','ютуб преміум','ютуб премиум'],category:'subscriptions'},
+  {canonical:'ChatGPT',aliases:['chatgpt','чатгпт','чат гпт'],category:'subscriptions'},
+  {canonical:'Claude',aliases:['claude ai','anthropic','клод'],category:'subscriptions'},
+  {canonical:'Notion',aliases:['notion','ноушн'],category:'subscriptions'},
+  {canonical:'Figma',aliases:['figma','фігма'],category:'subscriptions'},
+  {canonical:'Canva',aliases:['canva','канва'],category:'subscriptions'},
+  {canonical:'Dropbox',aliases:['dropbox','дропбокс'],category:'subscriptions'},
+  {canonical:'Disney+',aliases:['disney','дісней'],category:'subscriptions'},
+  {canonical:'HBO Max',aliases:['hbo','hbo max','хбо'],category:'subscriptions'},
+  {canonical:'Kyivstar',aliases:['kyivstar','київстар','киевстар'],category:'home'},
+  {canonical:'Vodafone',aliases:['vodafone','водафон'],category:'home'},
+  {canonical:'Orange',aliases:['orange','оранж'],category:'home'},
+  {canonical:'Play',aliases:['play polska','плей'],category:'home'},
+  {canonical:'InPost',aliases:['inpost','інпост'],category:'business'},
+  {canonical:'Nova Poshta',aliases:['нова пошта','новая почта','nova poshta'],category:'business'}
 ];
 function editDistance(a,b){
   a=foldText(a);b=foldText(b);const m=a.length,n=b.length,dp=Array(n+1).fill(0);for(let j=0;j<=n;j++)dp[j]=j;
@@ -92,6 +154,18 @@ function findMerchant(raw){
   const folded=foldText(raw);for(const m of MERCHANTS)for(const alias of m.aliases){const a=foldText(alias);if(folded.includes(a))return m;}
   const words=folded.split(/\s+/).filter(w=>w.length>=4);let best=null,bestScore=999;
   for(const m of MERCHANTS)for(const alias of m.aliases){const a=foldText(alias);if(a.includes(' '))continue;for(const w of words){const d=editDistance(w,a),mx=Math.max(w.length,a.length);if(mx>=6&&d<=Math.max(1,Math.floor(mx*.23))&&d<bestScore){best=m;bestScore=d;}}}return best;
+}
+/* Розширений словник відповідностей слів → категорій (укр, рос, пол, англ). Слова порівнюються після foldText; дві й більше збігів у категорії дають перевагу. */
+const EXTRA_WORDS={"groceries":"хліб хлеб булка булочка батон багет лаваш тісто мука борошно цукор сіль сахар соль олія масло оливкова соняшникова молоко молоко кефір йогурт сир сыр творог сметана вершки вершки яйця яйця яйцо масло вершкове маргарин ковбаса колбаса сосиски сардельки шинка бекон сало м'ясо мясо курка курица куряче індичка свинина яловичина телятина баранина фарш риба рыба лосось форель оселедець скумбрія тунець креветки краби морепродукти овочі овощи картопля картошка морква цибуля лук часник капуста буряк помідори томати огірки перець кабачок баклажан гриби грибы салат шпинат зелень петрушка кріп базилік фрукти фрукты яблука яблоки груші банани банан апельсини мандарини лимон лимони виноград полуниця малина чорниця кавун диня персики абрикоси сливи ківі авокадо манго ананас горіхи орехи мигдаль фундук арахіс насіння сухофрукти родзинки мед мёд варення джем шоколад цукерки конфеты печиво печенье вафлі торт тістечка морозиво мороженое чіпси снеки сухарики батончик макарони паста спагеті лапша рис гречка вівсянка пластівці каші крупа квасоля горох сочевиця консерви тушонка кукурудза оливки солоні соління кетчуп майонез гірчиця соус спеції приправи вода сік сок лимонад кола пепсі фанта спрайт пиво вино горілка віскі коньяк шампанське алкоголь сидр енергетик напої чай кава мелена зернова розчинна какао пакети памперси підгузки серветки туалетний папір рушники мило шампунь гель зубна паста зубна щітка дезодорант порошок пральний прання кондиціонер для білизни миючий засіб губки пакети для сміття фольга пергамент плівка smaczne chleb bulka maslo mleko ser jajka jaja miesо mieso kurczak szynka kielbasa parowki ryba warzywa owoce ziemniaki cebula marchew pomidory ogorki jablka banany pieczywo makaron ryz kasza platki cukier sol mąka maka olej woda sok piwo wino wodka napoje slodycze czekolada ciastka lody chipsy zakupy spozywcze bread butter milk cheese eggs chicken meat fish vegetables fruit potatoes onion rice pasta sugar salt flour oil juice beer wine vodka snacks chocolate cookies ice cream detergent shampoo toothpaste tissue toilet paper napkins","food":"ресторан кафе кав'ярня кофейня кава кофе капучино латте американо еспресо раф флет уайт чай матча лимонад смузі коктейль бар паб піца пицца бургер гамбургер чізбургер картопля фрі наггетси хот-дог шаурма шаверма кебаб донер суші ролли роли сашимі вок рамен пад тай локшина стейк гриль шашлик барбекю пельмені вареники борщ суп салат десерт чізкейк тірамісу круасан пончик макарон млинці сирники сніданок снідав обід обідав вечеря вечеряв ланч бранч перекус доставка glovo bolt food uber eats wolt pyszne delivery takeaway kfc mcdonalds макдональдс бургер кінг burger king subway сабвей starbucks старбакс costa coffee dominos папа джонс papa johns pizza hut sushi master еко pyszne.pl restauracja kawiarnia obiad sniadanie kolacja kawa herbata piwo pizza kebab sushi lody ciasto drink lunch dinner breakfast brunch coffee tea latte espresso cappuccino croissant sandwich sandwiches fastfood fast food street food foodcourt фудкорт комплексний обід бізнес-ланч чайові tip","transport":"таксі такси taxi uber bolt убер болт індрайв indrive fretnow метро метрополітен автобус маршрутка трамвай тролейбус електричка поїзд потяг поезд квиток квитки білет проїзд проїзний транспортна карта кошти на карту ukrzaliznytsia укрзалізниця pkp intercity polregio flixbus флікс блаблакар blablacar бензин дизель дизельне газ автогаз пальне заправка азс wog окко okko shell bp orlen circle k parking паркінг парковка штраф евакуатор мийка автомийка шиномонтаж шини гума колеса масло замінa то техогляд страховка осаго каско ремонт авто сто запчастини дорога платна дорога вінетка autostrada toll bilet komunikacja miejska mpk ztm zkm kolej pociag autobus tramwaj metro taksowka paliwo benzyna olej myjnia parking mandat holowanie opony przeglad ubezpieczenie oc ac samochod auto mechanik warsztat części rower велосипед самокат скутер електросамокат bird lime tier hulajnoga rower miejski veturilo nextbike fuel gas gasoline diesel car wash tire tyres repair mot insurance roadside train bus tram ticket pass scooter bike","tech":"техніка електроніка гаджет комп'ютер компьютер ноутбук лептоп macbook imac mac mini ipad iphone айфон айпад смартфон телефон samsung xiaomi google pixel планшет монітор екран клавіатура миша мишка тачпад навушники airpods аірподс колонка колонки bluetooth зарядка зарядний кабель usb type-c адаптер хаб повербанк акумулятор батарея флешка ssd hdd диск жорсткий карта пам'яті sd microsd камера фотоапарат об'єктив обєктив штатив gopro action дрон dji mavic mini освітлення світло софтбокс мікрофон rode shure відеокарта gpu процесор cpu оперативна пам'ять ram материнська плата блок живлення корпус кулер вентилятор роутер маршрутизатор wifi модем принтер сканер картридж тонер телевізор tv приставка playstation xbox nintendo switch джойстик геймпад консоль гра steam епік smart watch годинник apple watch фітнес браслет електронна книга kindle pocketbook смарт колонка alexa лампа розумна розетка датчик ремонт телефону заміна екрану сервіс електроніки media markt mediaexpert x-kom morele komputronik euro rtv agd allegro olx rozetka розетка comfy фокстрот foxtrot citrus цитрус moyo ebay aliexpress алі експрес amazon laptop komputer monitor klawiatura mysz sluchawki ladowarka kabel telefon aparat obiektyw statyw mikrofon dysk pendrive router drukarka telewizor konsola gadzet elektronika sprzet headphones charger cable camera lens tripod microphone drive printer console gadget device","home":"дім дом квартира оренда рента rent чинш czynsz комуналка комунальні комунальні послуги світло електрика електроенергія prad газ вода водопостачання тепло опалення інтернет інтернет provider ukrtelecom київстар kyivstar vodafone lifecell orange play plus t-mobile netia upc vectra підвал домофон консьєрж ремонт ремонту будівельні цемент плитка фарба шпалери ламінат двері вікна сантехніка змішувач унітаз ванна душ меблі мебель диван крісло стіл стілець шафа комод ліжко матрац подушка ковдра постіль штори килим світильник лампа люстра ikea jysk leroy merlin castorama obi bricoman epicentr епіцентр нова лінія nowa linia праска пилосос холодильник пральна машина посудомийка мікрохвильовка духовка плита чайник тостер блендер міксер мультиварка кавоварка посуд тарілки чашки склянки каструля сковорода ніж виделка ложка набір кухня рушник скатертина прибирання клінінг прибиральниця хімчистка прання ремонт побутової садівництво сад город насіння розсада горщик квіти рослини газонокосарка інструменти дриль шуруповерт молоток цвяхи шурупи замок ключі сигналізація охорона страхування житла mieszkanie wynajem czynsz media prad gaz woda ogrzewanie internet remont meble sofa lozko szafa stol krzeslo lampa dywan firany naczynia garnek patelnia sprzatanie pralnia ogrod narzedzia wiertarka zamek klucze ubezpieczenie mieszkania home house apartment flat utilities electricity heating water internet furniture sofa bed wardrobe table chair lamp carpet curtains dishes cleaning laundry garden tools drill lock keys","subscriptions":"підписка подписка subscription abonament щомісячно щомісяця ежемесячно monthly netflix spotify apple music youtube premium youtube music icloud google one google drive dropbox onedrive adobe creative cloud photoshop lightroom premiere after effects figma canva notion evernote todoist chatgpt openai claude anthropic midjourney copilot github gitlab jetbrains vpn nordvpn expressvpn surfshark protonmail proton lastpass 1password bitwarden zoom slack microsoft 365 office word excel disney hbo max amazon prime apple tv paramount hulu crunchyroll twitch patreon boosty onlyfans substack medium kindle unlimited audible storytel empik go legimi duolingo coursera udemy skillshare masterclass gym fitness абонемент спортзал басейн yoga lingvist playstation plus xbox game pass nintendo online ea play steam wallet tinder bumble premium відеоредактор davinci final cut apple developer google play app store покупка в додатку in-app mobilny abonament plan taryfa tariff телефон тариф мобільний зв'язок","business":"бізнес бизнес студія студия робота работа зарплата зарплата гонорар проєкт проект замовлення заказ клієнт клиент оплата за роботу аванс передоплата предоплата рахунок фактура invoice інвойс faktura договір контракт підряд фріланс freelance монтаж зйомка съемка зйомки фото відео фотосесія відеозйомка кліп реклама ролик озвучка дубляж субтитри кольорокорекція колорист саунд-дизайн музика трек мастеринг апаратура оренда обладнання оренда студії локація реквізит модель актор актори ведучий ведуча монтажер оператор режисер продюсер асистент агентство агенція менеджер бухгалтер юрист податки податок пдв vat zus podatek ryczalt єдиний податок фоп спільний рахунок комісія процент відсоток еквайринг платіж stripe paypal wise payoneer revolut business реклама facebook ads google ads tiktok ads instagram таргет сайт домен хостинг hosting domain wordpress shopify wix tilda логотип дизайн макет бренд брендинг візитки друк поліграфія банер флаєр афіша упаковка склад доставка клієнту кур'єр пошта nova poshta нова пошта inpost dpd dhl ups fedex ukrposhta wynagrodzenie pensja projekt zlecenie klient faktura umowa freelancing montaz nagrania zdjecia wideo reklama agencja ksiegowa podatek zus vat domena hosting logo wizytowki druk salary fee project order client invoice contract freelance editing shooting photo video ad agency accountant tax domain hosting logo design print","travel":"подорож путешествие travel trip відпустка отпуск urlop wakacje готель отель hotel хостел hostel апартаменти apartments airbnb booking agoda hotels.com оренда житла бронювання бронь квиток на літак авіаквиток авіа літак самолёт flight ryanair wizz air lot polish airlines easyjet lufthansa klm emirates turkish airlines аеропорт airport lotnisko багаж bagaż валіза чемодан visa віза страховка мандрівника travel insurance екскурсія экскурсия excursion тур tour путівка путевка туристичний резорт resort пляж море гори лижі ski skipass ski-pass підйомник інструктор оренда авто car rental rentalcars sixt hertz avis europcar трансфер transfer таксі аеропорт мотель кемпінг палатка намет спальник рюкзак карта метро city pass музей музей museum квиток в музей театр кіно концерт фестиваль parking валюта обмін currency exchange kantor roaming роумінг сувеніри сувенір сувеніри подарунки з поїздки citypass wycieczka bilet lotniczy hotel nocleg wynajem samochodu przewodnik muzeum","other":"інше разное other різне подарунок подарунки подарок prezent kwiaty квіти букет донат благодійність charity допомога zbiorka збір внесок пожертва church церква школа курси навчання урок репетитор лікар лікарня аптека ліки таблетки вітаміни стоматолог зуби окуліст масаж косметолог перукар barber барбер стрижка манікюр педикюр салон краси спа одяг взуття куртка штани джинси футболка сорочка сукня светр кросівки черевики сумка рюкзак годинник прикраси кільце сережки ланцюжок парфуми косметика помада крем зоопарк тварини корм ветеринар кіт собака хом'як акваріум книги книжки канцелярія іграшки дитячі садок підручники штраф податок податок позика кредит відсотки комісія банку банкомат зняття переказ lekarz apteka leki dentysta fryzjer paznokcie odziez buty kurtka torebka perfumy kosmetyki ksiazki zabawki prezent datek mandat kredyt prowizja przelew gift donation doctor pharmacy medicine dentist haircut clothes shoes jacket bag perfume cosmetics books toys fine tax loan bank fee transfer"};
+const EXTRA_INDEX=Object.entries(EXTRA_WORDS).map(([id,list])=>[id,[...new Set(list.split(/\s+/).map(w=>foldText(w).trim()).filter(w=>w.length>=3))]]);
+function extraCategory(x,categories){
+  const words=new Set(x.split(/\s+/).filter(Boolean));let best=null,bestScore=0;
+  for(const [id,list] of EXTRA_INDEX){
+    if(!categories.some(c=>c.id===id))continue;
+    let score=0;for(const w of list){if(words.has(w))score+=2;else if(w.length>=5&&x.includes(w))score+=1;}
+    if(score>bestScore){bestScore=score;best=id;}
+  }
+  return bestScore>=1?best:null;
 }
 function detectCategory(t, categories=[]){
   const merchant=findMerchant(t);if(merchant&&categories.some(c=>c.id===merchant.category))return merchant.category;
@@ -106,6 +180,7 @@ function detectCategory(t, categories=[]){
     ['business',/(бізнес|студі|робот|зарплат|гонорар|проєкт|проект|монтаж|з[йи]омк|фото|відео|shoot|editing|edit|montaz|nagran|client|клієнт|замовник|invoice|рахунок|фактур|davinci|реклам|marketing|офіс|office)/]
   ];
   for(const [id,re] of rules)if(re.test(x)&&categories.some(c=>c.id===id))return id;
+  const extra=extraCategory(x,categories);if(extra)return extra;
   const custom=categories.find(c=>x.includes(foldText(c.name)));return custom?.id||(categories.some(c=>c.id==='other')?'other':categories[0]?.id);
 }
 function detectClient(raw,type){

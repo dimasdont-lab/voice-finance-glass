@@ -367,7 +367,7 @@ function dkDraw(){
  dkLoad();if(!dkPos||!dkImg.length)return;
  var ready=dkImg.every(function(im){return im&&im.complete&&im.naturalWidth>0;});
  if(!ready){dkOK=0;return;}
- var tt=BAL_TREND>0?[.14,.96,.5]:BAL_TREND<0?[1,.27,.33]:[.8,.82,.9];
+ var tt=BAL_TREND>0?[.04,.98,.36]:BAL_TREND<0?[1,.03,.07]:[.8,.82,.9];
  for(var q=0;q<3;q++)dkTint[q]+=(tt[q]-dkTint[q])*.08;
  var x=tkXx,c=cells();
  x.setTransform(2,0,0,2,0,160);x.clearRect(0,0,VW,76);
@@ -376,7 +376,7 @@ function dkDraw(){
   var P=dkPos[k];
   var cxk=c.cx(k);
   var w=Math.max(0,Math.min(1,1-Math.abs(dkX-cxk)/c.cw));w=w*w*(3-2*w);
-  var mix=.12,tr=255*(dkTint[0]*(1-mix)+mix),tg=255*(dkTint[1]*(1-mix)+mix),tb=255*(dkTint[2]*(1-mix)+mix),r=Math.round(255+(tr-255)*w),g=Math.round(255+(tg-255)*w),b=Math.round(255+(tb-255)*w);
+  var mix=BAL_TREND===0?.12:0,tr=255*(dkTint[0]*(1-mix)+mix),tg=255*(dkTint[1]*(1-mix)+mix),tb=255*(dkTint[2]*(1-mix)+mix),r=Math.round(255+(tr-255)*w),g=Math.round(255+(tg-255)*w),b=Math.round(255+(tb-255)*w);
   var col='rgb('+r+','+g+','+b+')',al=.7+.3*w;
   dkTc.clearRect(0,0,48,48);dkTc.globalCompositeOperation='source-over';dkTc.drawImage(dkImg[k],0,0,48,48);
   dkTc.globalCompositeOperation='source-in';dkTc.fillStyle=col;dkTc.fillRect(0,0,48,48);
