@@ -1,7 +1,7 @@
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
- var KEY='vf-log',MAXL=1500,sid=Date.now().toString(36),lines=[],ov=null,dbg=false;
+ var KEY='vf-log',MAXL=6000,sid=Date.now().toString(36),lines=[],ov=null,dbg=false;
  try{dbg=!!localStorage.getItem('vf-debug')||/[?&]debug/.test(location.search);}catch(e){}
  function ms(){return Math.round(performance.now());}
  function vvs(){var v=window.visualViewport;return v?Math.round(v.width)+'x'+Math.round(v.height)+'@'+Math.round(v.offsetTop):'-';}
@@ -21,7 +21,7 @@
  log('vp',snap());
  if(navigator.standalone&&screen.height-innerHeight>=40)log('ДІАГНОЗ','перший кадр: вікно '+innerHeight+' при екрані '+screen.height+' — iOS запустив застосунок з геометрією непрозорого статус-бару (іконка, ймовірно, збережена зі старим стилем)');
  ['resize','orientationchange','pageshow','pagehide','focus','blur','scroll','load'].forEach(function(n){
-  window.addEventListener(n,function(e){log('ev:'+n,(e&&e.persisted!==undefined?'persisted='+e.persisted+' ':'')+snap());if(n==='pagehide')save();},true);});
+  window.addEventListener(n,function(e){if(n==='scroll'&&(window.__vfSc=(window.__vfSc||0)+1)>20)return;log('ev:'+n,(e&&e.persisted!==undefined?'persisted='+e.persisted+' ':'')+snap());if(n==='pagehide')save();},true);});
  document.addEventListener('DOMContentLoaded',function(){log('ev:DOMContentLoaded',snap());},true);
  document.addEventListener('visibilitychange',function(){log('ev:visibility',document.visibilityState+' '+snap());if(document.visibilityState==='hidden')save();},true);
  if(window.visualViewport){visualViewport.addEventListener('resize',function(){log('vv:resize',snap());});visualViewport.addEventListener('scroll',function(){log('vv:scroll',snap());});}
@@ -44,7 +44,7 @@
  /* вибірка щокадру перші 8 с: пишемо лише зміни */
  var last='',fr=0,T0=performance.now();
  (function tick(){fr++;if(fr%4===1){var s=snap();if(s!==last){last=s;log('кадр#'+fr,s);}}if(performance.now()-T0<8000)requestAnimationFrame(tick);else log('вибірка-кінець','кадрів '+fr);})();
- var sv=setInterval(save,3000);setTimeout(function(){clearInterval(sv);save();},16000);
+ var sv=setInterval(save,3000);setTimeout(function(){clearInterval(sv);save();setInterval(save,30000);},16000);
  /* живий рядок на екрані під час запуску (якщо діагностику ввімкнено) — для запису екрана */
  if(dbg){var mk=function(){if(ov||!document.body)return;ov=document.createElement('pre');ov.style.cssText='position:fixed;left:6px;right:6px;bottom:calc(env(safe-area-inset-bottom,0px) + 100px);z-index:100;margin:0;padding:5px 7px;border-radius:8px;background:rgba(0,0,0,.8);color:#ff0;font:10px/1.3 ui-monospace,Menlo,monospace;pointer-events:none;white-space:pre-wrap';document.body.appendChild(ov);ov.textContent=snap();};
   document.addEventListener('DOMContentLoaded',mk,true);setTimeout(mk,0);setTimeout(function(){if(ov){ov.remove();ov=null;}},12000);}

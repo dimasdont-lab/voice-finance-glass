@@ -276,7 +276,7 @@ function shot(el,w,h,ts){
  for(var q=0;q<src.length;q++){if(src[q].tagName==='TEXTAREA')dst[q].textContent=src[q].value;else dst[q].setAttribute('value',src[q].value);}
  n.style.margin='0';n.style.filter='';n.style.opacity='';n.style.width=w+'px';n.style.transform='none';n.style.willChange='auto';FC.appendChild(n);
  FR.style.width=Math.ceil(w)+'px';FR.style.height=Math.ceil(h)+'px';
- return html2canvas(n,{backgroundColor:null,scale:ts,logging:false,windowWidth:Math.ceil(w),windowHeight:Math.ceil(h),imageTimeout:0});
+ var s0=performance.now();return html2canvas(n,{backgroundColor:null,scale:ts,logging:false,windowWidth:Math.ceil(w),windowHeight:Math.ceil(h),imageTimeout:0}).then(function(c){var d=performance.now()-s0;pfS('знімок',d);if(d>25)LG('знімок','html2canvas '+Math.round(d)+' мс, блок '+Math.round(w)+'x'+Math.round(h));return c;});
 }
 function pump(t){
  if(busy||!window.html2canvas)return;
@@ -721,8 +721,8 @@ function bootStep(t,dt){
 /* ---- спільна фізика скляної панелі: пружина появи, деформація за пальцем, відступ під верхнім вікном ---- */
 /* коефіцієнти руху країв при зсуві [верхній/лівий, нижній/правий] для додатного й від'ємного зсуву */
 var EF_DEF={xp:[.35,1],xn:[1,.35],yp:[.35,1],yn:[1,.35]};
-var EF_SHEET={xp:[.4,1],xn:[1,.4],yp:[1,.8],yn:[1.7,.1]};
-var EF_MORE={xp:[.3,.06],xn:[1.6,.1],yp:[.4,1],yn:[1,.4]};
+var EF_SHEET={xp:[.4,1],xn:[1,.4],yp:[1,.8],yn:[1.3,.03]};
+var EF_MORE={xp:[.3,.04],xn:[1.3,.05],yp:[.4,1],yn:[1,.4]};
 function panelStep(P,dt,L,k,dm,fade,bl){
  var tg=P.on?1:0,h=dt/2,q,d=P.def,t=P.tgt;
  for(q=0;q<2;q++){var a=k*(tg-P.s)-dm*P.vs;P.vs+=a*h;P.s+=P.vs*h;
@@ -735,6 +735,7 @@ function panelStep(P,dt,L,k,dm,fade,bl){
  var hw=Math.max(.5,P.tw/2*sx),hh=Math.max(.5,P.th/2*sy);
  var ef=P===sheetP?EF_SHEET:(P===menu&&menu.kind==='more')?EF_MORE:EF_DEF,kx=d.x>0?ef.xp:ef.xn,ky=d.y>0?ef.yp:ef.yn;
  var ex0=cx-hw+d.x*kx[0],ex1=cx+hw+d.x*kx[1],ey0=cy-hh+d.y*ky[0],ey1=cy+hh+d.y*ky[1];
+ if(P===sheetP&&ey0<14)ey0=14;   /* шторка не виходить за верх екрана при розтягуванні */
  if(ex1-ex0<1)ex1=ex0+1;if(ey1-ey0<1)ey1=ey0+1;
  cx=(ex0+ex1)/2;hw=Math.max(.5,(ex1-ex0)/2);cy=(ey0+ey1)/2;hh=Math.max(.5,(ey1-ey0)/2);sx=hw/Math.max(.5,P.tw/2);sy=hh/Math.max(.5,P.th/2);
  var mn=Math.min(hw,hh);
@@ -768,8 +769,24 @@ function stepSheet(dt){
  if(panelStep(sheetP,dt,rec.sh,175,26,false,true)){if(sheetP.el)sheetP.el.style.display='none';}
  sheetA=Math.max(0,sheetP.s);
 }
+var PF={lt:0,n:0,sum:0,mx:0,j33:0,j50:0,j100:0,t0:0,nlag:0,secs:{},cur:{tiles:0,draw:0,bake:0,strip:0,atlas:0,frame:0},ck:'',st:0};
+function pfS(name,ms){var s=PF.secs[name];if(!s)s=PF.secs[name]={n:0,sum:0,mx:0};s.n++;s.sum+=ms;if(ms>s.mx)s.mx=ms;if(PF.cur[name]!==undefined)PF.cur[name]=ms;}
+function pfCtx(){var ck=typeof curSheet!=='undefined'&&curSheet?curSheet.kind:'';return 'стор.'+sel+(menu.on?' меню:'+menu.kind:'')+(ck?' вікно:'+ck:'')+(scrollingNow?' скрол':'')+(mode?' ввід:'+mode:'')+(boot.on?' boot':'')+(AURA?' ореол':'')+(FGact?' слід':'')+(busy?' знімок':'');}
+var scrollingNow=false;
+function pfFrame(t){
+ if(PF.lt){var gap=t-PF.lt;PF.n++;PF.sum+=gap;if(gap>PF.mx)PF.mx=gap;if(gap>33.5)PF.j33++;if(gap>50)PF.j50++;if(gap>100)PF.j100++;
+  if(gap>36&&gap<5000&&PF.nlag<900&&!document.hidden){PF.nlag++;var c=PF.cur;LG('лаг','пауза '+Math.round(gap)+' мс | js кадр '+c.frame.toFixed(1)+' плитки '+c.tiles.toFixed(1)+' малюв. '+c.draw.toFixed(1)+' розмиття '+c.bake.toFixed(1)+' смуга '+c.strip.toFixed(1)+' атлас '+c.atlas.toFixed(1)+' | '+pfCtx());}}
+ PF.lt=t;
+ var ck=sel+'|'+(menu.on?menu.kind:'')+'|'+(typeof curSheet!=='undefined'&&curSheet?curSheet.kind:'')+'|'+mode;
+ if(ck!==PF.ck){PF.ck=ck;LG('стан',pfCtx());}
+ if(!PF.t0)PF.t0=t;
+ if(t-PF.t0>5000){
+  if(PF.n>5&&!document.hidden){var parts=[];for(var k in PF.secs){var q=PF.secs[k];parts.push(k+' '+(q.sum/q.n).toFixed(1)+'/'+q.mx.toFixed(0));}
+   LG('perf','5с: кадрів '+PF.n+' (~'+Math.round(1000*PF.n/(t-PF.t0))+' к/с), інтервал середній '+(PF.sum/PF.n).toFixed(1)+' макс '+Math.round(PF.mx)+' мс; повільніше 33мс: '+PF.j33+', 50мс: '+PF.j50+', 100мс: '+PF.j100+' | js мс середнє/макс: '+parts.join(', ')+' | '+pfCtx());}
+  PF.n=0;PF.sum=0;PF.mx=0;PF.j33=0;PF.j50=0;PF.j100=0;PF.secs={};PF.t0=t;}
+}
 function frame(t){
- requestAnimationFrame(frame);
+ requestAnimationFrame(frame);var pf0=performance.now();pfFrame(t);
  vpSample(t);
  {liveEnv();lvCheck();if(SO<-.5&&mode!==1&&(frame.st||0)<6&&t>(frame.stn||0)){frame.st=(frame.st||0)+1;frame.stn=t+400;window.scrollTo(0,0);LG('fix','scrollTo(0,0) спроба '+frame.st+' → scrollY '+Math.round(window.scrollY||0));}
   var bgR=bgEl.getBoundingClientRect(),bgH=bgR.height,dty=bgH-72-14-SAFE.b;
@@ -797,7 +814,7 @@ function frame(t){
  recStep(dt);
  refreshTabs(t);
  if(intro.on)introStep(t);
- if(tgOK)drawTiles();
+ var pt0=performance.now();if(tgOK)drawTiles();pfS('tiles',performance.now()-pt0);
  if(menu.s>0||menu.on)stepMenu(dt);
  if(sheetP.s>0||sheetP.on)stepSheet(dt);
  bootStep(t,dt);
@@ -879,11 +896,11 @@ function frame(t){
  wantFull=(mode!==0)||menuA>0.002||sheetA>0.002||(boot.on&&boot.phase===2);
  if(fullMode!==wantFull){fullMode=wantFull;document.documentElement.classList.toggle('fm',fullMode);measure();dirty=true;}
  var tkBase=(!fullMode&&tgOK&&tgShown&&tickerEl.classList.contains('on')&&tickerEl.offsetHeight>0&&tickerTrk.dataset.loop)?1:0;
- if(tkBase){tkY0=tickerEl.offsetTop-12;tkStripBuild();}
+ if(tkBase){tkY0=tickerEl.offsetTop-12;var ps0=performance.now();tkStripBuild();var psd=performance.now()-ps0;if(psd>1)pfS('strip',psd);}
  var tkOn=(tkBase&&tkStrip.ok)?1:0;
  if(tickerEl._gl!==tkOn){tickerEl._gl=tkOn;tickerEl.classList.toggle('tkgl',!!tkOn);dirty=true;}
  var otherMotion=dirty||gMov||moving||!settled||scrolling||mode||menuA>0.002||sheetA>0.002||recMoving||(boot.on&&boot.phase===2)||boot.warm===1;
- if(otherMotion||tkOn){
+ if(otherMotion||tkOn){var pd0=performance.now();
   var e=Math.max(-0.25,Math.min(0.7,j+Math.abs(v)*0.00015));
   var IR=DR.height/2+3,hw=IR*1.3*(1+e),hh=IR/(1+e*0.7),cy=(DR.top+DR.height/2+off-R.y)*S;
   var A=T[fl],Bt=f2<NP?T[f2]:null;
@@ -909,12 +926,12 @@ function frame(t){
   var bmv=boot.on?0:Math.min(1,rec.pg.v*1.2),bsv=Math.min(1,rec.sh.v*1.2),shOK=(SH.on&&SH.ready)?1:0;
   if(bmv>.003||bsv>.003){
    var P0=[(fl-ca)*VW,sy[fl],A?A.ch:1,A?1:0],P1=[(f2-ca)*VW,f2<NP?sy[f2]:0,Bt?Bt.ch:1,Bt?1:0],P2=[SH.x,-SH.y,SH.ch,shOK],W3=[A?A.cw:1,Bt?Bt.cw:1,SH.cw];
-   bkGlt();bake('pg',0,P0,P1,P2,W3);if(shOK)bake('sh',1,P0,P1,P2,W3);
-   bkEnd(A,Bt);
+   var pb0=performance.now();bkGlt();bake('pg',0,P0,P1,P2,W3);if(shOK)bake('sh',1,P0,P1,P2,W3);
+   bkEnd(A,Bt);pfS('bake',performance.now()-pb0);
   }
   gl.uniform1f(U.u_bm,bmv);gl.uniform1f(U.u_bs,bsv);
   atlPrep();if(tkOn){TKH=Math.ceil(tickerEl.offsetTop+tickerEl.offsetHeight+60);tkCopy();}
-  dkX=x===null?0:x;dkDraw();atlUp();
+  var pa0=performance.now();dkX=x===null?0:x;dkDraw();atlUp();pfS('atlas',performance.now()-pa0);
   gl.uniform4f(U.u_dk,DR.left,DR.top+off,DR.width,DR.height);gl.uniform1f(U.u_atw,Math.max(tkXc.width,dkXc.width,Math.round(VW*2)));
   if(tkOn){var curT=-(parseFloat(String(tickerTrk._tx||'').replace('translate3d(',''))||0);gl.uniform3f(U.u_xs,tkStrip.T0,curT,tkStrip.w);}else gl.uniform3f(U.u_xs,0,0,0);gl.uniform1f(U.u_dkv,dkOK);
   if(dkOK&&!dock._dkc){dock._dkc=1;dock.classList.add('dkc');}
@@ -926,9 +943,10 @@ function frame(t){
    for(var qi=0;qi<2;qi++){var q=rc[qi],qx=Math.floor(q[0]),qy=Math.max(0,Math.floor(q[1])),qw=Math.ceil(q[2]),qh=Math.ceil(q[3]);if(qy+qh>CH)qh=CH-qy;if(qh<=0||qw<=0)continue;gl.scissor(qx,CH-qy-qh,qw,qh);gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}
    gl.disable(gl.SCISSOR_TEST);
   }else{gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}
-  dirty=false;boot.warm=0;
+  dirty=false;boot.warm=0;pfS('draw',performance.now()-pd0);
  }
  if(!shown&&full[sel]){shown=true;cv.style.opacity=1;}
  if(moving||!settled||scrolling||mode||hide!==hT||menuA>0.002&&menuA<.999||sheetA>0.002&&sheetA<.999||recMoving||boot.on&&boot.phase===2||menu.dragging||sheetP.dragging)lastMotion=t;
  if(t-lastMotion>150)pump(t);   /* важкі знімки — тільки коли нічого не рухається */
+ scrollingNow=!!scrolling;pfS('frame',performance.now()-pf0);
 }
