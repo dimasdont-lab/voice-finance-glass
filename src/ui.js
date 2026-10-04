@@ -146,6 +146,8 @@ function sheetHtml(kind,ov){
    '<div class="fr"><label>Місячний ліміт, zł</label><input data-g="goal" inputmode="decimal" value="'+esc(g)+'" autocomplete="off"></div>'+
    '<button class="btnw" data-s="goal">Зберегти ліміт</button>'+
    '<button class="btnw" data-s="markets">Валюти в бігучій строці</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button>'+
+   '<button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
+   '<div class="mkinfo" style="padding-top:10px">Збірка: '+esc(window.__VF_BUILD||'?')+(navigator.standalone&&window.__vfFirstH&&screen.height-window.__vfFirstH>=40?'<br><span style="color:var(--ac)">Цей запуск почався з вікном '+window.__vfFirstH+' замість '+screen.height+': iOS відкрив застосунок з геометрією старої іконки. Видаліть іконку з робочого столу, оновіть сторінку в Safari й додайте іконку знову.</span>':'')+'</div>'+
    '<button class="btnw" data-s="export">Експорт JSON</button><button class="btnw" data-s="seed">Додати тестові дані для перегляду</button>'+
    '<button class="btnw dng" data-s="clear">Очистити операції та борги</button><div class="err" data-err></div>';
  }
@@ -269,6 +271,8 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='acc')app.openManualAccount('manual');
   else if(s==='cash')app.openManualAccount('cash');
   else if(s==='export')exportData();
+  else if(s==='logshare')logShare();
+  else if(s==='logcopy')logCopy();
   else if(s==='seed'){seedDemo();toast('Додано тестові дані');}
   else if(s==='clear'){if(!delArm){delArm=1;t.textContent='Натисніть ще раз: очистити все';sheetStale();setTimeout(function(){delArm=0;},3500);}else{delArm=0;app.clearData({confirmed:true});toast('Очищено');}}
   else if(s==='delcat'){fin.deleteCategory(t.dataset.id);}
@@ -501,30 +505,42 @@ function mkLoadSpark(){
 uiReady=true;renderTicker();
 (function w(){if(boot.on)setTimeout(w,200);else mkRefresh();})();   /* мережа й важкі операції — після екрана завантаження, щоб анімація не рвалась */
 
-/* діагностика: ?debug у адресі або довге натискання (1,4 с) на тікер. Показує розміри вікна, екрана, безпечних зон і положення дока */
-var hud=null,hudT=0;
+/* діагностика: ?debug у адресі або довге натискання (1,4 с) на тікер. Панель із розмірами + кнопки «Поділитися журналом» / «Копіювати» */
+var hud=null,hudPre=null,hudT=0;
+function logText(){return window.__vfExport?window.__vfExport():'(журнал недоступний)';}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,txt.length);var ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();toast(ok?'Журнал скопійовано':'Не вдалося скопіювати');}
+function logCopy(){var txt=logText();LG('export','копіювання, символів '+txt.length);if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){toast('Журнал скопійовано');},function(){fallbackCopy(txt);});}else fallbackCopy(txt);}
+function logShare(){
+ var txt=logText(),f=null;LG('export','поділитися, символів '+txt.length);
+ try{f=new File([txt],'voice-finance-log.txt',{type:'text/plain'});}catch(e){}
+ if(f&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:'Журнал запуску'}).catch(function(){});}
+ else if(navigator.share){navigator.share({title:'Журнал запуску',text:txt}).catch(function(){});}
+ else logCopy();
+}
 function hudToggle(){
- if(hud){clearInterval(hudT);hud.remove();hud=null;try{localStorage.removeItem('vf-debug');}catch(e){}return;}
+ if(hud){clearInterval(hudT);hud.remove();hud=null;try{localStorage.removeItem('vf-debug');}catch(e){}LG('hud','вимкнено');return;}
  try{localStorage.setItem('vf-debug','1');}catch(e){}
- hudOn();
+ LG('hud','увімкнено');hudOn();
 }
 function hudOn(){
  if(hud)return;
- hud=document.createElement('pre');
- hud.style.cssText='position:fixed;left:6px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;margin:0;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,.78);color:#9f9;font:11px/1.35 ui-monospace,Menlo,monospace;pointer-events:none;white-space:pre';
- document.body.appendChild(hud);
- var probe=function(side){var q=document.createElement('div');q.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-'+side+',0px);visibility:hidden';document.body.appendChild(q);var h=q.offsetHeight;q.remove();return h;};
+ hud=document.createElement('div');hud.style.cssText='position:fixed;left:6px;right:6px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:99;pointer-events:none';
+ hudPre=document.createElement('pre');hudPre.style.cssText='margin:0;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,.8);color:#9f9;font:11px/1.35 ui-monospace,Menlo,monospace;white-space:pre-wrap';
+ var bar=document.createElement('div');bar.style.cssText='display:flex;gap:6px;margin-top:6px;pointer-events:auto';
+ [['Поділитися журналом',logShare],['Копіювати',logCopy],['Сховати',hudToggle]].forEach(function(b){var e=document.createElement('button');e.textContent=b[0];e.style.cssText='flex:1;height:34px;border-radius:17px;background:rgba(40,40,48,.95);color:#fff;font:600 12px var(--f);text-align:center;border:1px solid rgba(255,255,255,.15)';e.addEventListener('click',function(ev){ev.stopPropagation();b[1]();});bar.appendChild(e);});
+ hud.appendChild(hudPre);hud.appendChild(bar);document.body.appendChild(hud);
  hudT=setInterval(function(){
-  var vv=window.visualViewport,b=bgEl.getBoundingClientRect(),d=dock.getBoundingClientRect(),c=cv.getBoundingClientRect();
-  hud.textContent=['standalone '+(navigator.standalone?'yes':'no')+' / dm '+(matchMedia('(display-mode: standalone)').matches?'sa':'br'),
-   'inner '+innerWidth+'x'+innerHeight+'  outer '+outerWidth+'x'+outerHeight,'screen '+screen.width+'x'+screen.height+'  dpr '+devicePixelRatio,
-   'vv '+(vv?Math.round(vv.width)+'x'+Math.round(vv.height)+' top '+Math.round(vv.offsetTop)+' sc '+vv.scale.toFixed(2):'-'),
-   'safe top '+probe('top')+' bottom '+probe('bottom'),
+  var vv=window.visualViewport,b=bgEl.getBoundingClientRect(),d=dock.getBoundingClientRect(),c=cv.getBoundingClientRect(),rl=0;
+  try{rl=sessionStorage.getItem('vf-rl')?1:0;}catch(e){}
+  hudPre.textContent=['збірка '+(window.__VF_BUILD||'?'),
+   'standalone '+(navigator.standalone?'yes':'no')+' / dm '+(matchMedia('(display-mode: standalone)').matches?'sa':'br'),
+   'inner '+innerWidth+'x'+innerHeight+'  outer '+outerWidth+'x'+outerHeight+'  screen '+screen.width+'x'+screen.height,
+   'vv '+(vv?Math.round(vv.width)+'x'+Math.round(vv.height)+' top '+Math.round(vv.offsetTop):'-')+'  html '+document.documentElement.clientHeight+'  scrollY '+Math.round(scrollY)+'  SO '+SO,
+   'safe '+SAFE.t+'/'+SAFE.b+'  island '+ISL+'  cell '+gridCell().toFixed(1),
    'bg top '+Math.round(b.top)+' h '+Math.round(b.height)+'  VH '+Math.round(VH),
-   'dock top '+Math.round(d.top)+' bot '+Math.round(d.bottom)+' | DR '+Math.round(DR.top),
-   'gl top '+Math.round(c.top)+' bot '+Math.round(c.bottom)+'  island '+ISL+' cell '+gridCell().toFixed(1),
-   'html '+document.documentElement.clientHeight+' scrollY '+Math.round(scrollY),
-   'SO '+SO+' scrollY '+Math.round(window.scrollY)+' dockY '+(dockY===null?'-':dockY.toFixed(1))+' lay '+(boot.lay?1:0)+' nz '+(boot.nz||0)+' rl '+((function(){try{return sessionStorage.getItem('vf-rl')?1:0;}catch(e){return 0;}})()),
+   'dock(raw) '+Math.round(d.top)+'..'+Math.round(d.bottom)+'  DR '+Math.round(DR.top)+'  dockY '+(dockY===null?'-':dockY.toFixed(1)),
+   'gl(raw) '+Math.round(c.top)+'..'+Math.round(c.bottom),
+   'lay '+(boot.lay?1:0)+' nz '+(boot.nz||0)+' rl '+rl+'  перший кадр h '+window.__vfFirstH+'  рядків '+(window.__vfLines?window.__vfLines.length:0),
    'vp(t,h,vv): '+vpLog.map(function(x){return x.join(',');}).join(' | ')].join('\n');
  },400);
 }
@@ -533,3 +549,4 @@ tickerEl.addEventListener('pointerdown',function(e){clearTimeout(lpT);lpP=[e.cli
 tickerEl.addEventListener('pointermove',function(e){if(lpP&&Math.hypot(e.clientX-lpP[0],e.clientY-lpP[1])>12)clearTimeout(lpT);});
 ['pointerup','pointercancel'].forEach(function(n){tickerEl.addEventListener(n,function(){clearTimeout(lpT);});});
 if(/[?&]debug/.test(location.search)||(function(){try{return localStorage.getItem('vf-debug');}catch(e){return null;}})())hudOn();
+LG('main','інтерфейс ініціалізовано');

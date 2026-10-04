@@ -1,3 +1,5 @@
+function LG(a,b){if(window.__vfLog)try{window.__vfLog(a,b);}catch(e){}}   /* запис у журнал запуску (src/early-log.js) */
+LG('main','старт основного коду');
 /* ===== 0. Логіка Voice Finance (finance-core / navigation / application) ===== */
 function mkStore(kind){
  try{var s=window[kind];s.setItem('__vf','1');s.removeItem('__vf');return s;}

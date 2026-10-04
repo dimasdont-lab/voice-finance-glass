@@ -1,5 +1,6 @@
 var cv=document.getElementById('gl');
 var gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,powerPreference:'high-performance'})||cv.getContext('experimental-webgl');
+LG('gl',gl?'WebGL ok':'WebGL НЕ доступний');
 var ISL=0;   /* оновлюється щокадру з живої безпечної зони */
 /* Причина збоїв запуску на iPhone (за діагностикою): iOS у застосунку з іконки інколи лишає сторінку «прокрученою» на висоту статус-бару (scrollY=-62, visualViewport.offsetTop=-62).
    Тоді getBoundingClientRect() закріплених елементів зсунутий на +62 відносно того, де вони намальовані: скло дока опинялось нижче кнопок, крапля вилітала нижче логотипа.
@@ -8,7 +9,7 @@ var spT=document.createElement('div'),spB=document.createElement('div'),SAFE={t:
 spT.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none';
 spB.style.cssText='position:fixed;left:0;top:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none';
 document.body.appendChild(spT);document.body.appendChild(spB);
-function liveEnv(){SAFE.t=spT.offsetHeight||0;SAFE.b=spB.offsetHeight||0;ISL=(SAFE.t>=40||/[?&]island/.test(location.search))?1:0;var y=window.scrollY||window.pageYOffset||0;SO=y<0?y:0;}
+function liveEnv(){SAFE.t=spT.offsetHeight||0;SAFE.b=spB.offsetHeight||0;ISL=(SAFE.t>=40||/[?&]island/.test(location.search))?1:0;var y=window.scrollY||window.pageYOffset||0;SO=y<0?y:0;var k=SAFE.t+'/'+SAFE.b+'/'+SO+'/'+ISL;if(k!==liveEnv.k){liveEnv.k=k;LG('env','safe '+SAFE.t+'/'+SAFE.b+' scrollY-зсув '+SO+' island '+ISL);}}
 function frect(el){liveEnv();var r=el.getBoundingClientRect();return{left:r.left,right:r.right,width:r.width,height:r.height,top:r.top+SO,bottom:r.bottom+SO};}
 var GRID_CELL=45;   /* ≈5 мм на iPhone (CSS-пікселі) */
 var GLSL_BG=['vec3 blob(vec3 c,vec2 n,vec2 ce,vec2 r,vec3 col){float a=clamp(1.-length((n-ce)/r)/0.7,0.,1.);return mix(c,col,a);}',
@@ -297,6 +298,7 @@ function measure(){
  if(!fullMode&&!document.documentElement.style.getPropertyValue('--appH')){cv.style.top='auto';cv.style.bottom=(b.height-y0-h)+'px';}else{cv.style.bottom='auto';cv.style.top=y0+'px';}
  cv.width=Math.round(w*S);cv.height=Math.round(h*S);gl.viewport(0,0,cv.width,cv.height);
  if(wChanged){T.forEach(drop);P.forEach(drop);T=[];P=[];B=[];full=[];asm=[];needSync=allSync();}
+ LG('measure','VW '+VW+' VH '+VH+' S '+S+' док '+Math.round(DR.top)+'+'+Math.round(DR.height)+' полотно '+R.y+'+'+R.h+(fullMode?' (повноекранне)':'')+' SO '+SO);
  dirty=true;ready=true;rootGrid();
 }
 window.addEventListener('resize',measure);window.addEventListener('orientationchange',function(){setTimeout(measure,250);});
@@ -504,6 +506,7 @@ function smooth01(a,b,x){var t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3
 var fontsOK=!(document.fonts&&document.fonts.ready);
 if(!fontsOK)document.fonts.ready.then(function(){fontsOK=true;});
 function viewportNudge(n){
+ LG('fix','спроба перерахунку розкладки №'+n+' ('+innerHeight+')');
  var m=document.querySelector('meta[name=viewport]');if(!m)return;
  var c=m.getAttribute('content'),fire=function(){window.dispatchEvent(new Event('resize'));};
  if(n===1){var m2=document.createElement('meta');m2.setAttribute('name','viewport');m2.setAttribute('content',c);m.parentNode.replaceChild(m2,m);}
@@ -514,10 +517,11 @@ function viewportNudge(n){
 function bootGate(el,t){
  if(boot.lay)return;
  var sa=!!navigator.standalone,short=sa&&innerHeight<screen.height-1,stable=t-vpLastT>900;
+ var gk=(short?'коротке':'повне')+'/'+(stable?'стабільне':'змінюється');if(gk!==bootGate.k){bootGate.k=gk;LG('gate','вікно '+gk+' ('+innerHeight+' з '+screen.height+')');}
  if(short&&stable&&el>.6&&(boot.nz||0)<3&&el>(boot.nzT||0)){boot.nz=(boot.nz||0)+1;boot.nzT=el+1.2;viewportNudge(boot.nz);}
  var done=stable&&(!short||((boot.nz||0)>=3&&el>(boot.nzT||0)));
- if(done&&short){var rl=false;try{rl=sessionStorage.getItem('vf-rl');}catch(e){}if(!rl){try{sessionStorage.setItem('vf-rl','1');}catch(e){}location.reload();return;}}   /* одне перезавантаження на запуск: iOS після нього інколи віддає повну висоту */
- if((done||el>5.5)&&(fontsOK||el>5.5)&&ready&&el>.6){measure();tlAllStale();boot.lay=1;}
+ if(done&&short){var rl=false;try{rl=sessionStorage.getItem('vf-rl');}catch(e){}if(!rl){try{sessionStorage.setItem('vf-rl','1');}catch(e){}LG('fix','перезавантаження сторінки: вікно лишилось '+innerHeight);if(window.__vfSave)window.__vfSave();location.reload();return;}}   /* одне перезавантаження на запуск: iOS після нього інколи віддає повну висоту */
+ if((done||el>5.5)&&(fontsOK||el>5.5)&&ready&&el>.6){measure();tlAllStale();boot.lay=1;LG('gate','готово: вихід із завантаження ('+(done?'вікно стабільне':'за таймаутом')+')');}
 }
 function bootStep(t,dt){
  if(!boot.on)return;
@@ -532,10 +536,10 @@ function bootStep(t,dt){
   var pp=Math.max(0,Math.min(1,boot.p)),sc=2.4*(1-Math.pow(pp,1.8));   /* логотип зменшується разом із завантаженням, наприкінці до нуля */
   boot.logo.style.transform='scale('+sc.toFixed(4)+')';boot.wrap.style.setProperty('--gs',(.45+.55*sc/2.4).toFixed(3));
   if(el>.25&&!boot.lit){boot.lit=1;boot.el.classList.add('lit');}
-  if(boot.phase===0&&boot.p>=1){boot.phase=1;boot.t1=t;boot.wrap.classList.add('p1');boot.warm=1;dirty=true;}
+  if(boot.phase===0&&boot.p>=1){boot.phase=1;boot.t1=t;LG('boot','фаза 1: логотип зник, '+Math.round(el*1000)+' мс від старту анімації');boot.wrap.classList.add('p1');boot.warm=1;dirty=true;}
   else if(boot.phase===1&&t-boot.t1>330){
    boot.phase=2;boot.t2=t;boot.wrap.classList.add('p2');
-   var r=frect(boot.logo);boot.cx=r.left+r.width/2;boot.cy=r.top+r.height/2;introStart(t);
+   var r=frect(boot.logo);boot.cx=r.left+r.width/2;boot.cy=r.top+r.height/2;introStart(t);LG('boot','фаза 2: розширення з '+Math.round(boot.cx)+','+Math.round(boot.cy)+' (SO '+SO+')');
    cv.style.opacity=1;dirty=true;
   }
  }
@@ -549,7 +553,7 @@ function bootStep(t,dt){
   var hp=rrPts(cx,cy,Math.max(.5,hw-1.5),Math.max(.5,hh-1.5),Math.max(.5,rr-1.5),12);
   boot.el.style.clipPath='polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,'+hp.join(',')+','+hp[0]+')';
   if(u>=.55)boot.hold=0;
-  if(u>=1){boot.on=0;boot.el.style.display='none';dirty=true;}
+  if(u>=1){LG('boot','кінець завантаження');boot.on=0;boot.el.style.display='none';dirty=true;}
  }
 }
 /* ---- спільна фізика скляної панелі: пружина появи, деформація за пальцем, відступ під верхнім вікном ---- */
@@ -596,8 +600,9 @@ function stepSheet(dt){
 function frame(t){
  requestAnimationFrame(frame);
  vpSample(t);
- {liveEnv();if(SO<-.5&&mode!==1)window.scrollTo(0,0);
+ {liveEnv();if(SO<-.5&&mode!==1&&(frame.st||0)<6&&t>(frame.stn||0)){frame.st=(frame.st||0)+1;frame.stn=t+400;window.scrollTo(0,0);LG('fix','scrollTo(0,0) спроба '+frame.st+' → scrollY '+Math.round(window.scrollY||0));}
   var bgH=bgEl.getBoundingClientRect().height,dty=bgH-72-14-SAFE.b;
+  if(Math.abs(dty-(frame.dt0===undefined?-1:frame.dt0))>.5){frame.dt0=dty;LG('dock','ціль top '+dty.toFixed(1)+' (висота '+Math.round(bgH)+', safe.b '+SAFE.b+')');}
   if(dockY===null)dockY=dty;
   if(Math.abs(dty-dockY)>.3)dockY+=(dty-dockY)*(1-Math.exp(-Math.min(.05,Math.max(.001,(t-dkLast)/1000))*9));else dockY=dty;
   dkLast=t;var dys=dockY.toFixed(2)+'px';if(dock._dy!==dys){dock._dy=dys;dock.style.setProperty('--dockTop',dys);}}

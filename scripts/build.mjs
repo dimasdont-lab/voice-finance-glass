@@ -16,6 +16,7 @@ const logic = buildSync({
 const logo = 'data:image/jpeg;base64,' + fs.readFileSync(path.join(root, 'src/logo-256.jpg')).toString('base64');
 const SPLASH = [[440,956],[430,932],[420,912],[402,874],[393,852],[390,844],[428,926],[375,812]]
   .map(([w, h]) => `<link rel="apple-touch-startup-image" href="assets/splash/s-${w * 3}x${h * 3}.jpg" media="(device-width: ${w}px) and (device-height: ${h}px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">`).join('\n');
+const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 const body = r('src/body.html').replace('__LOGO__', logo);
 
 const html = `<!doctype html>
@@ -31,6 +32,8 @@ const html = `<!doctype html>
 <link rel="icon" type="image/png" href="assets/icon-192.png">
 ${SPLASH}
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
+<script>window.__VF_BUILD='${BUILD}';
+${r('src/early-log.js')}</script>
 <title>Voice Finance</title>
 <style>${r('src/style.css')}</style></head><body>
 ${body}
@@ -45,4 +48,5 @@ ${r('src/ui.js')}
 
 fs.mkdirSync(path.join(root, 'docs'), {recursive: true});
 fs.writeFileSync(path.join(root, 'docs/index.html'), html);
+console.log('build', BUILD);
 console.log('docs/index.html', (html.length / 1024).toFixed(0) + ' KB');

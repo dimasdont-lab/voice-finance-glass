@@ -40,7 +40,7 @@ GLSL_BG,
  var b=tgl.createBuffer();tgl.bindBuffer(tgl.ARRAY_BUFFER,b);tgl.bufferData(tgl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),tgl.STATIC_DRAW);
  tgl.enableVertexAttribArray(0);tgl.vertexAttribPointer(0,2,tgl.FLOAT,false,0,0);
  ['u_res','u_vp','u_go','u_cell','u_isl','u_s','u_n','u_br','u_r','u_q','u_h','u_al'].forEach(function(n){TGU[n]=tgl.getUniformLocation(p,n);});
- tgOK=true;
+ tgOK=true;LG('glt','шар скла плиток: WebGL ok');
 })();
 function tileRadius(el){for(var k in TILE_R)if(el.classList.contains(k))return TILE_R[k];return 0;}
 function tlMeasure(i){
