@@ -385,9 +385,10 @@ var TG={P:null,x0:0,y0:0,t0:0,ty:0,tt:0,vy:0,drag:0,moved:false,sc:null,top0:0};
 function rb(d){return d/(1+Math.abs(d)/55)*.55;}
 function scrollParent(n,stop){while(n&&n!==stop){if(n.scrollHeight>n.clientHeight+2){var o=getComputedStyle(n).overflowY;if(o==='auto'||o==='scroll')return n;}n=n.parentNode;}return stop&&stop.scrollHeight>stop.clientHeight+2&&/auto|scroll/.test(getComputedStyle(stop).overflowY)?stop:null;}
 function gStart(P,x,y,t,tg){
- if(!P.on)return;
+ if(!P.on)return;TG.atBot=false;
  TG.P=P;TG.x0=x;TG.y0=y;TG.t0=t;TG.ty=y;TG.tt=t;TG.vy=0;TG.drag=0;TG.moved=false;
  TG.sc=scrollParent(tg,P.el);TG.top0=TG.sc?TG.sc.scrollTop:0;
+ TG.atBot=!TG.sc||(TG.sc.scrollTop+TG.sc.clientHeight>=TG.sc.scrollHeight-2);   /* жест почався вже внизу списку */
 }
 function gMove(x,y,t){
  var P=TG.P;if(!P)return;
@@ -406,7 +407,9 @@ function gEnd(){
  var dy=TG.ty-TG.y0,atTop=!TG.sc||TG.top0<=0;
  var scr=!!TG.sc&&TG.sc.scrollHeight>TG.sc.clientHeight+2;   /* у вікні є що прокручувати — вимагаємо виразнішого жесту */
  var close=TG.drag&&P.pull&&atTop&&(dy>(scr?150:110)||(dy>(scr?100:60)&&TG.vy>1));
+ var openSet=P===menu&&menu.kind==='more'&&TG.atBot&&TG.drag&&dy<-70&&!P.pull;   /* ще раз гортаємо вниз, коли список уже в упор — налаштування */
  P.dragging=0;P.pull=false;P.tgt.x=P.tgt.y=P.tgt.sx=P.tgt.sy=0;TG.P=null;dirty=true;
+ if(openSet){TG.moved=true;try{nav.openOverlay('settings');}catch(e){}return;}
  if(close){TG.moved=true;
   if(P===menu){if(menu.kind==='more')app.closePanel('more');else closeMenu();}
   else{try{app.back();}catch(e){}}
@@ -642,3 +645,54 @@ function syImport(mode){var k=syNeedKey();if(!k)return;var code=syField('code');
   var r=fin.importSnapshot(o.data,{mode:mode});LG('sync','імпорт '+mode+' '+JSON.stringify(r));
   toast(mode==='merge'?'Додано: операцій '+r.transactions+', боргів '+r.debts+', рахунків '+r.accounts:'Дані замінено: операцій '+r.transactions);
  }).catch(function(e){toast(e.message||String(e));});}
+
+/* колесо/трекпад: ще раз вниз у кінці панелі «Додатково» відкриває налаштування */
+var MW={acc:0,t:0,bot:false};
+menu.el.addEventListener('wheel',function(e){if(menu.kind!=='more'||!menu.on)return;var s=menu.el,atB=s.scrollTop+s.clientHeight>=s.scrollHeight-2;
+ if(e.timeStamp-MW.t>450){MW.acc=0;MW.bot=atB;}MW.t=e.timeStamp;
+ if(MW.bot&&atB&&e.deltaY>0){MW.acc+=e.deltaY;if(MW.acc>140){MW.acc=0;MW.bot=false;try{nav.openOverlay('settings');}catch(er){}}}else if(!atB)MW.bot=false;},{passive:true});
+
+/* ---------- м’яке натискання на будь-який віджет чи кнопку: пружина масштабу + легка віддача сусідів ---------- */
+var PRS=new Map(),PRraf=0,PRlast=0,PRd=null;
+function prKick(){if(!PRraf){PRlast=performance.now();PRraf=requestAnimationFrame(prStep);}}
+function prSt(el){var s=el._ps;if(!s){s=el._ps={s:1,v:0,ts:1,dx:0,dy:0,vx:0,vy:0,tdx:0,tdy:0};PRS.set(el,s);}return s;}
+function prStep(t){
+ PRraf=0;var dt=Math.min(.033,Math.max(.001,(t-PRlast)/1000)),sg=0;PRlast=t;
+ PRS.forEach(function(s,el){
+  for(var q=0;q<2;q++){var h=dt/2;s.v+=(430*(s.ts-s.s)-23*s.v)*h;s.s+=s.v*h;s.vx+=(430*(s.tdx-s.dx)-26*s.vx)*h;s.dx+=s.vx*h;s.vy+=(430*(s.tdy-s.dy)-26*s.vy)*h;s.dy+=s.vy*h;}
+  if(Math.abs(s.s-1)<.0008&&Math.abs(s.v)<.012&&Math.abs(s.dx)<.03&&Math.abs(s.dy)<.03&&s.ts===1&&!s.tdx&&!s.tdy){el.style.scale='';el.style.translate='';el._ps=null;PRS.delete(el);}
+  else{el.style.scale=s.s.toFixed(4);el.style.translate=s.dx.toFixed(2)+'px '+s.dy.toFixed(2)+'px';sg+=s.s+s.dx*.013+s.dy*.017;}
+ });
+ PRSIG=sg.toFixed(4);dirty=true;
+ if(PRS.size)prKick();
+}
+function prNudge(el,mag){
+ var p=el.parentElement;if(!p)return;var r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,lim=Math.max(r.width,r.height)*1.9+60;
+ [].forEach.call(p.children,function(c){if(c===el||c.nodeType!==1||!c.offsetWidth)return;var q=c.getBoundingClientRect(),dx=q.left+q.width/2-cx,dy=q.top+q.height/2-cy,d=Math.hypot(dx,dy);if(d<1||d>lim)return;
+  var k=mag*(1-d/lim),s=prSt(c);if(Math.abs(dx)>Math.abs(dy)*1.4){s.tdx=dx/d*k*1.6;s.tdy=0;}else if(Math.abs(dy)>Math.abs(dx)*1.4){s.tdy=dy/d*k*1.6;s.tdx=0;}else{s.tdx=dx/d*k;s.tdy=dy/d*k;}
+  PRd.nb.push(c);});
+}
+function prDown(e){
+ if(e.button>0||!e.target.closest)return;
+ var t=e.target;if(t.closest('input,textarea,select,#dock,#send,#inp,#ticker,.sw,[data-cg]'))return;
+ var el=t.closest('button,[data-act],.pillb,.mr,.btnw'),tile=t.closest('.tile');
+ if(el&&tile&&el.tagName==='DIV'&&el.parentElement&&el.parentElement.classList.contains('tile'))el=tile;   /* віджет-ціле (напр. баланс) */
+ else if(!el&&tile&&tile.querySelector('[data-act]')&&0)el=tile;
+ if(!el)return;
+ prUp(true);
+ var r=el.getBoundingClientRect(),small=Math.min(r.width,r.height)<64&&r.width<120,big=r.width>220&&r.height>110,s=el.classList.contains('tile')?.985:big?.985:r.width>200?.972:small?.9:.94;
+ PRd={el:el,tile:null,x:e.clientX,y:e.clientY,t:performance.now(),nb:[]};
+ var st=prSt(el);st.ts=s;
+ if(el!==tile&&tile&&!el.classList.contains('mr')){var ts=prSt(tile);ts.ts=.993;PRd.tile=tile;}
+ prNudge(el,small?3:el.classList.contains('tile')?2.4:1.8);
+ prKick();
+}
+function prUp(now){
+ var d=PRd;if(!d)return;PRd=null;
+ var rel=function(){[d.el,d.tile].concat(d.nb).forEach(function(c){var s=c&&c._ps;if(s){s.ts=1;s.tdx=0;s.tdy=0;}});prKick();};
+ var w=now?0:Math.max(0,90-(performance.now()-d.t));
+ if(w>0)setTimeout(rel,w);else rel();
+}
+document.addEventListener('pointerdown',prDown,true);
+['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){prUp(false);},true);});
+document.addEventListener('pointermove',function(e){if(PRd&&Math.hypot(e.clientX-PRd.x,e.clientY-PRd.y)>9)prUp(true);},true);

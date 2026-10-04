@@ -376,7 +376,7 @@ function dkDraw(){
   var P=dkPos[k];
   var cxk=c.cx(k);
   var w=Math.max(0,Math.min(1,1-Math.abs(dkX-cxk)/c.cw));w=w*w*(3-2*w);
-  var mix=.45*(1-w)+.12*w,r=Math.round(255*(dkTint[0]*(1-mix)+mix)),g=Math.round(255*(dkTint[1]*(1-mix)+mix)),b=Math.round(255*(dkTint[2]*(1-mix)+mix));
+  var mix=.12,tr=255*(dkTint[0]*(1-mix)+mix),tg=255*(dkTint[1]*(1-mix)+mix),tb=255*(dkTint[2]*(1-mix)+mix),r=Math.round(255+(tr-255)*w),g=Math.round(255+(tg-255)*w),b=Math.round(255+(tb-255)*w);
   var col='rgb('+r+','+g+','+b+')',al=.7+.3*w;
   dkTc.clearRect(0,0,48,48);dkTc.globalCompositeOperation='source-over';dkTc.drawImage(dkImg[k],0,0,48,48);
   dkTc.globalCompositeOperation='source-in';dkTc.fillStyle=col;dkTc.fillRect(0,0,48,48);
