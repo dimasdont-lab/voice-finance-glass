@@ -64,7 +64,7 @@ function spark(points,id){
  var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),rg=mx-mn||1,W=320,H=84,pad=6,col=v[v.length-1]>=v[0]?'#66d896':'#ff7d83';
  var xy=v.map(function(y,i){return[(i/(v.length-1))*W,pad+(H-2*pad)*(1-(y-mn)/rg)];});
  var d=xy.map(function(p,i){return(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' ');
- return'<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" data-pts="'+ptsAttr(xy)+'" data-vb="'+W+','+H+'" data-col="'+col+'" data-lw="3.4"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".38"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#g'+id+')"/>'+lineSvg(d,col,2.4,'',true)+'</svg>';
+ return'<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" data-pts="'+ptsAttr(xy)+'" data-vb="'+W+','+H+'" data-col="'+col+'" data-lw="4.2"><defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".38"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs><path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#g'+id+')"/>'+lineSvg(d,col,2.4,'',true)+'</svg>';
 }
 function txRow(t,first){
  var cat=catName(t.category),title=t.client||(t.note&&t.note.length<34?t.note:cat),inc=t.type==='income';
