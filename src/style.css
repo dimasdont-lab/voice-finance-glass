@@ -300,3 +300,7 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 /* стрілки й літери в кружечках лишаються поверх скла без заломлення */
 .gt .gxh .dot,.gt .gxh .ic{-webkit-text-fill-color:currentColor}
 .gt .gxh svg.spark{opacity:0}
+
+.brow .chw{display:block;flex:0 0 40%;width:40%;padding:4px 0}
+.brow .chw .spark{display:block;width:100%;height:36px;flex:none}
+.brow .chev{align-self:center;margin-left:2px}

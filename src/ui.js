@@ -394,12 +394,12 @@ function scrollParent(n,stop){while(n&&n!==stop){if(n.scrollHeight>n.clientHeigh
 function gStart(P,x,y,t,tg){
  if(!P.on)return;TG.atBot=false;
  TG.P=P;TG.x0=x;TG.y0=y;TG.t0=t;TG.ty=y;TG.tt=t;TG.vy=0;TG.drag=0;TG.moved=false;
- TG.sc=scrollParent(tg,P.el);TG.top0=TG.sc?TG.sc.scrollTop:0;
+ TG.lx=x;TG.sc=scrollParent(tg,P.el);TG.top0=TG.sc?TG.sc.scrollTop:0;
  TG.atBot=!TG.sc||(TG.sc.scrollTop+TG.sc.clientHeight>=TG.sc.scrollHeight-2);   /* жест почався вже внизу списку */
 }
 function gMove(x,y,t){
  var P=TG.P;if(!P)return;
- var dx=x-TG.x0,dy=y-TG.y0;
+ var dx=x-TG.x0,dy=y-TG.y0;TG.lx=x;
  if(!TG.drag){if(Math.hypot(dx,dy)<7)return;TG.drag=1;TG.moved=true;P.dragging=1;}
  var dt=Math.max(1,t-TG.tt);TG.vy=.6*TG.vy+.4*(y-TG.ty)/dt;TG.ty=y;TG.tt=t;
  var atTop=!TG.sc||TG.sc.scrollTop<=0&&TG.top0<=0,tg=P.tgt,pull=dy>14&&atTop&&dy>=Math.abs(dx)*1.6;   /* намір закрити: явно вниз, не по діагоналі, після невеликої «мертвої зони» */
@@ -414,8 +414,10 @@ function gEnd(){
  var dy=TG.ty-TG.y0,atTop=!TG.sc||TG.top0<=0;
  var scr=!!TG.sc&&TG.sc.scrollHeight>TG.sc.clientHeight+2;   /* у вікні є що прокручувати — вимагаємо виразнішого жесту */
  var close=TG.drag&&P.pull&&atTop&&(dy>(scr?150:110)||(dy>(scr?100:60)&&TG.vy>1));
+ var dxe=TG.lx-TG.x0,closeX=P===menu&&menu.kind==='more'&&TG.drag&&dxe>70&&Math.abs(dxe)>Math.abs(dy)*1.4;   /* свайп зліва направо закриває «Додатково» */
  var openSet=P===menu&&menu.kind==='more'&&TG.atBot&&TG.drag&&dy<-70&&!P.pull;   /* ще раз гортаємо вниз, коли список уже в упор — налаштування */
  P.dragging=0;P.pull=false;P.tgt.x=P.tgt.y=P.tgt.sx=P.tgt.sy=0;TG.P=null;dirty=true;
+ if(closeX){TG.moved=true;try{app.closePanel('more');}catch(e){}return;}
  if(openSet){TG.moved=true;try{nav.openOverlay('settings');}catch(e){}return;}
  if(close){TG.moved=true;
   if(P===menu){if(menu.kind==='more')app.closePanel('more');else closeMenu();}
@@ -616,8 +618,12 @@ tickerEl.addEventListener('wheel',function(e){e.preventDefault();tkOff+=e.deltaX
 
 /* текст у віджетах стискається під ширину свого боксу й ніколи не виходить за межі */
 var FIT_SEL='.big,.mid,.split b,.mini b,.aa',fitQ=0;
-function fitOne(el){el.style.fontSize='';var w=el.clientWidth;if(!w)return;var sw=el.scrollWidth;if(sw>w+.5){var fs=parseFloat(getComputedStyle(el).fontSize)||16;el.style.fontSize=Math.max(10,Math.floor(fs*w/sw*10)/10-.1)+'px';}}
-function fitAll(){fitQ=0;[].forEach.call(root.querySelectorAll(FIT_SEL),fitOne);}   /* виконується синхронно після зміни DOM, до малювання: скло й текст не розходяться */
+function fitAll(){   /* виконується синхронно після зміни DOM, до малювання; читання й запис розділені (без зайвих перерахунків макету) */
+ fitQ=0;var els=[].slice.call(root.querySelectorAll(FIT_SEL));
+ els.forEach(function(el){if(el.style.fontSize)el.style.fontSize='';});
+ var need=els.map(function(el){var w=el.clientWidth;return w?[w,el.scrollWidth]:null;});
+ els.forEach(function(el,i){var n=need[i];if(n&&n[1]>n[0]+.5){var fs=parseFloat(getComputedStyle(el).fontSize)||16;el.style.fontSize=Math.max(10,Math.floor(fs*n[0]/n[1]*10)/10-.1)+'px';}});
+}
 function fitSoon(){if(!fitQ)fitQ=requestAnimationFrame(fitAll);}
 new MutationObserver(function(){fitAll();tlAllStale();dirty=true;}).observe(root,{childList:true,subtree:true,characterData:true});
 window.addEventListener('resize',fitSoon);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitSoon);

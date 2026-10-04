@@ -183,7 +183,7 @@ function bkGlt(){   /* зменшена копія шару скла відже�
  if(!bkGT){bkGT=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,bkGT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
  gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,bkGT);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,bkCv);gl.activeTexture(gl.TEXTURE0);
 }
-var tkY0=0,TKH=190,tkCv=document.createElement('canvas'),tkCx=tkCv.getContext('2d'),tkTex=null;
+var tkSkip=0,tkY0=0,TKH=190,tkCv=document.createElement('canvas'),tkCx=tkCv.getContext('2d'),tkTex=null;
 function tkCopy(){   /* верхня смуга шару плиток (#glt) — те, що тікер заломлює разом зі знімками сторінок */
  if(tkTex&&tkCopy.last===tgDraws+':'+TKH+':'+VW){gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,tkTex);gl.activeTexture(gl.TEXTURE0);return;}tkCopy.last=tgDraws+':'+TKH+':'+VW;
  var k=1.5,w=Math.round(VW*k),h=Math.round(TKH*k);if(tkCv.width!==w||tkCv.height!==h){tkCv.width=w;tkCv.height=h;}
@@ -196,11 +196,12 @@ var tkXc=document.createElement('canvas'),tkXx=tkXc.getContext('2d'),tkXTex=null
 function tkText(){
  var k=2;
  var x=tkXx;x.setTransform(k,0,0,k,0,-tkY0*k);x.clearRect(0,tkY0,VW,80);
- var its=tickerEl.querySelectorAll('.ti');if(!its.length)return;
+ atlTkCh=1;if(!tkIts||!tkIts[0]||!tkIts[0].isConnected)tkIts=tickerEl.querySelectorAll('.ti');
+ var its=tkIts;if(!its.length)return;var cur=-(parseFloat(String(tickerTrk._tx||'').replace('translate3d(',''))||0);
  if(!tkF){var g=function(q){var e=tickerEl.querySelector(q);if(!e)return null;var c=getComputedStyle(e);return{f:c.fontWeight+' '+c.fontSize+' '+c.fontFamily,c:c.color};};
   tkF={b:g('.tc b'),p:g('.tp span'),i:g('.tp i'),n:g('.tp i.neg'),l:getComputedStyle(its[0]).borderLeftColor};}
  x.textBaseline='middle';
- for(var n=0;n<its.length;n++){var ti=its[n],r=ti.getBoundingClientRect();if(r.right<-4||r.left>VW+4)continue;
+ for(var n=0;n<its.length;n++){var ti=its[n],L0=ti.offsetLeft-cur;if(L0>VW+200||L0+ti.offsetWidth<-200)continue;var r=ti.getBoundingClientRect();if(r.right<-4||r.left>VW+4)continue;
   x.fillStyle=tkF.l;x.fillRect(r.left,r.top+(r.height-26)/2,1,26);
   var b=ti.querySelector('.tc b'),p=ti.querySelector('.tp span'),i=ti.querySelector('.tp i'),sp=ti.querySelector('svg.sp'),t;
   if(b&&tkF.b){t=b.getBoundingClientRect();x.font=tkF.b.f;x.fillStyle=tkF.b.c;x.fillText(b.textContent,t.left,t.top+t.height/2);}
@@ -343,10 +344,16 @@ new MutationObserver(function(recs){recs.forEach(function(r){
 });}).observe(root,{childList:true,characterData:true,subtree:true});
 
 var ATH=304;
-function atlPrep(){var w=Math.round(VW*2);if(tkXc.width!==w||tkXc.height!==ATH){tkXc.width=w;tkXc.height=ATH;}}
+var dkXc=document.createElement('canvas'),dkXx=dkXc.getContext('2d'),atlW=0,atlTkCh=1,atlDkCh=1,dkSig='',tkIts=null;
+function atlPrep(){var w=Math.round(VW*2);if(tkXc.width!==w||tkXc.height!==160){tkXc.width=w;tkXc.height=160;atlTkCh=1;}if(dkXc.width!==w||dkXc.height!==144){dkXc.width=w;dkXc.height=144;atlDkCh=1;dkSig='';}}
 function atlUp(){
+ var w=tkXc.width;
  if(!tkXTex){tkXTex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tkXTex);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
- gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,tkXTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,tkXc);gl.activeTexture(gl.TEXTURE0);
+ gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,tkXTex);
+ if(atlW!==w){gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,ATH,0,gl.RGBA,gl.UNSIGNED_BYTE,null);atlW=w;atlTkCh=1;atlDkCh=1;}
+ if(atlTkCh)gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,tkXc);
+ if(atlDkCh)gl.texSubImage2D(gl.TEXTURE_2D,0,0,160,gl.RGBA,gl.UNSIGNED_BYTE,dkXc);
+ atlTkCh=0;atlDkCh=0;gl.activeTexture(gl.TEXTURE0);
 }
 /* ===== ряд іконок доку: малюється в текстуру, кольори за станом балансу, активна світиться; скляний індикатор заломлює їх ===== */
 var dkImg=[],dkPos=null,dkTint=[.78,.8,.88],dkTmp=document.createElement('canvas'),dkTc=dkTmp.getContext('2d'),dkFam='',dkOK=0;
@@ -368,9 +375,10 @@ function dkDraw(){
  var ready=dkImg.every(function(im){return im&&im.complete&&im.naturalWidth>0;});
  if(!ready){dkOK=0;return;}
  var tt=BAL_TREND>0?[.04,.98,.36]:BAL_TREND<0?[1,.03,.07]:[.8,.82,.9];
- for(var q=0;q<3;q++)dkTint[q]+=(tt[q]-dkTint[q])*.08;
- var x=tkXx,c=cells();
- x.setTransform(2,0,0,2,0,160);x.clearRect(0,0,VW,76);
+ var dtn=0;for(var q=0;q<3;q++){dkTint[q]+=(tt[q]-dkTint[q])*.08;dtn+=Math.abs(tt[q]-dkTint[q]);}if(dtn>.02)dirty=true;
+ var sig=Math.round(dkX*2)+'|'+dkTint.map(function(v){return Math.round(v*40);}).join(',')+'|'+VW+'|'+BAL_TREND;if(sig===dkSig&&dkOK)return;dkSig=sig;
+ var x=dkXx,c=cells();
+ x.setTransform(2,0,0,2,0,0);x.clearRect(0,0,VW,76);
  x.textAlign='center';x.textBaseline='middle';
  for(var k=0;k<btns.length;k++){
   var P=dkPos[k];
@@ -386,7 +394,7 @@ function dkDraw(){
   x.fillText(btns[k].getAttribute('aria-label')||'',P.lx,P.ly);
   x.shadowBlur=0;x.globalAlpha=1;
  }
- dkOK=1;
+ dkOK=1;atlDkCh=1;
 }
 var dkX=0;
 /* ===== 4. Розміри (кешуються, не читаються щокадру) ===== */
@@ -863,7 +871,8 @@ function frame(t){
  if(fullMode!==wantFull){fullMode=wantFull;document.documentElement.classList.toggle('fm',fullMode);measure();dirty=true;}
  var tkOn=(!fullMode&&tgOK&&tgShown&&tickerEl.classList.contains('on')&&tickerEl.offsetHeight>0)?1:0;
  if(tickerEl._gl!==tkOn){tickerEl._gl=tkOn;tickerEl.classList.toggle('tkgl',!!tkOn);dirty=true;}
- if(dirty||tkOn||gMov||moving||!settled||scrolling||mode||menuA>0.002||sheetA>0.002||recMoving||(boot.on&&boot.phase===2)||boot.warm===1){
+ var otherMotion=dirty||gMov||moving||!settled||scrolling||mode||menuA>0.002||sheetA>0.002||recMoving||(boot.on&&boot.phase===2)||boot.warm===1;
+ if(otherMotion||(tkOn&&(tkSkip^=1))){
   var e=Math.max(-0.25,Math.min(0.7,j+Math.abs(v)*0.00015));
   var IR=DR.height/2+3,hw=IR*1.3*(1+e),hh=IR/(1+e*0.7),cy=(DR.top+DR.height/2+off-R.y)*S;
   var A=T[fl],Bt=f2<NP?T[f2]:null;
