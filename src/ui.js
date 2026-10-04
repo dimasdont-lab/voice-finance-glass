@@ -753,22 +753,29 @@ setInterval(function(){if(SYN.on&&!document.hidden)synPull(false);},8000);
 document.addEventListener('visibilitychange',function(){if(SYN.on&&!document.hidden)synPull(false);});
 
 /* ---------- світіння за пальцем: суцільний насичений лазерний слід кольору балансу; малюється в текстуру, яку скло плиток заломлює ---------- */
-var FGc=document.getElementById('fglow'),FGx=FGc&&FGc.getContext('2d'),FGp=[],FGraf=0,FGdown=false;
-function fgSize(){if(!FGc)return;var w=Math.max(8,Math.round(VW/4)),h=Math.max(8,Math.round(VH/4));if(FGc.width!==w||FGc.height!==h){FGc.width=w;FGc.height=h;}}
+var FGc=null,FGp=[],FGraf=0,FGdown=false;
 function fgPal(t){var f=((t%1)+1)%1*4,A=[[255,66,133],[148,77,255],[46,140,255],[255,153,66]],i=Math.floor(f),u=f-i;u=u*u*(3-2*u);var a=A[i%4],b=A[(i+1)%4];return[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u];}
 function fgAdd(x,y,brk){var now=performance.now(),pv=FGp.length?FGp[FGp.length-1]:null,v=0;if(pv&&!brk){v=Math.hypot(x-pv.x,y-pv.y)/Math.max(1,now-pv.t);v=pv.v*.65+v*.35;}FGp.push({x:x,y:y,t:now,b:!!brk,v:v});if(FGp.length>90)FGp.shift();kickFg();}
 function kickFg(){if(!FGraf)FGraf=requestAnimationFrame(fgStep);}
 function fgStep(){
- FGraf=0;if(!FGc)return;fgSize();var now=performance.now(),LIFE=500+FGS.l*20,c=FGx,k=.25,IN=FGS.i/100,BR=30+FGS.w*.75;
+ FGraf=0;var now=performance.now(),LIFE=500+FGS.l*20,IN=FGS.i/100,BR=30+FGS.w*.75;
  FGp=FGp.filter(function(p){return now-p.t<LIFE;});
- c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='source-over';c.fillStyle='#000';c.fillRect(0,0,FGc.width,FGc.height);
- c.globalCompositeOperation='lighten';
- function stamp(x,y,age,v,tt){var al=Math.pow(Math.max(0,age),1.4),r=(BR*(1-Math.min(1,v/3)*.3)*(.55+.45*age))*k;if(al<.01||r<1)return;var pc=fgPal(tt/3800+x/900),cs=Math.round(pc[0]*.78)+','+Math.round(pc[1]*.78)+','+Math.round(pc[2]*.78);var g=c.createRadialGradient(x*k,y*k,0,x*k,y*k,r);g.addColorStop(0,'rgba('+cs+','+(al*IN*.9).toFixed(3)+')');g.addColorStop(.5,'rgba('+cs+','+(al*IN*.4).toFixed(3)+')');g.addColorStop(1,'rgba('+cs+',0)');c.fillStyle=g;c.fillRect(x*k-r,y*k-r,r*2,r*2);}
- for(var i=0;i<FGp.length;i++){var b=FGp[i],ageB=1-(now-b.t)/LIFE;
-  if(i>0&&!b.b){var a=FGp[i-1],ageA=1-(now-a.t)/LIFE,d=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(d/10));for(var s2=1;s2<=n;s2++){var f=s2/n;stamp(a.x+(b.x-a.x)*f,a.y+(b.y-a.y)*f,ageA+(ageB-ageA)*f,b.v,a.t+(b.t-a.t)*f);}}
-  else stamp(b.x,b.y,ageB,b.v,b.t);}
- FGact=FGp.length>0?1:0;FGgen++;dirty=true;
- if(FGp.length||FGdown)FGraf=requestAnimationFrame(fgStep);
+ /* шлях → рівномірні точки (не більше 24), кожна — м'яка пляма в шейдері */
+ var pts=[],i,len=0;for(i=1;i<FGp.length;i++)if(!FGp[i].b)len+=Math.hypot(FGp[i].x-FGp[i-1].x,FGp[i].y-FGp[i-1].y);
+ var step=Math.max(BR*.32,len/22),acc=step;
+ for(i=0;i<FGp.length;i++){var b=FGp[i],ageB=1-(now-b.t)/LIFE;
+  if(i>0&&!b.b){var a=FGp[i-1],ageA=1-(now-a.t)/LIFE,d=Math.hypot(b.x-a.x,b.y-a.y),u=0;
+   while(acc<=d){u=acc/d;pts.push([a.x+(b.x-a.x)*u,a.y+(b.y-a.y)*u,ageA+(ageB-ageA)*u,b.v,a.t+(b.t-a.t)*u]);acc+=step;}acc-=d;}
+  else{pts.push([b.x,b.y,ageB,b.v,b.t]);acc=step;}}
+ if(FGp.length){var L=FGp[FGp.length-1];pts.push([L.x,L.y,1-(now-L.t)/LIFE,L.v,L.t]);}
+ if(pts.length>24)pts=pts.slice(pts.length-24);
+ var n=0,x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+ for(i=0;i<pts.length;i++){var q=pts[i],al=Math.pow(Math.max(0,q[2]),1.4),r=BR*(1-Math.min(1,q[3]/3)*.3)*(.55+.45*q[2]);if(al<.01||r<1)continue;
+  var pc=fgPal(q[4]/3800+q[0]/900);FGu[n*4]=q[0];FGu[n*4+1]=q[1];FGu[n*4+2]=r*.55;FGu[n*4+3]=al*IN*1.4;FGcu[n*3]=pc[0]/255*.78;FGcu[n*3+1]=pc[1]/255*.78;FGcu[n*3+2]=pc[2]/255*.78;n++;
+  x0=Math.min(x0,q[0]-r*1.2);y0=Math.min(y0,q[1]-r*1.2);x1=Math.max(x1,q[0]+r*1.2);y1=Math.max(y1,q[1]+r*1.2);}
+ FGn=n;FGbb=n?[x0,y0,x1,y1]:null;
+ FGact=n>0?1:0;FGgen++;dirty=true;
+ if(FGp.length||FGdown)FGraf=requestAnimationFrame(fgStep);else{FGgen++;}
 }
 document.addEventListener('pointerdown',function(e){if(e.target.closest&&e.target.closest('input,textarea'))return;FGdown=true;fgAdd(e.clientX,e.clientY,true);},true);
 document.addEventListener('pointermove',function(e){if(!(FGdown||e.buttons))return;var ev=e.getCoalescedEvents?e.getCoalescedEvents():null;if(ev&&ev.length){ev.forEach(function(q){fgAdd(q.clientX,q.clientY,false);});}else fgAdd(e.clientX,e.clientY,false);},true);
