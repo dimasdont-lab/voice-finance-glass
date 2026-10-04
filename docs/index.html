@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-04 02:47 UTC';
+<script>window.__VF_BUILD='2026-10-04 02:48 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -2628,8 +2628,7 @@ GLSL_BG,
 'vec3 bgT(vec2 xpx){vec2 p=u_org+xpx/u_s;vec3 c=texture2D(u_tt,vec2(clamp(p.x/u_vp.x,0.,1.),clamp(p.y/u_th,0.,1.))).rgb;vec2 pp=rt(p,u_rp,u_rt.xy);',
 ' vec4 a=pageS(u_t0,u_p0,u_w.x,pp);a.rgb*=u_rp.w;c=c*(1.-a.a)+a.rgb;vec4 b=pageS(u_t1,u_p1,u_w.y,pp);b.rgb*=u_rp.w;c=c*(1.-b.a)+b.rgb;return c*(1.-u_scrim);}',
 'float sdBand(vec2 px){float W=u_vp.x*u_s,cy=u_tk.x+u_tk.y*.5;return sdRB(px-vec2(W*.5,cy),vec2(W*.5+90.*u_s,u_tk.y*.5),u_tk.y*.5);}',
-'float sdTick(vec2 px){float W=u_vp.x*u_s,cy=u_tk.x+u_tk.y*.5;float band=sdBand(px);',
-' float sl=sdRB(px-vec2(-70.*u_s,cy),vec2(70.*u_s,500.*u_s),0.);float sr=sdRB(px-vec2(W+70.*u_s,cy),vec2(70.*u_s,500.*u_s),0.);return smin(band,min(sl,sr),u_tk.z);}',
+'float sdTick(vec2 px){return sdBand(px);}',
 'vec2 tickN(vec2 px){float e=1.5;return normalize(vec2(sdTick(px+vec2(e,0.))-sdTick(px-vec2(e,0.)),sdTick(px+vec2(0.,e))-sdTick(px-vec2(0.,e)))+1e-5);}',
 'vec4 tickGlass(vec2 px,float d){float m=26.*u_s;float t=clamp(-d/(.6*m),0.,1.);vec2 n=tickN(px);',
 ' vec2 of=n*pow(1.-t,2.2)*.7*m;float ab=.08*(.35+pow(1.-t,1.5));vec3 ci=vec3(bgT(px-of*(1.+ab)).r,bgT(px-of).g,bgT(px-of*(1.-ab)).b)*.78;',
