@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-04 04:36 UTC';
+<script>window.__VF_BUILD='2026-10-04 04:54 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -3122,6 +3122,8 @@ inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault(
 root.addEventListener('pointerdown',function(){if(mode===1&&document.activeElement===inp)inp.blur();},true);
 
 var TAB_IDS=['analytics','debts','home','more'];
+var TAB_ROOT=['insights','debts','home'];
+function tabAtRoot(i){try{return i>2||nav.getState().screen===TAB_ROOT[i];}catch(e){return true;}}   /* з будь-якої підсторінки повторний тап по вкладці повертає на її початкову сторінку */
 function actTab(i){try{app.activateButton(TAB_IDS[i]);}catch(err){console.error(err);}}
 dock.addEventListener('pointerdown',function(e){
  e.preventDefault();if(mode===1)return;
@@ -3129,7 +3131,7 @@ dock.addEventListener('pointerdown',function(e){
  var c=cells(),px=e.clientX,grab=x!==null&&Math.abs(px-x)<c.cw/2+4,sl=slotAt(c,px);
  if(grab){drag={id:e.pointerId,off:x-px,start:x};dragTarget=x;try{dock.setPointerCapture(e.pointerId);}catch(_){}}
  else if(sl===KS){kbTap={id:e.pointerId,x:e.clientX,y:e.clientY};kbClick=true;}
- else{var i=sl>KS?sl-1:sl;if(i===dockSel&&i!==3)return;dir=(c.cx(slotOf[i])-x)>=0?1:-1;actTab(i);}
+ else{var i=sl>KS?sl-1:sl;if(i===dockSel&&i!==3&&tabAtRoot(i))return;dir=(c.cx(slotOf[i])-x)>=0?1:-1;actTab(i);}
 });
 dock.addEventListener('pointermove',function(e){
  if(kbTap&&e.pointerId===kbTap.id&&Math.hypot(e.clientX-kbTap.x,e.clientY-kbTap.y)>12){kbTap=null;kbClick=false;}
@@ -3141,7 +3143,7 @@ function release(e){
  if(!drag||e.pointerId!==drag.id)return;var c=cells();
  var tab=tabNear(c,Math.max(c.cx(0),Math.min(c.cx(NS-1),x+v*0.12))),moved=Math.abs(dragTarget-drag.start)>10;
  drag=null;setOn(dockSel);
- if(tab!==dockSel)actTab(tab);else if(!moved&&tab===3)actTab(3);}
+ if(tab!==dockSel)actTab(tab);else if(!moved&&(tab===3||!tabAtRoot(tab)))actTab(tab);}
 dock.addEventListener('pointerup',release);dock.addEventListener('pointercancel',function(e){kbTap=null;kbClick=false;release(e);});
 dock.addEventListener('click',function(){   /* запасний шлях для iOS: фокус саме в click */
  if(kbClick){kbClick=false;if(mode!==1)tapInput();}
@@ -3786,9 +3788,9 @@ function mkpLoad(){
  var m=mkMeta(mkP.id);if(!m)return;
  var tok=++mkpReq;mkP.state='loading';mkP.pts=null;mkP.draw=null;
  mkLoadSeries(m,mkP.period).then(function(pts){
-  if(tok!==mkpReq)return;mkP.pts=pts;mkP.state=pts.length>1?'ok':'empty';renderPages();
+  if(tok!==mkpReq)return;mkP.pts=pts;mkP.state=pts.length>1?'ok':'empty';renderPages();mkSheetRefresh();
  }).catch(function(e){
-  if(tok!==mkpReq)return;mkP.state='err';renderPages();
+  if(tok!==mkpReq)return;mkP.state='err';renderPages();mkSheetRefresh();
  });
  renderPages();
 }
@@ -3811,7 +3813,7 @@ function mkDown(pts){
  if(o[o.length-1]!==pts[n-1])o.push(pts[n-1]);
  return o;
 }
-function mkChartHtml(pts,up){
+function mkChartHtml(pts,up,dom){
  var W=340,H=210,pd=22,mn=Infinity,mx=-Infinity,i;
  for(i=0;i<pts.length;i++){if(pts[i].v<mn)mn=pts[i].v;if(pts[i].v>mx)mx=pts[i].v;}
  var rg=mx-mn||1,col=up?'#66d896':'#ff7d83';
@@ -3819,8 +3821,26 @@ function mkChartHtml(pts,up){
  var d='M'+xy.join(' L');
  var grid='';for(i=0;i<3;i++){var gy=(pd+(H-2*pd)*i/2).toFixed(1);grid+='<line x1="0" x2="'+W+'" y1="'+gy+'" y2="'+gy+'" stroke="rgba(255,255,255,.08)" stroke-width="1" vector-effect="non-scaling-stroke"/>';}
  return'<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" data-pts="'+ptsAttr(xy.map(function(q){return q.split(' ');}))+'" data-vb="'+W+','+H+'" data-col="'+col+'" data-lw="4"><defs><linearGradient id="mpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".32"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+grid+
-  '<path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#mpg)"/>'+lineSvg(d,col,2.2,' vector-effect="non-scaling-stroke"',true)+'</svg>'+
+  '<path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#mpg)"/>'+lineSvg(d,col,2.2,' vector-effect="non-scaling-stroke"',!dom)+'</svg>'+
   '<span class="mx">'+esc(mkFmt(mx))+'</span><span class="mn">'+esc(mkFmt(mn))+'</span>';
+}
+/* пара у вікні-вспливашці (відкривається з тікера): той самий зміст, що й сторінка пари */
+function marketSheetHtml(id){
+ var head=function(t){return'<div class="sh"><span style="min-width:70px"></span><h3>'+esc(t)+'</h3><button class="ok" data-s="cancel">Закрити</button></div>';};
+ var m=mkMeta(id);if(!m)return head('Пару не знайдено');
+ var live=MK.data[m.id],pts=mkP.id===m.id?mkP.pts:null,ok=mkP.id===m.id&&mkP.state==='ok'&&pts&&pts.length>1;
+ var first=ok?pts[0].v:null,last=ok?pts[pts.length-1].v:(live&&isFinite(live.value)?live.value:null);
+ var chg=ok&&first?(last-first)/first*100:null,up=chg==null||chg>=0;
+ var chips=mkPeriods(m).map(function(p){return'<button class="chip'+(p===mkP.period?' on':'')+'" data-s="mper" data-v="'+p+'">'+MKP_L[p]+'</button>';}).join('');
+ var body;
+ if(ok){mkP.draw=mkDown(pts);body='<div class="mchart" data-mkc="1">'+mkChartHtml(mkP.draw,up,true)+'</div><div class="mt"><span>'+esc(mkDate(pts[0].t,mkP.period))+'</span><span>'+esc(mkDate(pts[pts.length-1].t,mkP.period))+'</span></div>';}
+ else{var msg=mkP.state==='loading'?'Завантаження…':mkP.state==='err'?'Не вдалося завантажити дані: перевірте мережу.':'Для цього періоду даних немає.';body='<div class="mchart"><div class="msg">'+esc(msg)+'</div></div><div class="mt"><span></span><span></span></div>';}
+ var h=head(m.label)+'<div class="mkinfo" style="padding:0 0 8px">'+esc((m.name?m.name+' · ':'')+mkSource(m))+'</div>'+
+  '<div class="lbl">'+esc(MKP_L[mkP.period])+'</div><div class="big" style="font-size:34px">'+esc(last==null?'—':mkFmt(last))+'</div>'+
+  (chg==null?'':'<div class="chg '+(chg<0?'neg':'')+'">'+esc(mkPct(chg))+'<span>за період</span></div>')+body+'<div class="mper">'+chips+'</div>';
+ if(ok){var mn=Infinity,mx=-Infinity;pts.forEach(function(p){if(p.v<mn)mn=p.v;if(p.v>mx)mx=p.v;});
+  h+='<div class="grid2" style="margin-top:14px"><div class="mini"><span class="lbl">Початок періоду</span><b>'+esc(mkFmt(first))+'</b></div><div class="mini"><span class="lbl">Зараз</span><b>'+esc(mkFmt(last))+'</b></div><div class="mini"><span class="lbl">Мінімум</span><b>'+esc(mkFmt(mn))+'</b></div><div class="mini"><span class="lbl">Максимум</span><b>'+esc(mkFmt(mx))+'</b></div></div>';}
+ return h;
 }
 function blocksMarket(){
  var m=mkMeta(nav.getState().params.marketId),o=[];
@@ -3859,7 +3879,7 @@ root.addEventListener('pointerup',mcrossHide);root.addEventListener('pointercanc
 
 /* ===== 6. Інтерфейс: події, аркуші, скляні меню, синхронізація зі станом логіки ===== */
 var sheetsEl=document.getElementById('sheets'),scrimEl=document.getElementById('scrim'),toastEl=document.getElementById('toast');
-var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets'];
+var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet'];
 var CURS=['PLN','EUR','USD','GBP'],curSheet=null,lastScreen='',toastT=0;
 
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){toastEl.classList.remove('on');},2200);}
@@ -3994,6 +4014,7 @@ function sheetHtml(kind,ov){
   h+='<button class="btnw pri" data-s="confirm">Підтвердити</button><button class="btnw" data-s="edit">Редагувати</button>';
   return h;
  }
+ if(kind==='marketSheet')return marketSheetHtml(ov.data&&ov.data.marketId);
  if(kind==='transactionList'){
   var cid=ov.data&&ov.data.categoryId,ty=ov.data&&ov.data.type,list=cid?fin.transactions({category:cid}):ty?fin.transactions({type:ty,limit:100}):fin.transactions({limit:100});
   return'<div class="sh"><span style="min-width:70px"></span><h3>'+esc(cid?catName(cid):ty?(ty==='income'?'Доходи':'Витрати'):'Усі операції')+'</h3><button class="ok" data-s="cancel">Закрити</button></div>'+
@@ -4088,7 +4109,7 @@ function showSheet(top){
  el.style.display='block';
  sheetP.el=el;curSheet={key:key,kind:top.kind,el:el,body:body,html:html};
  el.classList.remove('ghost');
- var anc=top.kind==='input'?sendAnchor:(top.kind==='transactionList'&&growAnchor)?growAnchor:null,grow=!!anc;growAnchor=null;
+ var anc=top.kind==='input'?sendAnchor:((top.kind==='transactionList'||top.kind==='marketSheet')&&growAnchor)?growAnchor:null,grow=!!anc;growAnchor=null;
  sheetP.mode=grow?'grow':'rise';
  if(grow){sheetP.ax=anc.x;sheetP.ay=anc.y;}
  sheetP.kind=top.kind;
@@ -4138,6 +4159,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='acc')app.openManualAccount('manual');
   else if(s==='cash')app.openManualAccount('cash');
   else if(s==='export')exportData();
+  else if(s==='mper')setMarketPeriod(t.dataset.v);
   else if(s==='logshare')logShare();
   else if(s==='syncgen')syGen();
   else if(s==='syncexp')syExport();
@@ -4357,7 +4379,7 @@ function tkEnd(cancel,ts){
  if(!tkPress)return;var r=tkG.end({cancelled:cancel});tkPress=null;
  if(ts-tkPT>90)tkVel=0;                                   /* палець зупинився перед відпусканням — без інерції */
  tkVel=Math.max(-3000,Math.min(3000,tkVel));
- if(r){tkPause=r.resumeAt;if(r.openMarketId){tkVel=0;try{nav.openMarket(r.openMarketId);}catch(err){console.error(err);}}}
+ if(r){tkPause=r.resumeAt;if(r.openMarketId){tkVel=0;try{var tkr=tickerEl.getBoundingClientRect();growAnchor={x:tkPX,y:tkr.top+tkr.height/2};mkpEnter(r.openMarketId);nav.openOverlay('marketSheet',{marketId:r.openMarketId});}catch(err){console.error(err);}}}
 }
 /* строка закріплена поза сторінками: горизонтальне перетягування не скролить сторінку (touch-action:none) */
 tickerEl.addEventListener('pointerdown',function(e){
@@ -4555,5 +4577,7 @@ function prUp(now){
 document.addEventListener('pointerdown',prDown,true);
 ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){prUp(false);},true);});
 document.addEventListener('pointermove',function(e){if(PRd&&Math.hypot(e.clientX-PRd.x,e.clientY-PRd.y)>9)prUp(true);},true);
+
+function mkSheetRefresh(){if(!curSheet||curSheet.kind!=='marketSheet')return;var h=sheetHtml('marketSheet',{data:{marketId:mkP.id}});if(h!==curSheet.html){curSheet.html=h;curSheet.body.innerHTML=h;layoutSheet();sheetStale();}}
 
 })();</script></body></html>

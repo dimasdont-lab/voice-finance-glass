@@ -39,9 +39,9 @@ function mkpLoad(){
  var m=mkMeta(mkP.id);if(!m)return;
  var tok=++mkpReq;mkP.state='loading';mkP.pts=null;mkP.draw=null;
  mkLoadSeries(m,mkP.period).then(function(pts){
-  if(tok!==mkpReq)return;mkP.pts=pts;mkP.state=pts.length>1?'ok':'empty';renderPages();
+  if(tok!==mkpReq)return;mkP.pts=pts;mkP.state=pts.length>1?'ok':'empty';renderPages();mkSheetRefresh();
  }).catch(function(e){
-  if(tok!==mkpReq)return;mkP.state='err';renderPages();
+  if(tok!==mkpReq)return;mkP.state='err';renderPages();mkSheetRefresh();
  });
  renderPages();
 }
@@ -64,7 +64,7 @@ function mkDown(pts){
  if(o[o.length-1]!==pts[n-1])o.push(pts[n-1]);
  return o;
 }
-function mkChartHtml(pts,up){
+function mkChartHtml(pts,up,dom){
  var W=340,H=210,pd=22,mn=Infinity,mx=-Infinity,i;
  for(i=0;i<pts.length;i++){if(pts[i].v<mn)mn=pts[i].v;if(pts[i].v>mx)mx=pts[i].v;}
  var rg=mx-mn||1,col=up?'#66d896':'#ff7d83';
@@ -72,8 +72,26 @@ function mkChartHtml(pts,up){
  var d='M'+xy.join(' L');
  var grid='';for(i=0;i<3;i++){var gy=(pd+(H-2*pd)*i/2).toFixed(1);grid+='<line x1="0" x2="'+W+'" y1="'+gy+'" y2="'+gy+'" stroke="rgba(255,255,255,.08)" stroke-width="1" vector-effect="non-scaling-stroke"/>';}
  return'<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" data-pts="'+ptsAttr(xy.map(function(q){return q.split(' ');}))+'" data-vb="'+W+','+H+'" data-col="'+col+'" data-lw="4"><defs><linearGradient id="mpg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".32"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+grid+
-  '<path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#mpg)"/>'+lineSvg(d,col,2.2,' vector-effect="non-scaling-stroke"',true)+'</svg>'+
+  '<path d="'+d+' L'+W+' '+H+' L0 '+H+' Z" fill="url(#mpg)"/>'+lineSvg(d,col,2.2,' vector-effect="non-scaling-stroke"',!dom)+'</svg>'+
   '<span class="mx">'+esc(mkFmt(mx))+'</span><span class="mn">'+esc(mkFmt(mn))+'</span>';
+}
+/* пара у вікні-вспливашці (відкривається з тікера): той самий зміст, що й сторінка пари */
+function marketSheetHtml(id){
+ var head=function(t){return'<div class="sh"><span style="min-width:70px"></span><h3>'+esc(t)+'</h3><button class="ok" data-s="cancel">Закрити</button></div>';};
+ var m=mkMeta(id);if(!m)return head('Пару не знайдено');
+ var live=MK.data[m.id],pts=mkP.id===m.id?mkP.pts:null,ok=mkP.id===m.id&&mkP.state==='ok'&&pts&&pts.length>1;
+ var first=ok?pts[0].v:null,last=ok?pts[pts.length-1].v:(live&&isFinite(live.value)?live.value:null);
+ var chg=ok&&first?(last-first)/first*100:null,up=chg==null||chg>=0;
+ var chips=mkPeriods(m).map(function(p){return'<button class="chip'+(p===mkP.period?' on':'')+'" data-s="mper" data-v="'+p+'">'+MKP_L[p]+'</button>';}).join('');
+ var body;
+ if(ok){mkP.draw=mkDown(pts);body='<div class="mchart" data-mkc="1">'+mkChartHtml(mkP.draw,up,true)+'</div><div class="mt"><span>'+esc(mkDate(pts[0].t,mkP.period))+'</span><span>'+esc(mkDate(pts[pts.length-1].t,mkP.period))+'</span></div>';}
+ else{var msg=mkP.state==='loading'?'Завантаження…':mkP.state==='err'?'Не вдалося завантажити дані: перевірте мережу.':'Для цього періоду даних немає.';body='<div class="mchart"><div class="msg">'+esc(msg)+'</div></div><div class="mt"><span></span><span></span></div>';}
+ var h=head(m.label)+'<div class="mkinfo" style="padding:0 0 8px">'+esc((m.name?m.name+' · ':'')+mkSource(m))+'</div>'+
+  '<div class="lbl">'+esc(MKP_L[mkP.period])+'</div><div class="big" style="font-size:34px">'+esc(last==null?'—':mkFmt(last))+'</div>'+
+  (chg==null?'':'<div class="chg '+(chg<0?'neg':'')+'">'+esc(mkPct(chg))+'<span>за період</span></div>')+body+'<div class="mper">'+chips+'</div>';
+ if(ok){var mn=Infinity,mx=-Infinity;pts.forEach(function(p){if(p.v<mn)mn=p.v;if(p.v>mx)mx=p.v;});
+  h+='<div class="grid2" style="margin-top:14px"><div class="mini"><span class="lbl">Початок періоду</span><b>'+esc(mkFmt(first))+'</b></div><div class="mini"><span class="lbl">Зараз</span><b>'+esc(mkFmt(last))+'</b></div><div class="mini"><span class="lbl">Мінімум</span><b>'+esc(mkFmt(mn))+'</b></div><div class="mini"><span class="lbl">Максимум</span><b>'+esc(mkFmt(mx))+'</b></div></div>';}
+ return h;
 }
 function blocksMarket(){
  var m=mkMeta(nav.getState().params.marketId),o=[];

@@ -1,6 +1,6 @@
 /* ===== 6. Інтерфейс: події, аркуші, скляні меню, синхронізація зі станом логіки ===== */
 var sheetsEl=document.getElementById('sheets'),scrimEl=document.getElementById('scrim'),toastEl=document.getElementById('toast');
-var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets'];
+var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet'];
 var CURS=['PLN','EUR','USD','GBP'],curSheet=null,lastScreen='',toastT=0;
 
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){toastEl.classList.remove('on');},2200);}
@@ -135,6 +135,7 @@ function sheetHtml(kind,ov){
   h+='<button class="btnw pri" data-s="confirm">Підтвердити</button><button class="btnw" data-s="edit">Редагувати</button>';
   return h;
  }
+ if(kind==='marketSheet')return marketSheetHtml(ov.data&&ov.data.marketId);
  if(kind==='transactionList'){
   var cid=ov.data&&ov.data.categoryId,ty=ov.data&&ov.data.type,list=cid?fin.transactions({category:cid}):ty?fin.transactions({type:ty,limit:100}):fin.transactions({limit:100});
   return'<div class="sh"><span style="min-width:70px"></span><h3>'+esc(cid?catName(cid):ty?(ty==='income'?'Доходи':'Витрати'):'Усі операції')+'</h3><button class="ok" data-s="cancel">Закрити</button></div>'+
@@ -229,7 +230,7 @@ function showSheet(top){
  el.style.display='block';
  sheetP.el=el;curSheet={key:key,kind:top.kind,el:el,body:body,html:html};
  el.classList.remove('ghost');
- var anc=top.kind==='input'?sendAnchor:(top.kind==='transactionList'&&growAnchor)?growAnchor:null,grow=!!anc;growAnchor=null;
+ var anc=top.kind==='input'?sendAnchor:((top.kind==='transactionList'||top.kind==='marketSheet')&&growAnchor)?growAnchor:null,grow=!!anc;growAnchor=null;
  sheetP.mode=grow?'grow':'rise';
  if(grow){sheetP.ax=anc.x;sheetP.ay=anc.y;}
  sheetP.kind=top.kind;
@@ -279,6 +280,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='acc')app.openManualAccount('manual');
   else if(s==='cash')app.openManualAccount('cash');
   else if(s==='export')exportData();
+  else if(s==='mper')setMarketPeriod(t.dataset.v);
   else if(s==='logshare')logShare();
   else if(s==='syncgen')syGen();
   else if(s==='syncexp')syExport();
@@ -498,7 +500,7 @@ function tkEnd(cancel,ts){
  if(!tkPress)return;var r=tkG.end({cancelled:cancel});tkPress=null;
  if(ts-tkPT>90)tkVel=0;                                   /* палець зупинився перед відпусканням — без інерції */
  tkVel=Math.max(-3000,Math.min(3000,tkVel));
- if(r){tkPause=r.resumeAt;if(r.openMarketId){tkVel=0;try{nav.openMarket(r.openMarketId);}catch(err){console.error(err);}}}
+ if(r){tkPause=r.resumeAt;if(r.openMarketId){tkVel=0;try{var tkr=tickerEl.getBoundingClientRect();growAnchor={x:tkPX,y:tkr.top+tkr.height/2};mkpEnter(r.openMarketId);nav.openOverlay('marketSheet',{marketId:r.openMarketId});}catch(err){console.error(err);}}}
 }
 /* строка закріплена поза сторінками: горизонтальне перетягування не скролить сторінку (touch-action:none) */
 tickerEl.addEventListener('pointerdown',function(e){
@@ -696,3 +698,5 @@ function prUp(now){
 document.addEventListener('pointerdown',prDown,true);
 ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){prUp(false);},true);});
 document.addEventListener('pointermove',function(e){if(PRd&&Math.hypot(e.clientX-PRd.x,e.clientY-PRd.y)>9)prUp(true);},true);
+
+function mkSheetRefresh(){if(!curSheet||curSheet.kind!=='marketSheet')return;var h=sheetHtml('marketSheet',{data:{marketId:mkP.id}});if(h!==curSheet.html){curSheet.html=h;curSheet.body.innerHTML=h;layoutSheet();sheetStale();}}

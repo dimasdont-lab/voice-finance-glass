@@ -484,6 +484,8 @@ inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault(
 root.addEventListener('pointerdown',function(){if(mode===1&&document.activeElement===inp)inp.blur();},true);
 
 var TAB_IDS=['analytics','debts','home','more'];
+var TAB_ROOT=['insights','debts','home'];
+function tabAtRoot(i){try{return i>2||nav.getState().screen===TAB_ROOT[i];}catch(e){return true;}}   /* з будь-якої підсторінки повторний тап по вкладці повертає на її початкову сторінку */
 function actTab(i){try{app.activateButton(TAB_IDS[i]);}catch(err){console.error(err);}}
 dock.addEventListener('pointerdown',function(e){
  e.preventDefault();if(mode===1)return;
@@ -491,7 +493,7 @@ dock.addEventListener('pointerdown',function(e){
  var c=cells(),px=e.clientX,grab=x!==null&&Math.abs(px-x)<c.cw/2+4,sl=slotAt(c,px);
  if(grab){drag={id:e.pointerId,off:x-px,start:x};dragTarget=x;try{dock.setPointerCapture(e.pointerId);}catch(_){}}
  else if(sl===KS){kbTap={id:e.pointerId,x:e.clientX,y:e.clientY};kbClick=true;}
- else{var i=sl>KS?sl-1:sl;if(i===dockSel&&i!==3)return;dir=(c.cx(slotOf[i])-x)>=0?1:-1;actTab(i);}
+ else{var i=sl>KS?sl-1:sl;if(i===dockSel&&i!==3&&tabAtRoot(i))return;dir=(c.cx(slotOf[i])-x)>=0?1:-1;actTab(i);}
 });
 dock.addEventListener('pointermove',function(e){
  if(kbTap&&e.pointerId===kbTap.id&&Math.hypot(e.clientX-kbTap.x,e.clientY-kbTap.y)>12){kbTap=null;kbClick=false;}
@@ -503,7 +505,7 @@ function release(e){
  if(!drag||e.pointerId!==drag.id)return;var c=cells();
  var tab=tabNear(c,Math.max(c.cx(0),Math.min(c.cx(NS-1),x+v*0.12))),moved=Math.abs(dragTarget-drag.start)>10;
  drag=null;setOn(dockSel);
- if(tab!==dockSel)actTab(tab);else if(!moved&&tab===3)actTab(3);}
+ if(tab!==dockSel)actTab(tab);else if(!moved&&(tab===3||!tabAtRoot(tab)))actTab(tab);}
 dock.addEventListener('pointerup',release);dock.addEventListener('pointercancel',function(e){kbTap=null;kbClick=false;release(e);});
 dock.addEventListener('click',function(){   /* запасний шлях для iOS: фокус саме в click */
  if(kbClick){kbClick=false;if(mode!==1)tapInput();}
