@@ -903,7 +903,8 @@ function frame(t){
  var da=sel-ca,moving=false,i;
  if(HS.on){ca=HS.ca;moving=true;}
  else if(Math.abs(da)>0.0005){ca+=da*(1-Math.exp(-dt*9));moving=true;}else if(da!==0){ca=sel;moving=true;}
- for(i=0;i<NP;i++){var o=i-ca,vis=Math.abs(o)<1,st=vis?'translate3d('+(o*100)+'%,0,0)':'none';
+ for(i=0;i<NP;i++){if(BH.ph&&BH.pg.indexOf(i)>=0)continue;   /* чорна діра тримає сусідні вкладки видимими */
+  var o=i-ca,vis=Math.abs(o)<1,st=vis?'translate3d('+(o*100)+'%,0,0)':'none';
   if(pstyle[i]!==st){pstyle[i]=st;pg[i].style.visibility=vis?'visible':'hidden';inn[i].style.willChange=vis?'transform':'auto';if(vis)pg[i].style.transform=st;}}
  var fl=Math.max(0,Math.min(NP-1,Math.floor(ca))),f2=fl+1;
  var scrolling=stepScroll(dt);

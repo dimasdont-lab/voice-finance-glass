@@ -1,7 +1,7 @@
 /* ===== 7. Скляні віджети: окремий WebGL-шар під текстом. Малює фон із сіткою й плитки з заломленням сітки.
    Вкладене скло: кнопки «Доходи/Витрати», міні-картки (шар 1), круглі значки (шар 2), заповнення прогрес-барів (шар 3, свій колір).
    Скляні лінії графіків: ланцюжки капсул (до 4 ліній), колір лінії, заломлення сітки. Вимикаються разом із GLINES ===== */
-var BH={ph:0,x:0,y:0,r:0,k:0,au:1},RPL=[],RPU=new Float32Array(24),RPn=0,RPsig='',FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
+var BH={ph:0,x:0,y:0,r:0,k:0,au:1,pg:[]},RPL=[],RPU=new Float32Array(24),RPn=0,RPsig='',FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
 var GLASS_LINE_OK=false;
 var tgR=new Float32Array(TMAX*4),tgM=new Float32Array(TMAX*4),tgC=new Float32Array(TMAX*4);
 var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2]];
@@ -285,10 +285,11 @@ function drawTilesS(S){
   var qn=ca*7.3+VW*3.1+VH*1.7+S*5+gOX*1.3+gOY*2.1+GCOL[0]*11+GCOL[1]*13+GCOL[2]*17+qr.v*19+qr.ox*.3+qr.oy*.5+qr.tx*.7+qr.ty*.9+qs+CG.is+CG.ib*3+CG.bal*5+CG.gt*7+CG.gsat*9+CG.gbr*11+AREA_MODE*101+(AURA?Math.floor(performance.now()/66):0)*.37+FGgen*.71+GA.gen*13+tickerEl.offsetTop*.11;
   if(!TCLEAN&&qn===drawTilesS.q&&tgW&&!qst&&!GA.dirty&&!intro.on&&!(typeof PRS!=='undefined'&&PRS.size)&&!BH.ph&&!RPn)return;drawTilesS.q=qn;}
  var rp=rec.pg,v=rp.v>.003?rp.v:0,k=v?kOf(v):1,n=0,ns=0,nl=0,sig=[ca.toFixed(3),VW,VH,S,gOX.toFixed(1),gOY.toFixed(1),GCOL.map(function(x){return x.toFixed(3);}).join(':'),v.toFixed(3),rp.ox.toFixed(1),rp.oy.toFixed(1),rp.tx.toFixed(1),rp.ty.toFixed(1),'am'+AREA_MODE,'tk'+tickerEl.offsetTop+'/'+tickerEl.offsetHeight,CG.is,CG.ib,CG.bal,CG.gt,CG.gsat,CG.gbr,PRSIG],i,j;
- TGF++;for(i=0;i<NP;i++){if(Math.abs(i-ca)<1&&(tlStale[i]||!TL[i]))tlMeasure(i);}
+ var NEAR=BH.ph?1.01:1;   /* під час чорної діри скло малюється й для сусідніх вкладок */
+ TGF++;for(i=0;i<NP;i++){if(Math.abs(i-ca)<NEAR&&(tlStale[i]||!TL[i]))tlMeasure(i);}
  if(GA.dirty)gaBuild();var mna='ga'+GA.gen+'fg'+FGgen,minor=mna+(AURA?Math.floor(performance.now()/66):0);
  for(i=0;i<NP&&n<TMAX;i++){
-  var o=i-ca;if(Math.abs(o)>=1)continue;
+  var o=i-ca;if(Math.abs(o)>=NEAR)continue;
   if(tlStale[i]||!TL[i])tlMeasure(i);
   var yy=sy[i];sig.push(i,yy.toFixed(2));
   var tf=function(x,y,bcx,bcy,ia,blk){if(ia){x=bcx+(x-bcx)*ia.s+ia.x;y=bcy+(y-bcy)*ia.s+ia.y;}var pb=blk&&blk._ps;if(pb){x=bcx+(x-bcx)*pb.s+pb.dx;y=bcy+(y-bcy)*pb.s+pb.dy;}x+=o*VW;y-=yy;if(v){x=rp.ox+rp.tx*v+k*(x-rp.ox);y=rp.oy+rp.ty*v+k*(y-rp.oy);}return[x,y];};
