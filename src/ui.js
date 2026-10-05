@@ -78,7 +78,7 @@ root.addEventListener('click',function(e){
   else if(a==='tx')app.editTransaction(id);
   else if(a==='balance')nav.navigate('balanceAnalysis');
   else if(a==='game'){var gr=t.getBoundingClientRect();growAnchor={x:gr.left+gr.width/2,y:gr.top+gr.height/2};nav.openOverlay('game');gmMount();}
-  else if(a==='egg'){var er=t.getBoundingClientRect();lensToggle(er.left+er.width/2,er.top-30);}
+  else if(a==='egg'){var er=t.getBoundingClientRect();lensSpawn(er.left+er.width/2,er.top-30);}
   else if(a==='tpl'){var tx0=fin.useTemplate(id);toast('Додано: '+(tx0.note||'')+' '+money(tx0.amount,tx0.currency));}
   else if(a==='budgets')nav.openOverlay('budgets');
   else if(a==='recurring')nav.openOverlay('recurring');
@@ -855,7 +855,7 @@ function bhEase(x){return x<=0?0:x>=1?1:x*x*(3-2*x);}
 function bhBack(x){x=Math.max(0,Math.min(1,x));var c=1.4;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);}
 function bhCollect(){
  BHI=[];var hx=BH.x,hy=BH.y,mx=1;
- var add=function(el,css){if(!el)return;var r=el.getBoundingClientRect();if(r.width<1||r.bottom<0||r.top>VH||r.right<-VW*1.4||r.left>VW*2.4)return;var bx=r.left+r.width/2,by=r.top+r.height/2,d=Math.hypot(bx-hx,by-hy);mx=Math.max(mx,d);
+ var add=function(el,css){if(!el)return;var r=el.getBoundingClientRect();if(r.width<1||(css&&(r.bottom<0||r.top>VH))||r.right<-VW*1.4||r.left>VW*2.4)return;   /* віджети сторінок беремо всі, навіть поза екраном (прокручені) */var bx=r.left+r.width/2,by=r.top+r.height/2,d=Math.hypot(bx-hx,by-hy);mx=Math.max(mx,d);
   var st0=el.style;BHI.push({el:el,css:css,nb:!css&&BH.pg.some(function(j){return inn[j].contains(el);}),bx:bx,by:by,d:d,a0:Math.atan2(by-hy,bx-hx),o0:{opacity:st0.opacity,visibility:st0.visibility,transformOrigin:st0.transformOrigin}});if(css){el.style.transformOrigin=(hx-r.left).toFixed(1)+'px '+(hy-r.top).toFixed(1)+'px';}};
  /* сторінка й сусідні вкладки (ліва/права серед головних трьох; якщо сусіда немає — лише наявний) */
  BH.pg=[];if(sel<=2){for(var j=0;j<=2;j++)if(j!==sel)BH.pg.push(j);}
@@ -899,16 +899,16 @@ function bhStep(t){
 }
 function bhStart(){
  if(BH.ph)return;BH.x=VW/2;BH.y=VH*.46;BH.r=0;BH.k=0;BH.au=1;
- try{if(LN.on)lensToggle(0,0);}catch(e){}
+ lensClearAll();
  bhCollect();BH.ph=1;BHt0=performance.now();LG('egg','чорна діра: всмоктування ('+BHI.length+' елементів)');BHraf=requestAnimationFrame(bhStep);
 }
 window.__bhDemo=function(){if(BH.ph===3)bhBackOut();else bhStart();};   /* тестовий виклик для перевірки в браузері */
 function bhEggShow(on){var eg=inn[sel]&&inn[sel].querySelector('.egg');if(!eg)return;
  if(!on){eg.style.translate='';return;}var r=eg.getBoundingClientRect();eg.style.translate='0 '+((VH-170)-(r.top+r.height/2)).toFixed(1)+'px';}   /* крапля поточної сторінки — над низом екрана */
-function bhBackOut(){bhEggShow(0);hide=0;var ci=BHI.find(function(i){return i.el===cv;});if(ci)bhApply(ci,1);if(LN.on)lensToggle(0,0);BH.ph=2;BHt0=performance.now();LG('egg','чорна діра: вилітання');BHraf=requestAnimationFrame(bhStep);}
+function bhBackOut(){bhEggShow(0);hide=0;var ci=BHI.find(function(i){return i.el===cv;});if(ci)bhApply(ci,1);lensClearAll();BH.ph=2;BHt0=performance.now();LG('egg','чорна діра: вилітання');BHraf=requestAnimationFrame(bhStep);}
 /* поки діра працює, інтерфейс не реагує; коли все всмоктано — будь-який тап повертає */
 var BHdt={t:0,x:0,y:0};
-function bhOnLens(e){return LN.s>.5&&Math.hypot(e.clientX-LN.x,e.clientY-LN.y)<LN.R*1.1;}
+function bhOnLens(e){return !!lensHit(e);}
 window.addEventListener('pointerdown',function(e){if(BH.ph!==3)return;if((e.target.closest&&e.target.closest('.eggd'))||bhOnLens(e))return;
  var now=performance.now();if(now-BHdt.t<330&&Math.hypot(e.clientX-BHdt.x,e.clientY-BHdt.y)<40){BHdt.t=0;bhBackOut();e.stopPropagation();return;}BHdt.t=now;BHdt.x=e.clientX;BHdt.y=e.clientY;},true);
 ['pointerdown','pointermove','pointerup','touchstart','touchmove'].forEach(function(n){document.addEventListener(n,function(e){if(BH.ph!==3)return;if(e.target.closest&&e.target.closest('.eggd'))return;e.stopPropagation();},true);});   /* у паузі сторінка не гортається й вкладки не перемикаються */
@@ -919,15 +919,27 @@ function lensTap(){var now=performance.now();BHtap.n=now-BHtap.t<800?BHtap.n+1:1
  if(BHtap.n>=13){BHtap.n=0;LG('egg','13 тапів по лінзі');bhStart();return true;}return false;}
 
 /* ---------- накопичення хвилі: утримання пальця на фоні (без руху) стягує сітку; при відпусканні — велика м'яка хвиля ---------- */
-(function(){var t0=0,raf=0;
- function chStep(){raf=0;if(!CH.on)return;var h=(performance.now()-t0)/1000;CH.s=h<.2?0:Math.min(1,(h-.2)/1.6);dirty=true;raf=requestAnimationFrame(chStep);}
+(function(){var t0=0,raf=0,hapT=0,hapEl=null;
+ /* тактильна віддача, що наростає: Android — navigator.vibrate; iPhone 17.4+ — клік по прихованому перемикачу <input type=checkbox switch> (спроба, залежить від версії iOS) */
+ function buzz(s){
+  try{if(navigator.vibrate){navigator.vibrate(Math.round(5+s*22));return;}}catch(e){}
+  try{if(!hapEl){var l=document.createElement('label');l.style.cssText='position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none';var i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');l.appendChild(i);document.body.appendChild(l);hapEl=l;}hapEl.click();}catch(e){}
+ }
+ function chStep(){raf=0;if(!CH.on)return;var now=performance.now(),h=(now-t0)/1000;
+  CH.s=h<.2?0:Math.min(1,(h-.2)/1.5);
+  if(CH.drag){CH.x+=(CH.tx-CH.x)*.28;CH.y+=(CH.ty-CH.y)*.28;}   /* стягнута точка тягнеться за пальцем із легким запізненням */
+  if(CH.s>.02&&now>hapT){buzz(CH.s);hapT=now+Math.max(38,230-190*CH.s);}   /* частота росте разом із зарядом */
+  dirty=true;raf=requestAnimationFrame(chStep);}
  document.addEventListener('pointerdown',function(e){
   if((BH.ph&&BH.ph!==3)||!FGS.tw||WF.drag)return;var tg=e.target;
   if(tg.closest&&tg.closest('.tile,.srch,button,input,textarea,select,a,[data-act],#dock,#ticker,#sheets,#menu'))return;   /* лише фон */
-  CH.on=1;CH.x=e.clientX;CH.y=e.clientY;CH.s=0;t0=performance.now();if(!raf)raf=requestAnimationFrame(chStep);},true);
- document.addEventListener('pointermove',function(e){if(CH.on&&Math.hypot(e.clientX-CH.x,e.clientY-CH.y)>10){CH.on=0;CH.s=0;dirty=true;}},true);
- ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){if(!CH.on)return;var s=CH.s;CH.on=0;CH.s=0;dirty=true;
-  if(n==='pointerup'&&s>.05){rippleAdd(CH.x,CH.y,1+3.2*s);LG('egg','накопичена хвиля '+Math.round(s*100)+'%');}},true);});
+  CH.on=1;CH.drag=0;CH.x=CH.tx=e.clientX;CH.y=CH.ty=e.clientY;CH.s=0;t0=performance.now();hapT=0;if(!raf)raf=requestAnimationFrame(chStep);},true);
+ document.addEventListener('pointermove',function(e){if(!CH.on)return;
+  if(CH.s>.12){CH.tx=e.clientX;CH.ty=e.clientY;CH.drag=1;}   /* вже заряджено: тягнемо стягнуту точку за пальцем */
+  else if(Math.hypot(e.clientX-CH.x,e.clientY-CH.y)>10){CH.on=0;CH.s=0;dirty=true;}},true);
+ document.addEventListener('touchmove',function(e){if(CH.on&&CH.s>.12&&e.cancelable)e.preventDefault();},{capture:true,passive:false});   /* поки тягнемо заряд — сторінка не гортається */
+ ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(e){if(!CH.on)return;var s=CH.s,x=n==='pointerup'?e.clientX:CH.x,y=n==='pointerup'?e.clientY:CH.y;CH.on=0;CH.s=0;CH.drag=0;dirty=true;
+  if(n==='pointerup'&&s>.05){rippleAdd(x,y,1+4.2*s);try{if(navigator.vibrate)navigator.vibrate(30);}catch(e2){}LG('egg','накопичена хвиля '+Math.round(s*100)+'%'+(CH.tx!==x?' (перетягнута)':''));}},true);});
 })();
 
 /* ---------- віджет, що від'єднується: довгий тап по віджету — його можна тягнути й кидати (невагомість, відскок від країв, желе);
