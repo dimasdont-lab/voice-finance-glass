@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-05 03:58 UTC';
+<script>window.__VF_BUILD='2026-10-05 04:00 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -404,8 +404,8 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 .fr.rng>label{display:block;font-size:14px;margin-bottom:9px}
 .fr.rng input[type=range]{display:block;width:100%;margin:0;box-sizing:border-box}
 
-/* від'єднаний віджет: скло малює шейдер під DOM, тож текст інших віджетів позаду притлумлюємо темною підкладкою (це не скло, лише затемнення) */
-.wfd{background:rgba(8,8,12,.62)!important;border-radius:28px;box-shadow:0 18px 50px rgba(0,0,0,.45)!important}
+/* від'єднаний віджет лишається повністю скляним; віджети під ним притлумлюються (wfUnder) */
+.wfu{opacity:.14!important;transition:opacity .18s}
 
 /* утримання пальця (хвиля, від'єднання віджета) не виділяє текст і не відкриває системне меню; поля вводу виділяються як звичайно */
 html,body,#pages,#dock,#ticker,#sheets,#menu{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -4014,7 +4014,7 @@ function frame(t){
 /* ===== 7. Скляні віджети: окремий WebGL-шар під текстом. Малює фон із сіткою й плитки з заломленням сітки.
    Вкладене скло: кнопки «Доходи/Витрати», міні-картки (шар 1), круглі значки (шар 2), заповнення прогрес-барів (шар 3, свій колір).
    Скляні лінії графіків: ланцюжки капсул (до 4 ліній), колір лінії, заломлення сітки. Вимикаються разом із GLINES ===== */
-var BH={ph:0,x:0,y:0,r:0,k:0,au:1,pg:[]},WF={n:0},CH={on:0,x:0,y:0,s:0},RPL=[],RPU=new Float32Array(64),RPn=0,RPsig='',FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
+var BH={ph:0,x:0,y:0,r:0,k:0,au:1,pg:[]},WF={n:0,rects:[]},CH={on:0,x:0,y:0,s:0},RPL=[],RPU=new Float32Array(64),RPn=0,RPsig='',FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
 var GLASS_LINE_OK=false;
 var tgR=new Float32Array(TMAX*4),tgM=new Float32Array(TMAX*4),tgC=new Float32Array(TMAX*4);
 var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2]];
@@ -4312,6 +4312,7 @@ function drawTilesS(S){
   for(j=0;j<list.length&&n<TMAX;j++){
    var t=list[j],ia=t.blk._ia,pbk=t.blk._ps,pe=t.el!==t.blk?t.el._ps:null,sc=(ia?ia.s:1)*k*(pbk?pbk.s:1)*(pe?pe.s:1),c0=tf(t.l+t.w/2,t.t+t.h/2,t.bcx,t.bcy,ia,t.blk),cx=c0[0]+(pe?pe.dx:0),cy=c0[1]+(pe?pe.dy:0),hw=t.w/2*sc*(pbk&&pbk.jx||1),hh=t.h/2*sc*(pbk&&pbk.jy||1),rr=t.r*sc*Math.min(pbk&&pbk.jx||1,pbk&&pbk.jy||1);
    if(cx+hw<-40||cx-hw>VW+40||cy+hh<-40||cy-hh>VH+40)continue;
+   if(WF.n&&!t.blk.classList.contains('wfd')&&WF.rects.some(function(q){return cx>q[0]&&cx<q[2]&&cy>q[1]&&cy<q[3];}))continue;   /* під від'єднаним віджетом */
    tgR[n*4]=cx*S;tgR[n*4+1]=cy*S;tgR[n*4+2]=hw*S;tgR[n*4+3]=hh*S;
    tgM[n*4]=Math.min(rr*S,hw*S,hh*S);tgM[n*4+1]=t.hot*(t.lv===2?CG.ib/45:CG.bal/45);tgM[n*4+2]=ia?ia.a:1;tgM[n*4+3]=t.lv;
    if(t.gu){tgGU[n*4]=t.gu[0];tgGU[n*4+1]=t.gu[1];tgGU[n*4+2]=t.el.classList.contains('chw')?-t.gu[2]:t.gu[2];tgGU[n*4+3]=t.gu[3];if(!t.el._gx){t.el.classList.add('gxh');t.el._gx=1;}t.el._gf=TGF;}else{tgGU[n*4]=tgGU[n*4+1]=tgGU[n*4+2]=tgGU[n*4+3]=0;}
@@ -5457,7 +5458,14 @@ function wfDetach(el,x,y){
   w.z=el.style.zIndex;w.pos=el.style.position;el.style.position='relative';el.style.zIndex='6';el.classList.add('wfd');LG('egg','віджет від\'єднано');}
  WF.drag={w:w,x0:x,y0:y,dx0:w.dx,dy0:w.dy,lx:x,ly:y,lt:performance.now(),mv:0};w.vx=w.vy=0;w.evx-=1.5;w.evy-=1.5;wfKick();
 }
-function wfAttach(w){var el=w.el,st=el.style;st.translate='';st.scale='';st.zIndex=w.z;st.position=w.pos;el._ps=null;el.classList.remove('wfd');WFL.splice(WFL.indexOf(w),1);LG('egg','віджет повернувся');}
+/* віджети, над якими висить від'єднаний, притлумлюються; прямокутники від'єднаних — для шару скла */
+function wfUnder(){
+ WF.rects=WFL.map(function(w){var r=w.el.getBoundingClientRect();return[r.left,r.top,r.right,r.bottom];});
+ [].forEach.call(inn[sel]?inn[sel].children:[],function(b){if(b.classList.contains('wfd'))return;var r=b.getBoundingClientRect();
+  var ov=WF.rects.some(function(q){var ix=Math.min(r.right,q[2])-Math.max(r.left,q[0]),iy=Math.min(r.bottom,q[3])-Math.max(r.top,q[1]);return ix>20&&iy>20;});
+  b.classList.toggle('wfu',ov);});
+}
+function wfAttach(w){var el=w.el,st=el.style;st.translate='';st.scale='';st.zIndex=w.z;st.position=w.pos;el._ps=null;el.classList.remove('wfd');WFL.splice(WFL.indexOf(w),1);wfUnder();WF.n=WFL.length;LG('egg','віджет повернувся');}
 function wfKick(){if(!WFraf){WFlast=performance.now();WFraf=requestAnimationFrame(wfStep);}}
 function wfStep(t){
  WFraf=0;var dt=Math.min(.033,Math.max(.001,(t-WFlast)/1000)),sig=0,mv=0;WFlast=t;
@@ -5482,7 +5490,7 @@ function wfStep(t){
   if(w.home&&Math.abs(w.dx)+Math.abs(w.dy)<.4&&Math.abs(w.vx)+Math.abs(w.vy)<3&&Math.abs(w.ex)+Math.abs(w.ey)<.003){wfAttach(w);return;}
   if(!moving){w.vx=w.vy=0;}else mv=1;
  });
- WF.n=WFL.length;WF.mv=mv;PRSIG='wf'+sig.toFixed(3);dirty=true;
+ WF.n=WFL.length;WF.mv=mv;wfUnder();PRSIG='wf'+sig.toFixed(3);dirty=true;
  if(mv)WFraf=requestAnimationFrame(wfStep);
 }
 (function(){

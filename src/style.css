@@ -330,8 +330,8 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 .fr.rng>label{display:block;font-size:14px;margin-bottom:9px}
 .fr.rng input[type=range]{display:block;width:100%;margin:0;box-sizing:border-box}
 
-/* від'єднаний віджет: скло малює шейдер під DOM, тож текст інших віджетів позаду притлумлюємо темною підкладкою (це не скло, лише затемнення) */
-.wfd{background:rgba(8,8,12,.62)!important;border-radius:28px;box-shadow:0 18px 50px rgba(0,0,0,.45)!important}
+/* від'єднаний віджет лишається повністю скляним; віджети під ним притлумлюються (wfUnder) */
+.wfu{opacity:.14!important;transition:opacity .18s}
 
 /* утримання пальця (хвиля, від'єднання віджета) не виділяє текст і не відкриває системне меню; поля вводу виділяються як звичайно */
 html,body,#pages,#dock,#ticker,#sheets,#menu{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}

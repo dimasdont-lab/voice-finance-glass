@@ -933,7 +933,14 @@ function wfDetach(el,x,y){
   w.z=el.style.zIndex;w.pos=el.style.position;el.style.position='relative';el.style.zIndex='6';el.classList.add('wfd');LG('egg','віджет від\'єднано');}
  WF.drag={w:w,x0:x,y0:y,dx0:w.dx,dy0:w.dy,lx:x,ly:y,lt:performance.now(),mv:0};w.vx=w.vy=0;w.evx-=1.5;w.evy-=1.5;wfKick();
 }
-function wfAttach(w){var el=w.el,st=el.style;st.translate='';st.scale='';st.zIndex=w.z;st.position=w.pos;el._ps=null;el.classList.remove('wfd');WFL.splice(WFL.indexOf(w),1);LG('egg','віджет повернувся');}
+/* віджети, над якими висить від'єднаний, притлумлюються; прямокутники від'єднаних — для шару скла */
+function wfUnder(){
+ WF.rects=WFL.map(function(w){var r=w.el.getBoundingClientRect();return[r.left,r.top,r.right,r.bottom];});
+ [].forEach.call(inn[sel]?inn[sel].children:[],function(b){if(b.classList.contains('wfd'))return;var r=b.getBoundingClientRect();
+  var ov=WF.rects.some(function(q){var ix=Math.min(r.right,q[2])-Math.max(r.left,q[0]),iy=Math.min(r.bottom,q[3])-Math.max(r.top,q[1]);return ix>20&&iy>20;});
+  b.classList.toggle('wfu',ov);});
+}
+function wfAttach(w){var el=w.el,st=el.style;st.translate='';st.scale='';st.zIndex=w.z;st.position=w.pos;el._ps=null;el.classList.remove('wfd');WFL.splice(WFL.indexOf(w),1);wfUnder();WF.n=WFL.length;LG('egg','віджет повернувся');}
 function wfKick(){if(!WFraf){WFlast=performance.now();WFraf=requestAnimationFrame(wfStep);}}
 function wfStep(t){
  WFraf=0;var dt=Math.min(.033,Math.max(.001,(t-WFlast)/1000)),sig=0,mv=0;WFlast=t;
@@ -958,7 +965,7 @@ function wfStep(t){
   if(w.home&&Math.abs(w.dx)+Math.abs(w.dy)<.4&&Math.abs(w.vx)+Math.abs(w.vy)<3&&Math.abs(w.ex)+Math.abs(w.ey)<.003){wfAttach(w);return;}
   if(!moving){w.vx=w.vy=0;}else mv=1;
  });
- WF.n=WFL.length;WF.mv=mv;PRSIG='wf'+sig.toFixed(3);dirty=true;
+ WF.n=WFL.length;WF.mv=mv;wfUnder();PRSIG='wf'+sig.toFixed(3);dirty=true;
  if(mv)WFraf=requestAnimationFrame(wfStep);
 }
 (function(){
