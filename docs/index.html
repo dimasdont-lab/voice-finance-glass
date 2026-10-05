@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-05 03:04 UTC';
+<script>window.__VF_BUILD='2026-10-05 03:07 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -5266,8 +5266,8 @@ document.addEventListener('visibilitychange',function(){if(SYN.on&&!document.hid
 var FGc=null,FGp=[],FGraf=0,FGdown=false;
 function fgPal(t){var f=((t%1)+1)%1*4,A=[[255,66,133],[148,77,255],[46,140,255],[255,153,66]],i=Math.floor(f),u=f-i;u=u*u*(3-2*u);var a=A[i%4],b=A[(i+1)%4];return[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u];}
 function fgAdd(x,y,brk){var now=performance.now(),pv=FGp.length?FGp[FGp.length-1]:null,v=0;if(pv&&!brk){v=Math.hypot(x-pv.x,y-pv.y)/Math.max(1,now-pv.t);v=pv.v*.65+v*.35;}FGp.push({x:x,y:y,t:now,b:!!brk,v:v});if(FGp.length>90)FGp.shift();kickFg();}
-/* яскравість сліду від швидкості пальця (v у пікселях за мс): повільно ~0.3, швидко до 1.25 */
-function fgSpd(v){return .3+.95*Math.pow(Math.min(1,(v||0)/1.6),.75);}
+/* яскравість сліду від швидкості пальця (v у пікселях за мс): звичайний скрол (~0.7) ≈ 37%, дуже швидкий рух (3+) ≈ 95%, майже стоячий палець ≈ 12% */
+function fgSpd(v){return .12+.83*Math.pow(Math.min(1,(v||0)/3),.83);}
 function kickFg(){if(!FGraf)FGraf=requestAnimationFrame(fgStep);}
 function fgStep(){
  FGraf=0;var now=performance.now(),LIFE=500+FGS.l*20,IN=FGS.i/100,BR=30+FGS.w*.75;
