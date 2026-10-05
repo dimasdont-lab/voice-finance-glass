@@ -1,6 +1,6 @@
 /* ===== 6. Інтерфейс: події, аркуші, скляні меню, синхронізація зі станом логіки ===== */
 var sheetsEl=document.getElementById('sheets'),scrimEl=document.getElementById('scrim'),toastEl=document.getElementById('toast');
-var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet','confirmWipe'];
+var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet','confirmWipe','budgets','recurring'];
 var CURS=['PLN','EUR','USD','GBP'],curSheet=null,lastScreen='',toastT=0;
 
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){toastEl.classList.remove('on');},2200);}
@@ -76,6 +76,9 @@ root.addEventListener('click',function(e){
   if(a==='back')app.back();
   else if(a==='tx')app.editTransaction(id);
   else if(a==='balance')nav.navigate('balanceAnalysis');
+  else if(a==='tpl'){var tx0=fin.useTemplate(id);toast('Додано: '+(tx0.note||'')+' '+money(tx0.amount,tx0.currency));}
+  else if(a==='budgets')nav.openOverlay('budgets');
+  else if(a==='recurring')nav.openOverlay('recurring');
   else if(a==='flow'){var fr=frect(t);growAnchor={x:fr.left+fr.width/2,y:fr.top+fr.height/2};nav.openOverlay('transactionList',{type:v==='expense'?'expense':'income'});}
   else if(a==='accs')app.toggleAccounts();
   else if(a==='addacc')app.openManualAccount('manual');
@@ -137,6 +140,10 @@ function sheetHtml(kind,ov){
   return h;
  }
  if(kind==='marketSheet')return marketSheetHtml(ov.data&&ov.data.marketId);
+ if(kind==='budgets'){var cs2=fin.getState().categories;return'<div class="sh"><span style="min-width:70px"></span><h3>Бюджети</h3><button class="ok" data-s="cancel">Закрити</button></div><div class="mkinfo" style="padding:0 0 8px">Сума на місяць. Порожньо — без бюджету. Після 80% прийде попередження.</div>'+cs2.map(function(c){return'<div class="fr"><label>'+esc(c.name)+' <span style="opacity:.6">(цього місяця '+esc(money(monthSpend(c.id)))+')</span></label><input data-bud="'+esc(c.id)+'" inputmode="decimal" autocomplete="off" value="'+(c.budget?esc(c.budget):'')+'" placeholder="—"></div>';}).join('')+'<button class="btnw pri" data-s="savebud">Зберегти бюджети</button>';}
+ if(kind==='recurring'){var rl=fin.getState().recurring||[],cl2=fin.getState().categories;return'<div class="sh"><span style="min-width:70px"></span><h3>Повторювані</h3><button class="ok" data-s="cancel">Закрити</button></div>'+(rl.length?rl.map(function(r,i){return'<div class="row'+(i?'':' first')+'">'+icon(r.name,hashCol(r.category))+'<div class="rc"><b>'+esc(r.name)+'</b><span>'+r.day+' числа · '+esc(money(r.amount,r.currency))+'</span></div><button data-s="delrec" data-id="'+esc(r.id)+'" style="color:var(--ac);font-weight:600;padding:8px">Видалити</button></div>';}).join(''):'<div class="empty">Поки порожньо.</div>')+
+  '<div class="mkinfo" style="padding:14px 0 4px">Новий платіж</div><div class="fr"><label>Назва</label><input data-rc="name" placeholder="Netflix, оренда, зарплата" autocomplete="off"></div><div class="fr"><label>Сума, zł</label><input data-rc="amount" inputmode="decimal" autocomplete="off"></div><div class="fr"><label>День місяця</label><input data-rc="day" inputmode="numeric" value="1" autocomplete="off"></div>'+
+  '<div class="fr"><label>Категорія</label><select data-rc="category">'+cl2.map(function(c){return'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join('')+'</select></div><div class="fr"><label>Тип</label><select data-rc="type"><option value="expense">Витрата</option><option value="income">Дохід</option></select></div><button class="btnw pri" data-s="addrec">Додати платіж</button>';}
  if(kind==='confirmWipe')return'<div class="cw"><h3>Стерти всі дані?</h3><p>Ви насправді хочете видалити всі операції, борги, клієнтів і рахунки? Баланси почнуться з нуля. Це не можна скасувати.</p><div class="cwr"><button class="btnw" data-s="cancel">Не стирати</button><button class="btnw dng" data-s="wipeyes">Так, стерти все</button></div></div>';
  if(kind==='transactionList'){
   var cid=ov.data&&ov.data.categoryId,ty=ov.data&&ov.data.type,list=cid?fin.transactions({category:cid}):ty?fin.transactions({type:ty,limit:100}):fin.transactions({limit:100});
@@ -161,7 +168,7 @@ function sheetHtml(kind,ov){
    '<div class="fr"><label>ID gist (на першому пристрої порожньо)</label><input data-sy="gid" autocomplete="off" spellcheck="false" value="'+esc(SYN.id)+'"></div>'+
    '<button class="btnw" data-s="synon">'+(SYN.on?'Вимкнути автосинхронізацію':'Увімкнути автосинхронізацію')+'</button><div class="mkinfo" data-sy-st style="padding:4px 0 8px">'+esc(synSt||(SYN.on?'Увімкнено':'Вимкнено'))+'</div>'+
    '<div class="mkinfo" style="padding:4px 0 8px">Дані шифруються на пристрої (AES-256-GCM, ключ із вашого ключа); код можна безпечно надіслати собі в Нотатки чи месенджер. Видалення при об’єднанні не переноситься.</div>'+
-   '<button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
+   '<button class="btnw" data-s="csv">Експорт операцій у CSV</button><button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
    '<div class="mkinfo" style="padding-top:10px">Збірка: '+esc(window.__VF_BUILD||'?')+(navigator.standalone&&window.__vfFirstH&&screen.height-window.__vfFirstH>=40?'<br><span style="color:var(--ac)">Цей запуск почався з вікном '+window.__vfFirstH+' замість '+screen.height+': iOS відкрив застосунок з геометрією старої іконки. Видаліть іконку з робочого столу, оновіть сторінку в Safari й додайте іконку знову.</span>':'')+'</div>'+
    '<button class="btnw" data-s="export">Експорт JSON</button><button class="btnw" data-s="seed">Додати тестові дані для перегляду</button>'+
    '<button class="btnw dng" data-s="clear">Очистити операції та борги</button><div class="err" data-err></div>';
@@ -287,6 +294,10 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='cash')app.openManualAccount('cash');
   else if(s==='export')exportData();
   else if(s==='mper')setMarketPeriod(t.dataset.v);
+  else if(s==='savebud'){[].forEach.call(curSheet.body.querySelectorAll('[data-bud]'),function(i){fin.setCategoryBudget(i.dataset.bud,i.value.trim());});toast('Бюджети збережено');app.back();}
+  else if(s==='addrec'){var g2=function(k){var e=curSheet.body.querySelector('[data-rc="'+k+'"]');return e?e.value:'';};fin.saveRecurring({name:g2('name'),amount:g2('amount'),day:g2('day'),category:g2('category'),type:g2('type'),currency:'PLN'});fin.runDueRecurring();toast('Платіж додано');}
+  else if(s==='delrec'){fin.deleteRecurring(t.dataset.id);}
+  else if(s==='csv'){exportCsv();}
   else if(s==='vox'){setVOX('on',VOX.on?0:1);t.textContent='Кнопка «Ввід»: '+(VOX.on?'голос':'клавіатура');sheetStale();}
   else if(s==='voxlang'){openDropdown(t,VOX_LANGS.map(function(q){return{v:q[0]||'auto',l:q[1]};}),VOX.lang||'auto',function(v){setVOX('lang',v==='auto'?'':v);t.textContent='Мова: '+voxLabel('lang');sheetStale();});}
   else if(s==='voxmodel'){openDropdown(t,VOX_MODELS.map(function(q){return{v:q[0],l:q[1]};}),VOX.model,function(v){setVOX('model',v);VW_.model='';t.textContent='Модель: '+voxLabel('model');sheetStale();});}
@@ -618,7 +629,8 @@ root.addEventListener('pointermove',function(e){if(LP.el&&Math.hypot(e.clientX-L
 root.addEventListener('click',function(e){if(LP.fired){LP.fired=0;e.stopPropagation();e.preventDefault();}},true);
 function longPress(r){
  var a=r.dataset.act,id=r.dataset.id,isTx=a==='tx';LG('ui','утримання: '+a+' '+id);
- openDropdown(r,[{v:'edit',l:'Редагувати'},{v:'del',l:'Видалити'}],'',function(v){
+ openDropdown(r,isTx?[{v:'edit',l:'Редагувати'},{v:'tpl',l:'Зберегти як шаблон'},{v:'del',l:'Видалити'}]:[{v:'edit',l:'Редагувати'},{v:'del',l:'Видалити'}],'',function(v){
+  if(v==='tpl'){var tx1=fin.getState().transactions.find(function(q){return q.id===id;});if(tx1){fin.saveTemplate({name:tx1.client||tx1.note||catName(tx1.category),type:tx1.type,amount:tx1.amount,currency:tx1.currency,category:tx1.category,accountId:tx1.accountId,client:tx1.client,note:tx1.note});toast('Шаблон збережено — він на головній');}return;}
   if(v==='edit'){try{if(isTx)app.editTransaction(id);else app.editDebt(id);}catch(err){toast(err.message||'Помилка');}return;}
   setTimeout(function(){openDropdown(r,[{v:'yes',l:isTx?'Так, видалити операцію':'Так, видалити борг'},{v:'no',l:'Скасувати'}],'',function(v2){
    if(v2!=='yes')return;
@@ -884,3 +896,26 @@ document.addEventListener('pointerdown',function(e){
 },true);
 
 window.__voDemo=function(on){if(on===false){voiceClose();return;}var c=cells();VO.ax=c.cx(KS);VO.ay=DR.top+DR.height/2;VO.on=1;VO.busy=1;document.documentElement.classList.add("vox");vst("Слухаю…");};
+
+/* утримання на шаблоні — видалити шаблон */
+root.addEventListener('contextmenu',function(e){var b=e.target.closest&&e.target.closest('[data-act=tpl]');if(!b)return;e.preventDefault();openDropdown(b,[{v:'del',l:'Видалити шаблон'},{v:'no',l:'Скасувати'}],'',function(v){if(v==='del')fin.deleteTemplate(b.dataset.id);});});
+(function(){var tt=0,tb=null;root.addEventListener('pointerdown',function(e){var b=e.target.closest&&e.target.closest('[data-act=tpl]');if(!b)return;tb=b;clearTimeout(tt);tt=setTimeout(function(){if(tb!==b)return;LP.fired=1;openDropdown(b,[{v:'del',l:'Видалити шаблон'},{v:'no',l:'Скасувати'}],'',function(v){if(v==='del')fin.deleteTemplate(b.dataset.id);});},560);});
+ ['pointerup','pointercancel','pointermove'].forEach(function(n){root.addEventListener(n,function(e){if(n==='pointermove'&&e.buttons===0)return;if(n!=='pointermove'||Math.abs(e.movementX)+Math.abs(e.movementY)>6){clearTimeout(tt);tb=null;}});});})();
+/* повторювані платежі: при запуску і при поверненні до застосунку */
+function runRecurring(){try{var made=fin.runDueRecurring();if(made.length){LG('ui','повторювані: створено '+made.length);toast('Автоматично додано: '+made.map(function(t){return t.note+' '+money(t.amount,t.currency);}).join(', '));}}catch(e){console.error(e);}}
+setTimeout(runRecurring,2500);document.addEventListener('visibilitychange',function(){if(!document.hidden)runRecurring();});
+/* попередження бюджету після нової операції: 80% і 100% */
+fin.subscribe(function(ev){if(ev.type!=='transaction:save')return;var tx2=ev.state.transactions.find(function(q){return q.id===ev.detail.id;});if(!tx2||tx2.type!=='expense')return;
+ var c=ev.state.categories.find(function(q){return q.id===tx2.category;});if(!c||!c.budget)return;var sp=monthSpend(c.id),p=sp/c.budget*100;
+ if(p>=100)toast('Бюджет «'+c.name+'» перевищено: '+money(sp)+' з '+money(c.budget));else if(p>=80)toast('Бюджет «'+c.name+'»: використано '+Math.round(p)+'%');});
+/* експорт у CSV (Excel, Numbers, Google Таблиці) */
+function exportCsv(){
+ var st=fin.getState(),q=function(v){v=String(v==null?'':v);return/[";,\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+ var rows=[['Дата','Тип','Сума','Валюта','Категорія','Клієнт','Нотатка','Рахунок']];
+ st.transactions.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);}).forEach(function(t){var acc=st.accounts.find(function(a){return a.id===t.accountId;});
+  rows.push([new Date(t.date).toISOString().slice(0,16).replace('T',' '),t.type==='income'?'Дохід':'Витрата',String(t.amount).replace('.',','),t.currency,catName(t.category),t.client,t.note,acc?(acc.displayName||acc.bankName):'']);});
+ var csv='\ufeff'+rows.map(function(r){return r.map(q).join(';');}).join('\r\n'),name='voice-finance-'+new Date().toISOString().slice(0,10)+'.csv';
+ var f=null;try{f=new File([csv],name,{type:'text/csv'});}catch(e){}
+ if(f&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:'Операції'}).catch(function(){});return;}
+ var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);
+}

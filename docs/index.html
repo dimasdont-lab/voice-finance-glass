@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-05 00:31 UTC';
+<script>window.__VF_BUILD='2026-10-05 00:36 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -394,6 +394,9 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 #vst{position:fixed;left:0;right:0;top:calc(47% + min(27vw,112px) + 22px);text-align:center;font-size:15px;font-weight:600;color:rgba(255,255,255,.85);z-index:31;pointer-events:none;opacity:0;transition:opacity .3s;text-shadow:0 1px 8px rgba(0,0,0,.6)}
 #vkb{position:fixed;left:50%;transform:translateX(-50%);top:calc(47% + min(27vw,112px) + 54px);z-index:31;padding:9px 16px;border-radius:20px;font-size:14px;font-weight:600;color:rgba(255,255,255,.8);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);opacity:0;pointer-events:none;transition:opacity .3s}
 html.vox #vst,html.vox #vkb{opacity:1}html.vox #vkb{pointer-events:auto}
+
+.tools.tpl{display:flex;flex-wrap:wrap;gap:8px;padding:0 2px}
+.fr select{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--ln);border-radius:12px;color:#fff;font:inherit;padding:10px}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -546,7 +549,9 @@ html.vox #vst,html.vox #vkb{opacity:1}html.vox #vkb{pointer-events:auto}
       speechLang: "uk-UA",
       accounts: [],
       balanceSnapshots: [],
-      marketSelection: [...DEFAULT_MARKETS]
+      marketSelection: [...DEFAULT_MARKETS],
+      templates: [],
+      recurring: []
     };
   }
   function normalizeState(input) {
@@ -561,7 +566,9 @@ html.vox #vst,html.vox #vkb{opacity:1}html.vox #vkb{pointer-events:auto}
       speechLang: input.speechLang || "uk-UA",
       accounts: list(input.accounts).filter((account) => account.source !== "demo" && !String(account.id).endsWith("-demo")),
       balanceSnapshots: list(input.balanceSnapshots).filter((snapshot) => snapshot.source !== "demo"),
-      marketSelection: ((_b = input.marketSelection) == null ? void 0 : _b.length) ? [...input.marketSelection] : [...DEFAULT_MARKETS]
+      marketSelection: ((_b = input.marketSelection) == null ? void 0 : _b.length) ? [...input.marketSelection] : [...DEFAULT_MARKETS],
+      templates: list(input.templates),
+      recurring: list(input.recurring)
     };
   }
   function normalizeWords(value) {
@@ -862,6 +869,8 @@ html.vox #vst,html.vox #vkb{opacity:1}html.vox #vkb{pointer-events:auto}
     }
     function resetAll({ confirmed = false } = {}) {
       if (!confirmed) throw new Error("\u041F\u043E\u0442\u0440\u0456\u0431\u043D\u0435 \u043F\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043D\u043D\u044F");
+      state.templates = [];
+      state.recurring = [];
       state.transactions = [];
       state.debts = [];
       state.accounts = [];
@@ -869,6 +878,76 @@ html.vox #vst,html.vox #vkb{opacity:1}html.vox #vkb{pointer-events:auto}
       state.categories = copy(DEFAULT_CATEGORIES);
       commit("data:reset", {});
       return true;
+    }
+    function cleanPlan(input) {
+      var _a;
+      const type = input.type || "expense";
+      if (!["income", "expense"].includes(type)) throw new Error("\u041D\u0435\u043A\u043E\u0440\u0435\u043A\u0442\u043D\u0438\u0439 \u0442\u0438\u043F \u043E\u043F\u0435\u0440\u0430\u0446\u0456\u0457");
+      return {
+        type,
+        amount: positiveAmount(input.amount),
+        currency: input.currency || "PLN",
+        category: input.category || ((_a = state.categories[0]) == null ? void 0 : _a.id) || "other",
+        accountId: input.accountId || "",
+        client: String(input.client || "").trim(),
+        note: String(input.note || "").trim()
+      };
+    }
+    function saveTemplate(input, { id = input.id } = {}) {
+      const name = String(input.name || input.note || "").trim();
+      if (!name) throw new Error("\u0412\u043A\u0430\u0436\u0438 \u043D\u0430\u0437\u0432\u0443 \u0448\u0430\u0431\u043B\u043E\u043D\u0443");
+      const tpl = { id: id || uid(), name, ...cleanPlan(input) };
+      state.templates = state.templates.some((t) => t.id === tpl.id) ? state.templates.map((t) => t.id === tpl.id ? tpl : t) : [...state.templates, tpl];
+      commit("template:save", { id: tpl.id });
+      return copy(tpl);
+    }
+    function deleteTemplate(id) {
+      if (!state.templates.some((t) => t.id === id)) return false;
+      state.templates = state.templates.filter((t) => t.id !== id);
+      commit("template:delete", { id });
+      return true;
+    }
+    function useTemplate(id) {
+      const tpl = state.templates.find((t) => t.id === id);
+      if (!tpl) throw new Error("\u0428\u0430\u0431\u043B\u043E\u043D \u043D\u0435 \u0437\u043D\u0430\u0439\u0434\u0435\u043D\u043E");
+      const { type, amount, currency, category, accountId, client, note } = tpl;
+      return saveTransaction({ type, amount, currency, category, accountId, client, note: note || tpl.name });
+    }
+    function saveRecurring(input, { id = input.id } = {}) {
+      const name = String(input.name || input.note || "").trim();
+      if (!name) throw new Error("\u0412\u043A\u0430\u0436\u0438 \u043D\u0430\u0437\u0432\u0443 \u043F\u043B\u0430\u0442\u0435\u0436\u0443");
+      const day = Math.min(31, Math.max(1, Math.round(Number(input.day) || 1)));
+      const prev = id ? state.recurring.find((r) => r.id === id) : null;
+      const rec = { id: id || uid(), name, day, lastRun: (prev == null ? void 0 : prev.lastRun) || "", ...cleanPlan(input) };
+      state.recurring = prev ? state.recurring.map((r) => r.id === rec.id ? rec : r) : [...state.recurring, rec];
+      commit("recurring:save", { id: rec.id });
+      return copy(rec);
+    }
+    function deleteRecurring(id) {
+      if (!state.recurring.some((r) => r.id === id)) return false;
+      state.recurring = state.recurring.filter((r) => r.id !== id);
+      commit("recurring:delete", { id });
+      return true;
+    }
+    function runDueRecurring() {
+      const d = now(), ym = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"), last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+      const made = [];
+      for (const r of state.recurring) {
+        if (r.lastRun === ym || d.getDate() < Math.min(r.day, last)) continue;
+        const { type, amount, currency, category, accountId, client, note } = r;
+        made.push(saveTransaction({ type, amount, currency, category, accountId, client, note: note || r.name }));
+        state.recurring = state.recurring.map((x) => x.id === r.id ? { ...x, lastRun: ym } : x);
+      }
+      if (made.length) commit("recurring:run", { count: made.length });
+      return made;
+    }
+    function setCategoryBudget(id, amount) {
+      const cat = state.categories.find((c) => c.id === id);
+      if (!cat) throw new Error("\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0456\u044E \u043D\u0435 \u0437\u043D\u0430\u0439\u0434\u0435\u043D\u043E");
+      const v = amount === "" || amount == null || Number(amountInput(amount)) <= 0 ? 0 : positiveAmount(amount);
+      state.categories = state.categories.map((c) => c.id === id ? { ...c, budget: v } : c);
+      commit("category:budget", { id, budget: v });
+      return v;
     }
     function importSnapshot(remote, { mode = "merge" } = {}) {
       if (!remote || typeof remote !== "object") throw new TypeError("\u041D\u0435\u043A\u043E\u0440\u0435\u043A\u0442\u043D\u0456 \u0434\u0430\u043D\u0456 \u0441\u0438\u043D\u0445\u0440\u043E\u043D\u0456\u0437\u0430\u0446\u0456\u0457");
@@ -938,6 +1017,13 @@ html.vox #vst,html.vox #vkb{opacity:1}html.vox #vkb{pointer-events:auto}
       clearData,
       importSnapshot,
       resetAll,
+      saveTemplate,
+      deleteTemplate,
+      useTemplate,
+      saveRecurring,
+      deleteRecurring,
+      runDueRecurring,
+      setCategoryBudget,
       setMarketSelection(ids) {
         state.marketSelection = [...new Set(ids)].slice(0, 20);
         commit("markets:select", { ids: state.marketSelection });
@@ -2703,14 +2789,37 @@ function renderTicker(){
  tickerTrk._h=html;tickerTrk._ver=(tickerTrk._ver||0)+1;tickerTrk.innerHTML=html;if(loop)tickerTrk.dataset.loop=loop;else delete tickerTrk.dataset.loop;
 }
 /* ---- Дім ---- */
+function monthStart(d){return new Date(d.getFullYear(),d.getMonth(),1);}
+function monthSpend(cat,d){d=d||new Date();var a=monthStart(d),b=new Date(d.getFullYear(),d.getMonth()+1,1),sum=0;
+ fin.getState().transactions.forEach(function(t){if(t.type!=='expense'||t.currency!=='PLN')return;if(cat&&t.category!==cat)return;var x=new Date(t.date);if(x>=a&&x<b)sum+=t.amount;});return sum;}
+function forecastMonth(){var d=new Date(),days=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(),spent=monthSpend(null,d),day=Math.max(1,d.getDate()+d.getHours()/24),proj=spent/day*days;return{spent:spent,proj:proj,days:days,left:days-d.getDate(),limit:fin.getState().goal};}
+var MONTHS_UA=['січ','лют','бер','квіт','трав','черв','лип','серп','вер','жовт','лист','груд'];
+function nlQuery(q){
+ var x=String(q||'').toLowerCase().replace(/[’'?!.,]/g,' ');if(!/(скільки|сколько|how much|ile)/.test(x))return null;
+ var now=new Date(),y=now.getFullYear(),m=now.getMonth(),label='цього місяця',found=false;
+ if(/минул|прошл|last month/.test(x)){m--;if(m<0){m=11;y--;}label='минулого місяця';found=true;}
+ MONTHS_UA.forEach(function(st,i){if(!found&&new RegExp('(^|\\s)'+st).test(x)&&!/^скільк/.test(st)){m=i;if(i>now.getMonth())y=now.getFullYear()-1;else y=now.getFullYear();label='у '+['січні','лютому','березні','квітні','травні','червні','липні','серпні','вересні','жовтні','листопаді','грудні'][i];found=true;}});
+ var all=/за весь час|загалом|всього|усього/.test(x);if(all)label='за весь час';
+ var inc=/зароб|дохід|доход|отрим/.test(x);
+ var stop=/^(скільки|сколько|я|на|за|в|у|у|витратив|витратила|витрачено|потратив|грошей|було|цього|минулого|місяця|місяці|весь|час|зароб\S*|отрим\S*|дохід|доходу|how|much|ile|for|on|in|загалом|всього|усього)$/;
+ var words=x.split(/\s+/).filter(function(w){return w&&!stop.test(w)&&!MONTHS_UA.some(function(st){return w.indexOf(st)===0;});});
+ var stems=words.map(function(w){return VF.foldText(w).slice(0,Math.max(3,Math.min(5,w.length-1)));});
+ var a=all?new Date(0):new Date(y,m,1),b=all?new Date(8.64e15):new Date(y,m+1,1),sum=0,list=[];
+ fin.getState().transactions.forEach(function(t){if(t.type!==(inc?'income':'expense'))return;var dt=new Date(t.date);if(dt<a||dt>=b)return;
+  var hay=VF.foldText([t.note,t.client,catName(t.category)].join(' '));if(stems.length&&!stems.every(function(st){return hay.indexOf(st)>=0;}))return;sum+=t.amount;list.push(t);});
+ return{sum:sum,list:list,label:label,what:words.join(' '),inc:inc};
+}
 function blocksHome(){
  var ix=app.getState().interaction,t=fin.totals(),g=fin.goals(),pts=fin.financialSeries('balance','1M');
  var first=pts.length?pts[0].value:t.balance,last=pts.length?pts[pts.length-1].value:first,ch=last-first,pc=first?ch/Math.abs(first)*100:0;
  BAL_TREND=ch>0?1:ch<0?-1:0;
- var accs=fin.activeAccounts(),shown=ix.accountsExpanded?accs:accs.slice(0,4),tx=fin.recentTransactions(ix.homeQuery);
+ var accs=fin.activeAccounts(),shown=ix.accountsExpanded?accs:accs.slice(0,4),nq=nlQuery(ix.homeQuery),tx=nq?nq.list.slice(-30).reverse():fin.recentTransactions(ix.homeQuery);
  var o=[];
  o.push(hdr('Гарного дня!',todayStr()));
- o.push(searchBlock('home','Пошук операцій'));
+ o.push(searchBlock('home','Пошук або «скільки на каву в жовтні»'));
+ if(nq)o.push(B_('tile','<div class="lbl">'+(nq.inc?'Отримано':'Витрачено')+(nq.what?' · '+esc(nq.what):'')+' · '+esc(nq.label)+'</div><div class="big">'+esc(money(nq.sum))+'</div><div class="cap">Операцій: '+nq.list.length+'</div>'));
+ var tpls=fin.getState().templates||[];
+ if(tpls.length)o.push(B_('tools tpl','<div class="lbl" style="width:100%;margin-bottom:2px">Швидкі операції</div>'+tpls.map(function(p){return'<button class="pillb'+(p.type==='income'?'':' ac')+'" data-act="tpl" data-id="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(money(p.amount,p.currency))+'</button>';}).join('')));
  o.push(B_('tile bal '+(ch>0?'up':ch<0?'dn':''),'<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="brow"><div class="bl"><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>('+esc(pctTxt(pc))+') за 30 днів</span></div></div><div class="chw">'+spark(pts,'h')+'</div><i class="chev">›</i></div></div>'+
   '<div class="split"><button data-act="flow" data-v="income"><i class="dot up">↑</i><div><span class="lbl">Доходи</span><b>'+esc(money(t.income))+'</b></div></button><span class="vd"></span><button data-act="flow" data-v="expense"><i class="dot dn">↓</i><div><span class="lbl">Витрати</span><b>'+esc(money(t.expense))+'</b></div></button></div>'));
  o.push(B_('accs','<div class="th"><h2>Рахунки</h2>'+(accs.length>4?'<button data-act="accs">'+(ix.accountsExpanded?'Згорнути':'Усі ›')+'</button>':'')+'</div><div class="arow">'+shown.map(function(a){var cash=a.accountType==='cash'||a.type==='cash',nm=a.displayName||a.bankName||'Рахунок',neg=a.currentBalance<0;return'<button class="ab" data-act="acc" data-id="'+esc(a.id)+'"><i class="aic"'+(cash?'':' style="color:'+hashCol(a.id)+'"')+'>'+(cash?COIN_SVG:esc(String(nm).trim().charAt(0).toUpperCase()))+'</i><span class="an">'+esc(nm)+'</span><span class="aa'+(neg?' neg':'')+'">'+esc(money(a.currentBalance,a.currency))+'</span></button>';}).join('')+'<button class="ab" data-act="addacc"><i class="aic plus">'+PLUS_SVG+'</i><span class="an mu">Додати</span></button></div>'));
@@ -2727,6 +2836,12 @@ function blocksInsights(){
  o.push(B_('sec','Цілі'));
  o.push(B_('tile','<div class="lbl">Місячний ліміт витрат</div><div class="big">'+esc(money(g.limit))+'</div><div class="bar"><i style="width:'+g.percent.toFixed(1)+'%"></i></div><div class="cap">Витрачено '+esc(money(g.expense))+' · '+esc(pctTxt(g.percent))+'</div>'));
  o.push(B_('tile','<div class="lbl">Накопичення</div><div class="big">'+esc(money(g.savings))+'</div><div class="cap">Поточний баланс: рахунки плюс операції без рахунку.</div>'));
+ var fc=forecastMonth(),over=fc.proj-fc.limit;
+ o.push(B_('tile','<div class="lbl">Прогноз витрат на кінець місяця</div><div class="big" style="color:'+(over>0?'var(--ac)':'var(--gr)')+'">'+esc(money(fc.proj))+'</div><div class="bar"><i style="width:'+Math.min(100,fc.limit?fc.proj/fc.limit*100:0).toFixed(1)+'%;background:'+(over>0?'var(--ac)':'var(--gr)')+'"></i></div><div class="cap">'+(over>0?'За поточного темпу ліміт буде перевищено на '+esc(money(over)):'Вистачить: запас '+esc(money(-over)))+'. Залишилось днів: '+fc.left+'.</div>'));
+ var bc=fin.getState().categories.filter(function(c){return c.budget>0;});
+ o.push(B_('tile','<div class="th"><h2>Бюджети категорій</h2><button data-act="budgets">Налаштувати</button></div>'+(bc.length?bc.map(function(c){var sp=monthSpend(c.id),p=sp/c.budget*100,col=p>=100?'var(--ac)':p>=80?'#ffb547':'var(--gr)';return'<div class="cat"><span class="n">'+esc(c.name)+'</span><span class="v">'+esc(money(sp))+' / '+esc(money(c.budget))+'</span><div class="b"><i style="width:'+Math.min(100,p).toFixed(1)+'%;background:'+col+'" data-col="'+col+'"></i></div></div>';}).join(''):'<div class="empty">Бюджетів ще немає. Задайте суму на місяць для будь-якої категорії.</div>')));
+ var rc=fin.getState().recurring||[],rcTot=rc.reduce(function(a,r){return a+(r.type==='expense'?r.amount:0);},0);
+ o.push(B_('tile','<div class="th"><h2>Повторювані платежі</h2><button data-act="recurring">Керувати</button></div>'+(rc.length?rc.map(function(r,i){return'<div class="row'+(i?'':' first')+'">'+icon(r.name,hashCol(r.category))+'<div class="rc"><b>'+esc(r.name)+'</b><span>щомісяця '+r.day+' числа · '+esc(catName(r.category))+'</span></div><em class="'+(r.type==='income'?'in':'')+'">'+(r.type==='income'?'+':'−')+esc(money(r.amount,r.currency))+'</em></div>';}).join('')+'<div class="cap" style="margin-top:8px">Разом витрат на місяць: '+esc(money(rcTot))+'</div>':'<div class="empty">Додайте підписки, оренду чи зарплату — операції створюватимуться самі в потрібний день.</div>')));
  o.push(B_('sec','Аналітика'));
  o.push(B_('tile','<div class="lbl">Чистий результат</div><div class="mid" style="color:'+(net<0?'var(--ac)':'var(--gr)')+'">'+esc(mv(net))+'</div><div class="grid2" style="margin-top:12px"><button class="mini" data-act="flow" data-v="income"><span class="lbl">Доходи</span><b>'+esc(money(tot.income))+'</b></button><button class="mini" data-act="flow" data-v="expense"><span class="lbl">Витрати</span><b>'+esc(money(tot.expense))+'</b></button></div>'));
  o.push(B_('tile','<button data-act="debts" style="display:block;width:100%"><div class="th"><h2>Борги</h2><span class="lbl">Відкрити ›</span></div><div class="grid2"><div class="mini"><span class="lbl">Я винен</span><b>'+esc(money(s.debts.owed))+'</b></div><div class="mini"><span class="lbl">Мені винні</span><b>'+esc(money(s.debts.receivable))+'</b></div></div><div class="cap">Термінових: '+s.debts.urgent+' · сплачених: '+s.debts.paid+'</div></button>'));
@@ -4257,7 +4372,7 @@ root.addEventListener('pointerup',mcrossHide);root.addEventListener('pointercanc
 
 /* ===== 6. Інтерфейс: події, аркуші, скляні меню, синхронізація зі станом логіки ===== */
 var sheetsEl=document.getElementById('sheets'),scrimEl=document.getElementById('scrim'),toastEl=document.getElementById('toast');
-var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet','confirmWipe'];
+var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet','confirmWipe','budgets','recurring'];
 var CURS=['PLN','EUR','USD','GBP'],curSheet=null,lastScreen='',toastT=0;
 
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){toastEl.classList.remove('on');},2200);}
@@ -4333,6 +4448,9 @@ root.addEventListener('click',function(e){
   if(a==='back')app.back();
   else if(a==='tx')app.editTransaction(id);
   else if(a==='balance')nav.navigate('balanceAnalysis');
+  else if(a==='tpl'){var tx0=fin.useTemplate(id);toast('Додано: '+(tx0.note||'')+' '+money(tx0.amount,tx0.currency));}
+  else if(a==='budgets')nav.openOverlay('budgets');
+  else if(a==='recurring')nav.openOverlay('recurring');
   else if(a==='flow'){var fr=frect(t);growAnchor={x:fr.left+fr.width/2,y:fr.top+fr.height/2};nav.openOverlay('transactionList',{type:v==='expense'?'expense':'income'});}
   else if(a==='accs')app.toggleAccounts();
   else if(a==='addacc')app.openManualAccount('manual');
@@ -4394,6 +4512,10 @@ function sheetHtml(kind,ov){
   return h;
  }
  if(kind==='marketSheet')return marketSheetHtml(ov.data&&ov.data.marketId);
+ if(kind==='budgets'){var cs2=fin.getState().categories;return'<div class="sh"><span style="min-width:70px"></span><h3>Бюджети</h3><button class="ok" data-s="cancel">Закрити</button></div><div class="mkinfo" style="padding:0 0 8px">Сума на місяць. Порожньо — без бюджету. Після 80% прийде попередження.</div>'+cs2.map(function(c){return'<div class="fr"><label>'+esc(c.name)+' <span style="opacity:.6">(цього місяця '+esc(money(monthSpend(c.id)))+')</span></label><input data-bud="'+esc(c.id)+'" inputmode="decimal" autocomplete="off" value="'+(c.budget?esc(c.budget):'')+'" placeholder="—"></div>';}).join('')+'<button class="btnw pri" data-s="savebud">Зберегти бюджети</button>';}
+ if(kind==='recurring'){var rl=fin.getState().recurring||[],cl2=fin.getState().categories;return'<div class="sh"><span style="min-width:70px"></span><h3>Повторювані</h3><button class="ok" data-s="cancel">Закрити</button></div>'+(rl.length?rl.map(function(r,i){return'<div class="row'+(i?'':' first')+'">'+icon(r.name,hashCol(r.category))+'<div class="rc"><b>'+esc(r.name)+'</b><span>'+r.day+' числа · '+esc(money(r.amount,r.currency))+'</span></div><button data-s="delrec" data-id="'+esc(r.id)+'" style="color:var(--ac);font-weight:600;padding:8px">Видалити</button></div>';}).join(''):'<div class="empty">Поки порожньо.</div>')+
+  '<div class="mkinfo" style="padding:14px 0 4px">Новий платіж</div><div class="fr"><label>Назва</label><input data-rc="name" placeholder="Netflix, оренда, зарплата" autocomplete="off"></div><div class="fr"><label>Сума, zł</label><input data-rc="amount" inputmode="decimal" autocomplete="off"></div><div class="fr"><label>День місяця</label><input data-rc="day" inputmode="numeric" value="1" autocomplete="off"></div>'+
+  '<div class="fr"><label>Категорія</label><select data-rc="category">'+cl2.map(function(c){return'<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join('')+'</select></div><div class="fr"><label>Тип</label><select data-rc="type"><option value="expense">Витрата</option><option value="income">Дохід</option></select></div><button class="btnw pri" data-s="addrec">Додати платіж</button>';}
  if(kind==='confirmWipe')return'<div class="cw"><h3>Стерти всі дані?</h3><p>Ви насправді хочете видалити всі операції, борги, клієнтів і рахунки? Баланси почнуться з нуля. Це не можна скасувати.</p><div class="cwr"><button class="btnw" data-s="cancel">Не стирати</button><button class="btnw dng" data-s="wipeyes">Так, стерти все</button></div></div>';
  if(kind==='transactionList'){
   var cid=ov.data&&ov.data.categoryId,ty=ov.data&&ov.data.type,list=cid?fin.transactions({category:cid}):ty?fin.transactions({type:ty,limit:100}):fin.transactions({limit:100});
@@ -4418,7 +4540,7 @@ function sheetHtml(kind,ov){
    '<div class="fr"><label>ID gist (на першому пристрої порожньо)</label><input data-sy="gid" autocomplete="off" spellcheck="false" value="'+esc(SYN.id)+'"></div>'+
    '<button class="btnw" data-s="synon">'+(SYN.on?'Вимкнути автосинхронізацію':'Увімкнути автосинхронізацію')+'</button><div class="mkinfo" data-sy-st style="padding:4px 0 8px">'+esc(synSt||(SYN.on?'Увімкнено':'Вимкнено'))+'</div>'+
    '<div class="mkinfo" style="padding:4px 0 8px">Дані шифруються на пристрої (AES-256-GCM, ключ із вашого ключа); код можна безпечно надіслати собі в Нотатки чи месенджер. Видалення при об’єднанні не переноситься.</div>'+
-   '<button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
+   '<button class="btnw" data-s="csv">Експорт операцій у CSV</button><button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
    '<div class="mkinfo" style="padding-top:10px">Збірка: '+esc(window.__VF_BUILD||'?')+(navigator.standalone&&window.__vfFirstH&&screen.height-window.__vfFirstH>=40?'<br><span style="color:var(--ac)">Цей запуск почався з вікном '+window.__vfFirstH+' замість '+screen.height+': iOS відкрив застосунок з геометрією старої іконки. Видаліть іконку з робочого столу, оновіть сторінку в Safari й додайте іконку знову.</span>':'')+'</div>'+
    '<button class="btnw" data-s="export">Експорт JSON</button><button class="btnw" data-s="seed">Додати тестові дані для перегляду</button>'+
    '<button class="btnw dng" data-s="clear">Очистити операції та борги</button><div class="err" data-err></div>';
@@ -4544,6 +4666,10 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='cash')app.openManualAccount('cash');
   else if(s==='export')exportData();
   else if(s==='mper')setMarketPeriod(t.dataset.v);
+  else if(s==='savebud'){[].forEach.call(curSheet.body.querySelectorAll('[data-bud]'),function(i){fin.setCategoryBudget(i.dataset.bud,i.value.trim());});toast('Бюджети збережено');app.back();}
+  else if(s==='addrec'){var g2=function(k){var e=curSheet.body.querySelector('[data-rc="'+k+'"]');return e?e.value:'';};fin.saveRecurring({name:g2('name'),amount:g2('amount'),day:g2('day'),category:g2('category'),type:g2('type'),currency:'PLN'});fin.runDueRecurring();toast('Платіж додано');}
+  else if(s==='delrec'){fin.deleteRecurring(t.dataset.id);}
+  else if(s==='csv'){exportCsv();}
   else if(s==='vox'){setVOX('on',VOX.on?0:1);t.textContent='Кнопка «Ввід»: '+(VOX.on?'голос':'клавіатура');sheetStale();}
   else if(s==='voxlang'){openDropdown(t,VOX_LANGS.map(function(q){return{v:q[0]||'auto',l:q[1]};}),VOX.lang||'auto',function(v){setVOX('lang',v==='auto'?'':v);t.textContent='Мова: '+voxLabel('lang');sheetStale();});}
   else if(s==='voxmodel'){openDropdown(t,VOX_MODELS.map(function(q){return{v:q[0],l:q[1]};}),VOX.model,function(v){setVOX('model',v);VW_.model='';t.textContent='Модель: '+voxLabel('model');sheetStale();});}
@@ -4875,7 +5001,8 @@ root.addEventListener('pointermove',function(e){if(LP.el&&Math.hypot(e.clientX-L
 root.addEventListener('click',function(e){if(LP.fired){LP.fired=0;e.stopPropagation();e.preventDefault();}},true);
 function longPress(r){
  var a=r.dataset.act,id=r.dataset.id,isTx=a==='tx';LG('ui','утримання: '+a+' '+id);
- openDropdown(r,[{v:'edit',l:'Редагувати'},{v:'del',l:'Видалити'}],'',function(v){
+ openDropdown(r,isTx?[{v:'edit',l:'Редагувати'},{v:'tpl',l:'Зберегти як шаблон'},{v:'del',l:'Видалити'}]:[{v:'edit',l:'Редагувати'},{v:'del',l:'Видалити'}],'',function(v){
+  if(v==='tpl'){var tx1=fin.getState().transactions.find(function(q){return q.id===id;});if(tx1){fin.saveTemplate({name:tx1.client||tx1.note||catName(tx1.category),type:tx1.type,amount:tx1.amount,currency:tx1.currency,category:tx1.category,accountId:tx1.accountId,client:tx1.client,note:tx1.note});toast('Шаблон збережено — він на головній');}return;}
   if(v==='edit'){try{if(isTx)app.editTransaction(id);else app.editDebt(id);}catch(err){toast(err.message||'Помилка');}return;}
   setTimeout(function(){openDropdown(r,[{v:'yes',l:isTx?'Так, видалити операцію':'Так, видалити борг'},{v:'no',l:'Скасувати'}],'',function(v2){
    if(v2!=='yes')return;
@@ -5141,5 +5268,28 @@ document.addEventListener('pointerdown',function(e){
 },true);
 
 window.__voDemo=function(on){if(on===false){voiceClose();return;}var c=cells();VO.ax=c.cx(KS);VO.ay=DR.top+DR.height/2;VO.on=1;VO.busy=1;document.documentElement.classList.add("vox");vst("Слухаю…");};
+
+/* утримання на шаблоні — видалити шаблон */
+root.addEventListener('contextmenu',function(e){var b=e.target.closest&&e.target.closest('[data-act=tpl]');if(!b)return;e.preventDefault();openDropdown(b,[{v:'del',l:'Видалити шаблон'},{v:'no',l:'Скасувати'}],'',function(v){if(v==='del')fin.deleteTemplate(b.dataset.id);});});
+(function(){var tt=0,tb=null;root.addEventListener('pointerdown',function(e){var b=e.target.closest&&e.target.closest('[data-act=tpl]');if(!b)return;tb=b;clearTimeout(tt);tt=setTimeout(function(){if(tb!==b)return;LP.fired=1;openDropdown(b,[{v:'del',l:'Видалити шаблон'},{v:'no',l:'Скасувати'}],'',function(v){if(v==='del')fin.deleteTemplate(b.dataset.id);});},560);});
+ ['pointerup','pointercancel','pointermove'].forEach(function(n){root.addEventListener(n,function(e){if(n==='pointermove'&&e.buttons===0)return;if(n!=='pointermove'||Math.abs(e.movementX)+Math.abs(e.movementY)>6){clearTimeout(tt);tb=null;}});});})();
+/* повторювані платежі: при запуску і при поверненні до застосунку */
+function runRecurring(){try{var made=fin.runDueRecurring();if(made.length){LG('ui','повторювані: створено '+made.length);toast('Автоматично додано: '+made.map(function(t){return t.note+' '+money(t.amount,t.currency);}).join(', '));}}catch(e){console.error(e);}}
+setTimeout(runRecurring,2500);document.addEventListener('visibilitychange',function(){if(!document.hidden)runRecurring();});
+/* попередження бюджету після нової операції: 80% і 100% */
+fin.subscribe(function(ev){if(ev.type!=='transaction:save')return;var tx2=ev.state.transactions.find(function(q){return q.id===ev.detail.id;});if(!tx2||tx2.type!=='expense')return;
+ var c=ev.state.categories.find(function(q){return q.id===tx2.category;});if(!c||!c.budget)return;var sp=monthSpend(c.id),p=sp/c.budget*100;
+ if(p>=100)toast('Бюджет «'+c.name+'» перевищено: '+money(sp)+' з '+money(c.budget));else if(p>=80)toast('Бюджет «'+c.name+'»: використано '+Math.round(p)+'%');});
+/* експорт у CSV (Excel, Numbers, Google Таблиці) */
+function exportCsv(){
+ var st=fin.getState(),q=function(v){v=String(v==null?'':v);return/[";,\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+ var rows=[['Дата','Тип','Сума','Валюта','Категорія','Клієнт','Нотатка','Рахунок']];
+ st.transactions.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);}).forEach(function(t){var acc=st.accounts.find(function(a){return a.id===t.accountId;});
+  rows.push([new Date(t.date).toISOString().slice(0,16).replace('T',' '),t.type==='income'?'Дохід':'Витрата',String(t.amount).replace('.',','),t.currency,catName(t.category),t.client,t.note,acc?(acc.displayName||acc.bankName):'']);});
+ var csv='\ufeff'+rows.map(function(r){return r.map(q).join(';');}).join('\r\n'),name='voice-finance-'+new Date().toISOString().slice(0,10)+'.csv';
+ var f=null;try{f=new File([csv],name,{type:'text/csv'});}catch(e){}
+ if(f&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:'Операції'}).catch(function(){});return;}
+ var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);
+}
 
 })();</script></body></html>

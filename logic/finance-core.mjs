@@ -39,7 +39,7 @@ const defaultUid = () => {
 export function freshState() {
   return {
     categories:copy(DEFAULT_CATEGORIES), transactions:[], debts:[], goal:8000,
-    speechLang:'uk-UA', accounts:[], balanceSnapshots:[], marketSelection:[...DEFAULT_MARKETS]
+    speechLang:'uk-UA', accounts:[], balanceSnapshots:[], marketSelection:[...DEFAULT_MARKETS], templates:[], recurring:[]
   };
 }
 
@@ -57,7 +57,8 @@ export function normalizeState(input) {
     speechLang:input.speechLang || 'uk-UA',
     accounts:list(input.accounts).filter(account => account.source !== 'demo' && !String(account.id).endsWith('-demo')),
     balanceSnapshots:list(input.balanceSnapshots).filter(snapshot => snapshot.source !== 'demo'),
-    marketSelection:input.marketSelection?.length ? [...input.marketSelection] : [...DEFAULT_MARKETS]
+    marketSelection:input.marketSelection?.length ? [...input.marketSelection] : [...DEFAULT_MARKETS],
+    templates:list(input.templates), recurring:list(input.recurring)
   };
 }
 
@@ -339,9 +340,74 @@ export function createFinance({storage = null, storageKey = STORAGE_KEY, clock =
    * Налаштування (ліміт, мова, вибір ринків) зберігаються. Вимагає явного підтвердження. */
   function resetAll({confirmed = false} = {}) {
     if (!confirmed) throw new Error('Потрібне підтвердження');
+    state.templates = []; state.recurring = [];
     state.transactions = []; state.debts = []; state.accounts = []; state.balanceSnapshots = []; state.categories = copy(DEFAULT_CATEGORIES);
     commit('data:reset',{});
     return true;
+  }
+  /* Додано у Voice Finance Glass: шаблони операцій, повторювані платежі, бюджети категорій. */
+  function cleanPlan(input) {
+    const type = input.type || 'expense';
+    if (!['income','expense'].includes(type)) throw new Error('Некоректний тип операції');
+    return {type,amount:positiveAmount(input.amount),currency:input.currency || 'PLN',category:input.category || state.categories[0]?.id || 'other',
+      accountId:input.accountId || '',client:String(input.client || '').trim(),note:String(input.note || '').trim()};
+  }
+  function saveTemplate(input, {id = input.id} = {}) {
+    const name = String(input.name || input.note || '').trim();
+    if (!name) throw new Error('Вкажи назву шаблону');
+    const tpl = {id:id || uid(),name,...cleanPlan(input)};
+    state.templates = state.templates.some(t => t.id === tpl.id) ? state.templates.map(t => t.id === tpl.id ? tpl : t) : [...state.templates,tpl];
+    commit('template:save',{id:tpl.id});
+    return copy(tpl);
+  }
+  function deleteTemplate(id) {
+    if (!state.templates.some(t => t.id === id)) return false;
+    state.templates = state.templates.filter(t => t.id !== id);
+    commit('template:delete',{id});
+    return true;
+  }
+  function useTemplate(id) {
+    const tpl = state.templates.find(t => t.id === id);
+    if (!tpl) throw new Error('Шаблон не знайдено');
+    const {type,amount,currency,category,accountId,client,note} = tpl;
+    return saveTransaction({type,amount,currency,category,accountId,client,note:note || tpl.name});
+  }
+  function saveRecurring(input, {id = input.id} = {}) {
+    const name = String(input.name || input.note || '').trim();
+    if (!name) throw new Error('Вкажи назву платежу');
+    const day = Math.min(31,Math.max(1,Math.round(Number(input.day) || 1)));
+    const prev = id ? state.recurring.find(r => r.id === id) : null;
+    const rec = {id:id || uid(),name,day,lastRun:prev?.lastRun || '',...cleanPlan(input)};
+    state.recurring = prev ? state.recurring.map(r => r.id === rec.id ? rec : r) : [...state.recurring,rec];
+    commit('recurring:save',{id:rec.id});
+    return copy(rec);
+  }
+  function deleteRecurring(id) {
+    if (!state.recurring.some(r => r.id === id)) return false;
+    state.recurring = state.recurring.filter(r => r.id !== id);
+    commit('recurring:delete',{id});
+    return true;
+  }
+  /** Створює операції для повторюваних платежів, чий день у поточному місяці вже настав (без заднього числа за минулі місяці). */
+  function runDueRecurring() {
+    const d = now(), ym = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'), last = new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    const made = [];
+    for (const r of state.recurring) {
+      if (r.lastRun === ym || d.getDate() < Math.min(r.day,last)) continue;
+      const {type,amount,currency,category,accountId,client,note} = r;
+      made.push(saveTransaction({type,amount,currency,category,accountId,client,note:note || r.name}));
+      state.recurring = state.recurring.map(x => x.id === r.id ? {...x,lastRun:ym} : x);
+    }
+    if (made.length) commit('recurring:run',{count:made.length});
+    return made;
+  }
+  function setCategoryBudget(id, amount) {
+    const cat = state.categories.find(c => c.id === id);
+    if (!cat) throw new Error('Категорію не знайдено');
+    const v = amount === '' || amount == null || Number(amountInput(amount)) <= 0 ? 0 : positiveAmount(amount);
+    state.categories = state.categories.map(c => c.id === id ? {...c,budget:v} : c);
+    commit('category:budget',{id,budget:v});
+    return v;
   }
   function importSnapshot(remote, {mode = 'merge'} = {}) {
     if (!remote || typeof remote !== 'object') throw new TypeError('Некоректні дані синхронізації');
@@ -378,7 +444,7 @@ export function createFinance({storage = null, storageKey = STORAGE_KEY, clock =
     transactions,recentTransactions:(query = '') => transactions({query,limit:query?30:5}),
     categoryById:id => copy(categoryById(id)),categorySummary,debtTotals,debtGroups,personProfiles,personProfile,insights,goals,
     accountSnapshots,balanceAnalysis,activeAccounts:() => copy(state.accounts.filter(a => a.isActive)),
-    exportJSON:() => JSON.stringify(state,null,2),clearData,importSnapshot,resetAll,
+    exportJSON:() => JSON.stringify(state,null,2),clearData,importSnapshot,resetAll,saveTemplate,deleteTemplate,useTemplate,saveRecurring,deleteRecurring,runDueRecurring,setCategoryBudget,
     setMarketSelection(ids) { state.marketSelection=[...new Set(ids)].slice(0,20); commit('markets:select',{ids:state.marketSelection}); return [...state.marketSelection]; },
     // Goal/language are persisted settings in main's schema; no new UI is supplied.
     setGoal(value) { state.goal=positiveAmount(value); commit('goal:set',{goal:state.goal}); },

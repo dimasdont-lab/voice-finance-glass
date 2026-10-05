@@ -320,3 +320,6 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 #vst{position:fixed;left:0;right:0;top:calc(47% + min(27vw,112px) + 22px);text-align:center;font-size:15px;font-weight:600;color:rgba(255,255,255,.85);z-index:31;pointer-events:none;opacity:0;transition:opacity .3s;text-shadow:0 1px 8px rgba(0,0,0,.6)}
 #vkb{position:fixed;left:50%;transform:translateX(-50%);top:calc(47% + min(27vw,112px) + 54px);z-index:31;padding:9px 16px;border-radius:20px;font-size:14px;font-weight:600;color:rgba(255,255,255,.8);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);opacity:0;pointer-events:none;transition:opacity .3s}
 html.vox #vst,html.vox #vkb{opacity:1}html.vox #vkb{pointer-events:auto}
+
+.tools.tpl{display:flex;flex-wrap:wrap;gap:8px;padding:0 2px}
+.fr select{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--ln);border-radius:12px;color:#fff;font:inherit;padding:10px}

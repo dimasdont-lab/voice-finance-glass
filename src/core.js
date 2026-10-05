@@ -147,14 +147,37 @@ function renderTicker(){
  tickerTrk._h=html;tickerTrk._ver=(tickerTrk._ver||0)+1;tickerTrk.innerHTML=html;if(loop)tickerTrk.dataset.loop=loop;else delete tickerTrk.dataset.loop;
 }
 /* ---- Дім ---- */
+function monthStart(d){return new Date(d.getFullYear(),d.getMonth(),1);}
+function monthSpend(cat,d){d=d||new Date();var a=monthStart(d),b=new Date(d.getFullYear(),d.getMonth()+1,1),sum=0;
+ fin.getState().transactions.forEach(function(t){if(t.type!=='expense'||t.currency!=='PLN')return;if(cat&&t.category!==cat)return;var x=new Date(t.date);if(x>=a&&x<b)sum+=t.amount;});return sum;}
+function forecastMonth(){var d=new Date(),days=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(),spent=monthSpend(null,d),day=Math.max(1,d.getDate()+d.getHours()/24),proj=spent/day*days;return{spent:spent,proj:proj,days:days,left:days-d.getDate(),limit:fin.getState().goal};}
+var MONTHS_UA=['січ','лют','бер','квіт','трав','черв','лип','серп','вер','жовт','лист','груд'];
+function nlQuery(q){
+ var x=String(q||'').toLowerCase().replace(/[’'?!.,]/g,' ');if(!/(скільки|сколько|how much|ile)/.test(x))return null;
+ var now=new Date(),y=now.getFullYear(),m=now.getMonth(),label='цього місяця',found=false;
+ if(/минул|прошл|last month/.test(x)){m--;if(m<0){m=11;y--;}label='минулого місяця';found=true;}
+ MONTHS_UA.forEach(function(st,i){if(!found&&new RegExp('(^|\\s)'+st).test(x)&&!/^скільк/.test(st)){m=i;if(i>now.getMonth())y=now.getFullYear()-1;else y=now.getFullYear();label='у '+['січні','лютому','березні','квітні','травні','червні','липні','серпні','вересні','жовтні','листопаді','грудні'][i];found=true;}});
+ var all=/за весь час|загалом|всього|усього/.test(x);if(all)label='за весь час';
+ var inc=/зароб|дохід|доход|отрим/.test(x);
+ var stop=/^(скільки|сколько|я|на|за|в|у|у|витратив|витратила|витрачено|потратив|грошей|було|цього|минулого|місяця|місяці|весь|час|зароб\S*|отрим\S*|дохід|доходу|how|much|ile|for|on|in|загалом|всього|усього)$/;
+ var words=x.split(/\s+/).filter(function(w){return w&&!stop.test(w)&&!MONTHS_UA.some(function(st){return w.indexOf(st)===0;});});
+ var stems=words.map(function(w){return VF.foldText(w).slice(0,Math.max(3,Math.min(5,w.length-1)));});
+ var a=all?new Date(0):new Date(y,m,1),b=all?new Date(8.64e15):new Date(y,m+1,1),sum=0,list=[];
+ fin.getState().transactions.forEach(function(t){if(t.type!==(inc?'income':'expense'))return;var dt=new Date(t.date);if(dt<a||dt>=b)return;
+  var hay=VF.foldText([t.note,t.client,catName(t.category)].join(' '));if(stems.length&&!stems.every(function(st){return hay.indexOf(st)>=0;}))return;sum+=t.amount;list.push(t);});
+ return{sum:sum,list:list,label:label,what:words.join(' '),inc:inc};
+}
 function blocksHome(){
  var ix=app.getState().interaction,t=fin.totals(),g=fin.goals(),pts=fin.financialSeries('balance','1M');
  var first=pts.length?pts[0].value:t.balance,last=pts.length?pts[pts.length-1].value:first,ch=last-first,pc=first?ch/Math.abs(first)*100:0;
  BAL_TREND=ch>0?1:ch<0?-1:0;
- var accs=fin.activeAccounts(),shown=ix.accountsExpanded?accs:accs.slice(0,4),tx=fin.recentTransactions(ix.homeQuery);
+ var accs=fin.activeAccounts(),shown=ix.accountsExpanded?accs:accs.slice(0,4),nq=nlQuery(ix.homeQuery),tx=nq?nq.list.slice(-30).reverse():fin.recentTransactions(ix.homeQuery);
  var o=[];
  o.push(hdr('Гарного дня!',todayStr()));
- o.push(searchBlock('home','Пошук операцій'));
+ o.push(searchBlock('home','Пошук або «скільки на каву в жовтні»'));
+ if(nq)o.push(B_('tile','<div class="lbl">'+(nq.inc?'Отримано':'Витрачено')+(nq.what?' · '+esc(nq.what):'')+' · '+esc(nq.label)+'</div><div class="big">'+esc(money(nq.sum))+'</div><div class="cap">Операцій: '+nq.list.length+'</div>'));
+ var tpls=fin.getState().templates||[];
+ if(tpls.length)o.push(B_('tools tpl','<div class="lbl" style="width:100%;margin-bottom:2px">Швидкі операції</div>'+tpls.map(function(p){return'<button class="pillb'+(p.type==='income'?'':' ac')+'" data-act="tpl" data-id="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(money(p.amount,p.currency))+'</button>';}).join('')));
  o.push(B_('tile bal '+(ch>0?'up':ch<0?'dn':''),'<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="brow"><div class="bl"><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>('+esc(pctTxt(pc))+') за 30 днів</span></div></div><div class="chw">'+spark(pts,'h')+'</div><i class="chev">›</i></div></div>'+
   '<div class="split"><button data-act="flow" data-v="income"><i class="dot up">↑</i><div><span class="lbl">Доходи</span><b>'+esc(money(t.income))+'</b></div></button><span class="vd"></span><button data-act="flow" data-v="expense"><i class="dot dn">↓</i><div><span class="lbl">Витрати</span><b>'+esc(money(t.expense))+'</b></div></button></div>'));
  o.push(B_('accs','<div class="th"><h2>Рахунки</h2>'+(accs.length>4?'<button data-act="accs">'+(ix.accountsExpanded?'Згорнути':'Усі ›')+'</button>':'')+'</div><div class="arow">'+shown.map(function(a){var cash=a.accountType==='cash'||a.type==='cash',nm=a.displayName||a.bankName||'Рахунок',neg=a.currentBalance<0;return'<button class="ab" data-act="acc" data-id="'+esc(a.id)+'"><i class="aic"'+(cash?'':' style="color:'+hashCol(a.id)+'"')+'>'+(cash?COIN_SVG:esc(String(nm).trim().charAt(0).toUpperCase()))+'</i><span class="an">'+esc(nm)+'</span><span class="aa'+(neg?' neg':'')+'">'+esc(money(a.currentBalance,a.currency))+'</span></button>';}).join('')+'<button class="ab" data-act="addacc"><i class="aic plus">'+PLUS_SVG+'</i><span class="an mu">Додати</span></button></div>'));
@@ -171,6 +194,12 @@ function blocksInsights(){
  o.push(B_('sec','Цілі'));
  o.push(B_('tile','<div class="lbl">Місячний ліміт витрат</div><div class="big">'+esc(money(g.limit))+'</div><div class="bar"><i style="width:'+g.percent.toFixed(1)+'%"></i></div><div class="cap">Витрачено '+esc(money(g.expense))+' · '+esc(pctTxt(g.percent))+'</div>'));
  o.push(B_('tile','<div class="lbl">Накопичення</div><div class="big">'+esc(money(g.savings))+'</div><div class="cap">Поточний баланс: рахунки плюс операції без рахунку.</div>'));
+ var fc=forecastMonth(),over=fc.proj-fc.limit;
+ o.push(B_('tile','<div class="lbl">Прогноз витрат на кінець місяця</div><div class="big" style="color:'+(over>0?'var(--ac)':'var(--gr)')+'">'+esc(money(fc.proj))+'</div><div class="bar"><i style="width:'+Math.min(100,fc.limit?fc.proj/fc.limit*100:0).toFixed(1)+'%;background:'+(over>0?'var(--ac)':'var(--gr)')+'"></i></div><div class="cap">'+(over>0?'За поточного темпу ліміт буде перевищено на '+esc(money(over)):'Вистачить: запас '+esc(money(-over)))+'. Залишилось днів: '+fc.left+'.</div>'));
+ var bc=fin.getState().categories.filter(function(c){return c.budget>0;});
+ o.push(B_('tile','<div class="th"><h2>Бюджети категорій</h2><button data-act="budgets">Налаштувати</button></div>'+(bc.length?bc.map(function(c){var sp=monthSpend(c.id),p=sp/c.budget*100,col=p>=100?'var(--ac)':p>=80?'#ffb547':'var(--gr)';return'<div class="cat"><span class="n">'+esc(c.name)+'</span><span class="v">'+esc(money(sp))+' / '+esc(money(c.budget))+'</span><div class="b"><i style="width:'+Math.min(100,p).toFixed(1)+'%;background:'+col+'" data-col="'+col+'"></i></div></div>';}).join(''):'<div class="empty">Бюджетів ще немає. Задайте суму на місяць для будь-якої категорії.</div>')));
+ var rc=fin.getState().recurring||[],rcTot=rc.reduce(function(a,r){return a+(r.type==='expense'?r.amount:0);},0);
+ o.push(B_('tile','<div class="th"><h2>Повторювані платежі</h2><button data-act="recurring">Керувати</button></div>'+(rc.length?rc.map(function(r,i){return'<div class="row'+(i?'':' first')+'">'+icon(r.name,hashCol(r.category))+'<div class="rc"><b>'+esc(r.name)+'</b><span>щомісяця '+r.day+' числа · '+esc(catName(r.category))+'</span></div><em class="'+(r.type==='income'?'in':'')+'">'+(r.type==='income'?'+':'−')+esc(money(r.amount,r.currency))+'</em></div>';}).join('')+'<div class="cap" style="margin-top:8px">Разом витрат на місяць: '+esc(money(rcTot))+'</div>':'<div class="empty">Додайте підписки, оренду чи зарплату — операції створюватимуться самі в потрібний день.</div>')));
  o.push(B_('sec','Аналітика'));
  o.push(B_('tile','<div class="lbl">Чистий результат</div><div class="mid" style="color:'+(net<0?'var(--ac)':'var(--gr)')+'">'+esc(mv(net))+'</div><div class="grid2" style="margin-top:12px"><button class="mini" data-act="flow" data-v="income"><span class="lbl">Доходи</span><b>'+esc(money(tot.income))+'</b></button><button class="mini" data-act="flow" data-v="expense"><span class="lbl">Витрати</span><b>'+esc(money(tot.expense))+'</b></button></div>'));
  o.push(B_('tile','<button data-act="debts" style="display:block;width:100%"><div class="th"><h2>Борги</h2><span class="lbl">Відкрити ›</span></div><div class="grid2"><div class="mini"><span class="lbl">Я винен</span><b>'+esc(money(s.debts.owed))+'</b></div><div class="mini"><span class="lbl">Мені винні</span><b>'+esc(money(s.debts.receivable))+'</b></div></div><div class="cap">Термінових: '+s.debts.urgent+' · сплачених: '+s.debts.paid+'</div></button>'));
