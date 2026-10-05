@@ -9,14 +9,18 @@ var FXFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','
 'uniform vec2 u_vp;uniform vec2 u_res;uniform vec4 u_fp[24];uniform vec3 u_fc[24];uniform float u_fn;uniform float u_t;uniform float u_aura;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
 'vec3 fgAt(vec2 p){vec3 c=vec3(0.);if(u_fn<.5)return c;for(int i=0;i<24;i++){if(float(i)>=u_fn)break;vec4 f=u_fp[i];vec2 d=p-f.xy;float q=dot(d,d)/(f.z*f.z);if(q<4.){c=max(c,u_fc[i]*f.w*exp(-q*1.6));}}return c*.55;}',
-'vec3 auraPal(float t){float f=fract(t)*4.;vec3 a=vec3(1.,.26,.52),b=vec3(.58,.3,1.),c=vec3(.18,.55,1.),d=vec3(1.,.6,.26);',
+/* палітра як у світіння Сірі: гаряча рожева, фіолетова, синя, помаранчева — насичені */
+'vec3 auraPal(float t){float f=fract(t)*4.;vec3 a=vec3(1.,.16,.5),b=vec3(.62,.22,1.),c=vec3(.22,.42,1.),d=vec3(1.,.5,.12);',
 ' vec3 c0=mix(a,b,smoothstep(0.,1.,clamp(f,0.,1.))),c1=mix(b,c,smoothstep(0.,1.,clamp(f-1.,0.,1.))),c2=mix(c,d,smoothstep(0.,1.,clamp(f-2.,0.,1.))),c3=mix(d,a,smoothstep(0.,1.,clamp(f-3.,0.,1.)));',
 ' return f<1.?c0:f<2.?c1:f<3.?c2:c3;}',
-'vec3 auraAt(vec2 p){if(u_aura<.01)return vec3(0.);vec2 c=u_vp*.5,q=p-c;float d=sdRB(q,c,62.);if(d<-80.||d>8.)return vec3(0.);',
-' float inn=clamp(-d,0.,80.);float band=exp(-inn*inn/(2.*9.*9.))*.8+.35*exp(-inn*inn/(2.*26.*26.));float ang=atan(q.y,q.x);',
-' float h=ang*.318+u_t*.035+.13*sin(ang*3.+u_t*.5)+.09*sin(ang*5.-u_t*.7);',
-' vec3 col=auraPal(h);',
-' float pulse=.7+.3*sin(u_t*.6+ang*2.+sin(u_t*.27+ang*3.));return col*band*pulse*u_aura*.46;}',
+/* світіння, а не розмитий колір: яскраве ядро біля самого краю + м'який ореол всередину; великі плями кольору, що повільно пливуть */
+'vec3 auraAt(vec2 p){if(u_aura<.01)return vec3(0.);vec2 c=u_vp*.5,q=p-c;float d=sdRB(q,c,62.);if(d<-115.||d>8.)return vec3(0.);',
+' float inn=clamp(-d,0.,115.);float core=exp(-inn*inn/(2.*7.*7.));float mid=exp(-inn*inn/(2.*24.*24.));float far=exp(-inn/42.)*(1.-smoothstep(85.,115.,inn));',
+' float ang=atan(q.y,q.x);float h=ang*.159+u_t*.028+.09*sin(ang*2.+u_t*.45)+.05*sin(ang*3.-u_t*.6);',
+' vec3 col=auraPal(h);float pulse=.85+.15*sin(u_t*.7+ang*2.+sin(u_t*.3+ang*3.));',
+' float lum=(core*1.15+mid*.62+far*.2)*pulse;vec3 g=col*lum*1.25;',
+' g+=vec3(1.,.86,.94)*core*core*.28;',   /* «розпечений» білястий край, як у Сірі */
+' return g*u_aura;}',
 'void main(){vec2 p=vec2(gl_FragCoord.x/u_res.x,1.-gl_FragCoord.y/u_res.y)*u_vp;gl_FragColor=vec4(fgAt(p)+auraAt(p),1.);}'].join('\n');
 var FX={p:null,U:{},fb:null,tex:null,w:0,h:0};
 var BGFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
@@ -283,7 +287,7 @@ function drawTilesS(S){
  if(TCLEAN){onlyLite=false;onlyAura=false;}
  if(onlyLite&&!onlyAura&&fgR){var fx0=Math.max(0,Math.floor(fgR[0]*S)),fy0=Math.max(0,Math.floor(fgR[1]*S)),fx1=Math.min(W,Math.ceil(fgR[2]*S)),fy1=Math.min(H,Math.ceil(fgR[3]*S));
   if(fx1>fx0&&fy1>fy0)pass2(fx0,H-fy1,fx1-fx0,fy1-fy0);onlyAura=true;}
- if(onlyAura&&AURA){var bd=Math.round(72*S);pass2(0,H-bd,W,bd);pass2(0,0,W,bd);pass2(0,bd,bd,Math.max(1,H-2*bd));pass2(W-bd,bd,bd,Math.max(1,H-2*bd));}
+ if(onlyAura&&AURA){var bd=Math.round(118*S);pass2(0,H-bd,W,bd);pass2(0,0,W,bd);pass2(0,bd,bd,Math.max(1,H-2*bd));pass2(W-bd,bd,bd,Math.max(1,H-2*bd));}
  else if(!onlyAura)pass2(null);
  tgl.disable(tgl.SCISSOR_TEST);
  if(!tgShown){tgShown=true;TGC.style.display='block';document.documentElement.classList.add('gt');}
