@@ -843,7 +843,7 @@ function recStep(dt){
  var top={ox:VW/2,oy:0,tx:0,ty:-.05*VH},ul={ox:0,oy:0,tx:-.045*VW,ty:-.04*VH},mv=false;
  /* налаштування над «Додатково»: шари розходяться — екран тягнеться до лівого краю, панель до правого кута */
  var ulS={ox:0,oy:0,tx:-.07*VW,ty:-.05*VH},trc={ox:VW,oy:0,tx:.05*VW,ty:-.05*VH};
- var drw={ox:0,oy:VH/2,tx:-.19*VW,ty:0};   /* бокова панель: сторінка зсувається вліво (разом зі стисненням −20%) */
+ var drw={ox:0,oy:VH/2,tx:-(.5*VW+10),ty:0};   /* бокова панель: сторінка зсувається вліво (разом зі стисненням −20%) */
  var L={pg:sh?ulS:dd?top:mo?drw:ul,mn:dd?top:trc,sh:top};   /* меню-випадайка (dd) ділить шар mn і мусить рухатись разом із аркушем */
  ['pg','mn','sh'].forEach(function(k){
   var o=rec[k],d=tg[k]-o.v;
@@ -1291,7 +1291,7 @@ function frame(t){
   gl.uniform4f(U.u_p0,(fl-ca)*VW,sy[fl],A?A.ch:1,(A&&BH.ph!==3)?1:0);gl.uniform3f(U.u_w,A?A.cw:1,Bt?Bt.cw:1,SH.cw);
   gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,SH.tex||dummy);gl.activeTexture(gl.TEXTURE0);
   gl.uniform4f(U.u_p2,SH.x,-SH.y,SH.ch,(SH.on&&SH.ready)?1:0);gl.uniform1f(U.u_scrim,scrimV);
-  var G=menu.g,G2=sheetP.g,gm=0,gdk=.5,gbl=2*BLS*Math.min(1,rec.pg.v);
+  var G=menu.g,G2=sheetP.g,gm=0,gdk=(menu.kind==='more'&&menu.on)?1:.5,gbl=2*BLS*Math.min(1,rec.pg.v);
   if(boot.on&&boot.phase===2){G=boot.g;gm=1;gdk=.9;gbl=0;}
   gl.uniform1f(U.u_gm,gm);gl.uniform1f(U.u_gd,gdk);gl.uniform1f(U.u_gbl,gbl);gl.uniform1f(U.u_gb2,2*BLS*Math.min(1,rec.pg.v));gl.uniform2f(U.u_go,gOX,gOY);gl.uniform1f(U.u_isl,ISL);gl.uniform1f(U.u_cell,gridCell());gl.uniform3f(U.u_gcol,GCOL[0],GCOL[1],GCOL[2]);
   gl.uniform4f(U.u_rp,rec.pg.ox,rec.pg.oy,kOf(rec.pg.v),1-RD*rec.pg.v);gl.uniform4f(U.u_rs,rec.sh.ox,rec.sh.oy,kOf(rec.sh.v),1-RD*rec.sh.v);
