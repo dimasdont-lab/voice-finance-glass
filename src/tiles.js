@@ -379,7 +379,7 @@ function introStep(t){
   if(p<1)done=false;
   var x=u*u*it.sx+2*u*e*it.cx,y=u*u*it.sy+2*u*e*it.cy,sc=.7+.3*e,al=Math.min(1,p*3);
   st.transform=p<1?'translate3d('+x.toFixed(1)+'px,'+y.toFixed(1)+'px,0) rotate('+(it.rot*u).toFixed(2)+'deg) scale('+sc.toFixed(3)+')':'';
-  st.filter=p<1?'blur('+(16*u).toFixed(1)+'px) brightness('+(.3+.7*e).toFixed(2)+')':'';
+  st.filter=p<1?'brightness('+(.3+.7*e).toFixed(2)+')':'';
   st.opacity=al<1?al.toFixed(2):'';
   it.el._ia=p<1?{x:x,y:y,s:sc,a:al}:null;
  });
