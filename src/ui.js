@@ -223,9 +223,11 @@ function layoutSheet(){
  if(!curSheet)return;
  var el=curSheet.el,body=curSheet.body,m=vvm(),kb=(VH-(m.t+m.h))>100,w=Math.min(VW-20,520);
  var bottom=m.t+m.h-10-(kb?0:SAFE.b),maxH=Math.max(200,bottom-Math.max(SAFE.t,14)-60);
+ var sb=body.scrollTop,se=el.scrollTop;   /* висота auto на мить скидає прокрутку в 0 — запам'ятовуємо й повертаємо */
  el.style.width=w+'px';el.style.height='auto';body.style.height='auto';
  var h=Math.min(body.scrollHeight,maxH);
  el.style.height=h+'px';body.style.height='100%';
+ if(sb)body.scrollTop=sb;if(se)el.scrollTop=se;
  var left=m.l+(m.w-w)/2,top=bottom-h;
  el.style.left=left+'px';el.style.top=top+'px';
  sheetP.tx=left;sheetP.ty=top;sheetP.tw=w;sheetP.th=h;sheetP.rise=VH-top+24;
