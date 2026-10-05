@@ -48,9 +48,9 @@ GLSL_BG,
 '  p+=o/(1.+length(o)/(5.*mA));}',
 ' if(u_ch.z>.001){vec2 dc=p-u_ch.xy;float L=length(dc)+.001,q=L/(60.+40.*u_ch.z);p+=dc/L*u_ch.z*16.*q*exp(-q*q);}',
 ' if(u_bh.w>.001){vec2 d=p-u_bh.xy;float L=max(length(d),1.),R=u_bh.z,k=u_bh.w;',
-'  float E=R*1.3;float f=1.-k*E*E/(L*L+E*E*.35);float a=k*2.2*R*R/(L*L+R*R);float ca=cos(a),sa=sin(a);vec2 q=u_bh.xy+vec2(ca*d.x-sa*d.y,sa*d.x+ca*d.y)*f;',
+'  float E=R*2.5;float f=1.-k*E*E/(L*L+E*E*.25);float a=k*6.5*R*R/(L*L+R*R*.6)+k*.9*exp(-L/(R*6.));float ca=cos(a),sa=sin(a);vec2 q=u_bh.xy+vec2(ca*d.x-sa*d.y,sa*d.x+ca*d.y)*f;',
 '  vec3 col=gradBg(q);float hole=1.-smoothstep(R*.92,R*1.02,L);',
-'  float ring=exp(-pow((L-R*1.08)/(R*.07+1.2),2.))*k;float glow=exp(-max(L-R,0.)/(R*.9))*k*.35;',
+'  float ring=exp(-pow((L-R*1.08)/(R*.07+1.2),2.))*k;float glow=exp(-max(L-R,0.)/(R*1.4))*k*.45;',
 '  col=mix(col,vec3(0.),hole)+vec3(1.,.72,.45)*ring*.9+vec3(.55,.3,.9)*glow*(1.-hole);',
 '  gl_FragColor=vec4(col,1.);return;}',
 ' gl_FragColor=vec4(gradBg(p),1.);}'].join('\n');
@@ -285,7 +285,7 @@ function drawTilesS(S){
  /* швидкий вихід без жодних виділень пам'яті: якщо сцена не змінилась з минулого малювання — нічого не робимо */
  {var qr=rec.pg,qs=0,qi,qst=false;for(qi=0;qi<NP;qi++){qs+=(sy[qi]||0)*(1.1+qi*.37);if(Math.abs(qi-ca)<1&&(tlStale[qi]||!TL[qi]))qst=true;}
   var qn=ca*7.3+VW*3.1+VH*1.7+S*5+gOX*1.3+gOY*2.1+GCOL[0]*11+GCOL[1]*13+GCOL[2]*17+qr.v*19+qr.ox*.3+qr.oy*.5+qr.tx*.7+qr.ty*.9+qs+CG.is+CG.ib*3+CG.bal*5+CG.gt*7+CG.gsat*9+CG.gbr*11+AREA_MODE*101+(AURA?Math.floor(performance.now()/66):0)*.37+FGgen*.71+GA.gen*13+tickerEl.offsetTop*.11;
-  if(!TCLEAN&&qn===drawTilesS.q&&tgW&&!qst&&!GA.dirty&&!intro.on&&!(typeof PRS!=='undefined'&&PRS.size)&&!BH.ph&&!RPn&&!CH.on&&!WF.n)return;drawTilesS.q=qn;}
+  if(!TCLEAN&&qn===drawTilesS.q&&tgW&&!qst&&!GA.dirty&&!intro.on&&!(typeof PRS!=='undefined'&&PRS.size)&&!(BH.ph===1||BH.ph===2)&&!RPn&&!CH.on&&!WF.n)return;drawTilesS.q=qn;}
  var rp=rec.pg,v=rp.v>.003?rp.v:0,k=v?kOf(v):1,n=0,ns=0,nl=0,sig=[ca.toFixed(3),VW,VH,S,gOX.toFixed(1),gOY.toFixed(1),GCOL.map(function(x){return x.toFixed(3);}).join(':'),v.toFixed(3),rp.ox.toFixed(1),rp.oy.toFixed(1),rp.tx.toFixed(1),rp.ty.toFixed(1),'am'+AREA_MODE,'tk'+tickerEl.offsetTop+'/'+tickerEl.offsetHeight,CG.is,CG.ib,CG.bal,CG.gt,CG.gsat,CG.gbr,PRSIG],i,j;
  var NEAR=BH.ph?1.01:1;   /* під час чорної діри скло малюється й для сусідніх вкладок */
  TGF++;for(i=0;i<NP;i++){if(Math.abs(i-ca)<NEAR&&(tlStale[i]||!TL[i]))tlMeasure(i);}

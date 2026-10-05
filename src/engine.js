@@ -943,7 +943,7 @@ function frame(t){
  var settled=!drag&&Math.abs(target-x)<0.05&&Math.abs(v)<0.5&&Math.abs(j)<0.002&&Math.abs(jv)<0.05;
  if(settled){x=target;v=0;j=0;jv=0;}
  /* панель ховається під клавіатуру / повертається */
- var hT=((mode===1&&op.age>.14)||(mode===2&&cl.age<A1-.06)||sheetOn||boot.hold)?1:0;
+ var hT=((mode===1&&op.age>.14)||(mode===2&&cl.age<A1-.06)||sheetOn||boot.hold||BH.ph===3)?1:0;
  if(hide!==hT){hide+=(hT-hide)*(1-Math.exp(-dt*9));if(Math.abs(hT-hide)<.002)hide=hT;dirty=true;}
  var off=hide*hideOff();
  if(off!==lastOff){lastOff=off;dock.style.transform=off>.1?'translate3d(0,'+off+'px,0)':'';}
@@ -999,7 +999,7 @@ function frame(t){
  var bT=(mode===0&&hide<.02)?1:0;if(bump!==bT){bump+=(bT-bump)*(1-Math.exp(-dt*10));if(Math.abs(bT-bump)<.003)bump=bT;dirty=true;}
  wantFull=(mode!==0)||menuA>0.002||sheetA>0.002||(boot.on&&boot.phase===2);
  if(fullMode!==wantFull){fullMode=wantFull;document.documentElement.classList.toggle('fm',fullMode);measure();dirty=true;}
- var tkBase=(!fullMode&&tgOK&&tgShown&&tickerEl.classList.contains('on')&&tickerEl.offsetHeight>0&&tickerTrk.dataset.loop)?1:0;
+ var tkBase=(!fullMode&&!BH.ph&&tgOK&&tgShown&&tickerEl.classList.contains('on')&&tickerEl.offsetHeight>0&&tickerTrk.dataset.loop)?1:0;
  if(tkBase){tkY0=tickerEl.offsetTop-12;var ps0=performance.now();tkStripBuild();var psd=performance.now()-ps0;if(psd>1)pfS('strip',psd);}
  var tkOn=(tkBase&&tkStrip.ok)?1:0;
  if(tickerEl._gl!==tkOn){tickerEl._gl=tkOn;tickerEl.classList.toggle('tkgl',!!tkOn);dirty=true;}
