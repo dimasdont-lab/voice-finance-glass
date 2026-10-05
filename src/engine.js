@@ -356,7 +356,7 @@ function shot(el,w,h,ts){
  FC.innerHTML='';var n=FD.importNode(el,true);
  var src=el.querySelectorAll('input,textarea'),dst=n.querySelectorAll('input,textarea');
  for(var q=0;q<src.length;q++){if(src[q].tagName==='TEXTAREA')dst[q].textContent=src[q].value;else dst[q].setAttribute('value',src[q].value);}
- n.style.margin='0';n.style.filter='';n.style.opacity='';n.style.width=w+'px';n.style.transform='none';n.style.willChange='auto';FC.appendChild(n);
+ n.style.margin='0';n.style.filter='';n.style.opacity='';n.style.scale='';n.style.translate='';n.style.rotate='';n.style.width=w+'px';n.style.transform='none';n.style.willChange='auto';FC.appendChild(n);
  FR.style.width=Math.ceil(w)+'px';FR.style.height=Math.ceil(h)+'px';
  var s0=performance.now();return html2canvas(n,{backgroundColor:null,scale:ts,logging:false,windowWidth:Math.ceil(w),windowHeight:Math.ceil(h),imageTimeout:0}).then(function(c){var d=performance.now()-s0;pfS('знімок',d);texVer++;if(d>25)LG('знімок','html2canvas '+Math.round(d)+' мс, блок '+Math.round(w)+'x'+Math.round(h));return c;});
 }
@@ -1066,6 +1066,6 @@ function frame(t){
  }
  if(!shown&&full[sel]){shown=true;cv.style.opacity=1;}
  if(moving||!settled||scrolling||mode||hide!==hT||menuA>0.002&&menuA<.999||sheetA>0.002&&sheetA<.999||recMoving||boot.on&&boot.phase===2||menu.dragging||sheetP.dragging)lastMotion=t;
- if(t-lastMotion>150)pump(t);   /* важкі знімки — тільки коли нічого не рухається */
+ if(t-lastMotion>150&&!BH.ph)pump(t);   /* важкі знімки — тільки коли нічого не рухається */
  scrollingNow=!!scrolling;pfS('frame',performance.now()-pf0);
 }

@@ -1,7 +1,7 @@
 /* ===== 7. Скляні віджети: окремий WebGL-шар під текстом. Малює фон із сіткою й плитки з заломленням сітки.
    Вкладене скло: кнопки «Доходи/Витрати», міні-картки (шар 1), круглі значки (шар 2), заповнення прогрес-барів (шар 3, свій колір).
    Скляні лінії графіків: ланцюжки капсул (до 4 ліній), колір лінії, заломлення сітки. Вимикаються разом із GLINES ===== */
-var FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
+var BH={ph:0,x:0,y:0,r:0,k:0,au:1},FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
 var GLASS_LINE_OK=false;
 var tgR=new Float32Array(TMAX*4),tgM=new Float32Array(TMAX*4),tgC=new Float32Array(TMAX*4);
 var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2]];
@@ -35,13 +35,20 @@ var FXFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','
 'void main(){vec2 p=vec2(gl_FragCoord.x/u_res.x,1.-gl_FragCoord.y/u_res.y)*u_vp;gl_FragColor=vec4(fgAt(p)+auraAt(p),1.);}'].join('\n');
 var FX={p:null,U:{},fb:null,tex:null,w:0,h:0},ABC=[.72,.72,.82];   /* поточний колір балансу для ободка (плавно) */
 var BGFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
-'uniform vec2 u_vp;uniform vec2 u_res;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform sampler2D u_fx;uniform float u_fxk;uniform float u_clean;',
+'uniform vec2 u_vp;uniform vec2 u_res;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform sampler2D u_fx;uniform float u_fxk;uniform float u_clean;uniform vec4 u_bh;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
 'vec3 fgAt(vec2 p){return vec3(0.);}',
 'vec3 auraAt(vec2 p){return u_fxk>0.?texture2D(u_fx,vec2(p.x/u_vp.x,1.-p.y/u_vp.y)).rgb:vec3(0.);}',
 GLSL_BG,
 'void main(){vec2 p=vec2(gl_FragCoord.x/u_res.x,1.-gl_FragCoord.y/u_res.y)*u_vp;',
 ' if(u_clean>.5){gl_FragColor=vec4(mix(vec3(.0196,.0196,.0275),u_gcol,.17*gridL(p+u_go-u_vp*.5)),1.);return;}',
+/* пасхалка «чорна діра»: u_bh = центр, радіус горизонту, сила. Гравітаційна лінза (зображення з-за діри), закрутка, чорний диск, кільце фотонів */
+' if(u_bh.w>.001){vec2 d=p-u_bh.xy;float L=max(length(d),1.),R=u_bh.z,k=u_bh.w;',
+'  float E=R*1.3;float f=1.-k*E*E/(L*L+E*E*.35);float a=k*2.2*R*R/(L*L+R*R);float ca=cos(a),sa=sin(a);vec2 q=u_bh.xy+vec2(ca*d.x-sa*d.y,sa*d.x+ca*d.y)*f;',
+'  vec3 col=gradBg(q);float hole=1.-smoothstep(R*.92,R*1.02,L);',
+'  float ring=exp(-pow((L-R*1.08)/(R*.07+1.2),2.))*k;float glow=exp(-max(L-R,0.)/(R*.9))*k*.35;',
+'  col=mix(col,vec3(0.),hole)+vec3(1.,.72,.45)*ring*.9+vec3(.55,.3,.9)*glow*(1.-hole);',
+'  gl_FragColor=vec4(col,1.);return;}',
 ' gl_FragColor=vec4(gradBg(p),1.);}'].join('\n');
 var BG={p:null,U:{},fb:null,tex:null,w:0,h:0};
 var TCLEAN=0;
@@ -141,7 +148,7 @@ nseg?(' for(int l=0;l<4;l++){if(float(l)>=u_nl||px.y<tkb)break;vec4 bb=u_lb[l];i
   if(tgl.getProgramParameter(fp,tgl.LINK_STATUS)){FX.p=fp;['u_vp','u_res','u_fp','u_fc','u_fn','u_t','u_aura','u_amode','u_abc','u_ahsv'].forEach(function(n){FX.U[n]=tgl.getUniformLocation(fp,n);});}}
  var bv=cs(tgl.VERTEX_SHADER,VS),bf=cs(tgl.FRAGMENT_SHADER,BGFS);
  if(bv&&bf){var bp=tgl.createProgram();tgl.attachShader(bp,bv);tgl.attachShader(bp,bf);tgl.bindAttribLocation(bp,0,'p');tgl.linkProgram(bp);
-  if(tgl.getProgramParameter(bp,tgl.LINK_STATUS)){BG.p=bp;['u_vp','u_res','u_go','u_cell','u_isl','u_gcol','u_fx','u_fxk','u_clean'].forEach(function(n){BG.U[n]=tgl.getUniformLocation(bp,n);});}}
+  if(tgl.getProgramParameter(bp,tgl.LINK_STATUS)){BG.p=bp;['u_vp','u_res','u_go','u_cell','u_isl','u_gcol','u_fx','u_fxk','u_clean','u_bh'].forEach(function(n){BG.U[n]=tgl.getUniformLocation(bp,n);});}}
  if(!BG.p){console.error('tile bg program failed');return;}
  FX.main=p;tgl.useProgram(p);
  tgOK=true;GLASS_LINE_OK=NSEG>0;
@@ -240,7 +247,7 @@ function bgPrep(W,H,fxOn){
   BG.fb=tgl.createFramebuffer();tgl.bindFramebuffer(tgl.FRAMEBUFFER,BG.fb);tgl.framebufferTexture2D(tgl.FRAMEBUFFER,tgl.COLOR_ATTACHMENT0,tgl.TEXTURE_2D,BG.tex,0);tgl.bindFramebuffer(tgl.FRAMEBUFFER,null);BG.w=W;BG.h=H;}
  tgl.useProgram(BG.p);
  tgl.uniform2f(BG.U.u_vp,VW,VH);tgl.uniform2f(BG.U.u_res,W,H);tgl.uniform2f(BG.U.u_go,gOX,gOY);tgl.uniform1f(BG.U.u_cell,gridCell());tgl.uniform1f(BG.U.u_isl,ISL);tgl.uniform3f(BG.U.u_gcol,GCOL[0],GCOL[1],GCOL[2]);
- tgl.uniform1i(BG.U.u_fx,2);tgl.uniform1f(BG.U.u_fxk,fxOn&&!TCLEAN?1:0);tgl.uniform1f(BG.U.u_clean,TCLEAN);
+ tgl.uniform1i(BG.U.u_fx,2);tgl.uniform1f(BG.U.u_fxk,fxOn&&!TCLEAN?1:0);tgl.uniform1f(BG.U.u_clean,TCLEAN);tgl.uniform4f(BG.U.u_bh,BH.x,BH.y,BH.r,TCLEAN?0:BH.k);
  tgl.useProgram(FX.main);tgl.activeTexture(tgl.TEXTURE3);tgl.bindTexture(tgl.TEXTURE_2D,BG.tex);tgl.activeTexture(tgl.TEXTURE0);
 }
 function pass2(x,y,w,h){   /* фон у текстуру, потім скло — у межах прямокутника (координати WebGL) */
@@ -258,7 +265,7 @@ function fxRender(W,H){
   FX.fb=tgl.createFramebuffer();tgl.bindFramebuffer(tgl.FRAMEBUFFER,FX.fb);tgl.framebufferTexture2D(tgl.FRAMEBUFFER,tgl.COLOR_ATTACHMENT0,tgl.TEXTURE_2D,FX.tex,0);FX.w=w;FX.h=h;}
  var sc=tgl.isEnabled(tgl.SCISSOR_TEST);if(sc)tgl.disable(tgl.SCISSOR_TEST);
  tgl.useProgram(FX.p);tgl.bindFramebuffer(tgl.FRAMEBUFFER,FX.fb);tgl.viewport(0,0,w,h);
- tgl.uniform2f(FX.U.u_vp,VW,VH);tgl.uniform2f(FX.U.u_res,w,h);tgl.uniform1f(FX.U.u_t,(performance.now()/1000)%1000);tgl.uniform1f(FX.U.u_aura,AURA?FGS.a/50:0);var abT=BAL_TREND>0?[.2,.95,.45]:BAL_TREND<0?[1,.18,.25]:[.72,.72,.82];for(var ab=0;ab<3;ab++)ABC[ab]+=(abT[ab]-ABC[ab])*.08;tgl.uniform1f(FX.U.u_amode,FGS.am?1:0);tgl.uniform3f(FX.U.u_abc,ABC[0],ABC[1],ABC[2]);tgl.uniform3f(FX.U.u_ahsv,FGS.ah/360,FGS.as/100,FGS.av/100);tgl.uniform1f(FX.U.u_fn,FGact?FGn:0);if(FGact){tgl.uniform4fv(FX.U.u_fp,FGu);tgl.uniform3fv(FX.U.u_fc,FGcu);}
+ tgl.uniform2f(FX.U.u_vp,VW,VH);tgl.uniform2f(FX.U.u_res,w,h);tgl.uniform1f(FX.U.u_t,(performance.now()/1000)%1000);tgl.uniform1f(FX.U.u_aura,AURA?FGS.a/50*BH.au:0);var abT=BAL_TREND>0?[.2,.95,.45]:BAL_TREND<0?[1,.18,.25]:[.72,.72,.82];for(var ab=0;ab<3;ab++)ABC[ab]+=(abT[ab]-ABC[ab])*.08;tgl.uniform1f(FX.U.u_amode,FGS.am?1:0);tgl.uniform3f(FX.U.u_abc,ABC[0],ABC[1],ABC[2]);tgl.uniform3f(FX.U.u_ahsv,FGS.ah/360,FGS.as/100,FGS.av/100);tgl.uniform1f(FX.U.u_fn,FGact?FGn:0);if(FGact){tgl.uniform4fv(FX.U.u_fp,FGu);tgl.uniform3fv(FX.U.u_fc,FGcu);}
  tgl.drawArrays(tgl.TRIANGLE_STRIP,0,4);
  tgl.bindFramebuffer(tgl.FRAMEBUFFER,null);tgl.viewport(0,0,W,H);tgl.useProgram(FX.main);tgl.activeTexture(tgl.TEXTURE2);tgl.bindTexture(tgl.TEXTURE_2D,FX.tex);tgl.activeTexture(tgl.TEXTURE0);
 }
@@ -270,7 +277,7 @@ function drawTilesS(S){
  /* швидкий вихід без жодних виділень пам'яті: якщо сцена не змінилась з минулого малювання — нічого не робимо */
  {var qr=rec.pg,qs=0,qi,qst=false;for(qi=0;qi<NP;qi++){qs+=(sy[qi]||0)*(1.1+qi*.37);if(Math.abs(qi-ca)<1&&(tlStale[qi]||!TL[qi]))qst=true;}
   var qn=ca*7.3+VW*3.1+VH*1.7+S*5+gOX*1.3+gOY*2.1+GCOL[0]*11+GCOL[1]*13+GCOL[2]*17+qr.v*19+qr.ox*.3+qr.oy*.5+qr.tx*.7+qr.ty*.9+qs+CG.is+CG.ib*3+CG.bal*5+CG.gt*7+CG.gsat*9+CG.gbr*11+AREA_MODE*101+(AURA?Math.floor(performance.now()/66):0)*.37+FGgen*.71+GA.gen*13+tickerEl.offsetTop*.11;
-  if(!TCLEAN&&qn===drawTilesS.q&&tgW&&!qst&&!GA.dirty&&!intro.on&&!(typeof PRS!=='undefined'&&PRS.size))return;drawTilesS.q=qn;}
+  if(!TCLEAN&&qn===drawTilesS.q&&tgW&&!qst&&!GA.dirty&&!intro.on&&!(typeof PRS!=='undefined'&&PRS.size)&&!BH.ph)return;drawTilesS.q=qn;}
  var rp=rec.pg,v=rp.v>.003?rp.v:0,k=v?kOf(v):1,n=0,ns=0,nl=0,sig=[ca.toFixed(3),VW,VH,S,gOX.toFixed(1),gOY.toFixed(1),GCOL.map(function(x){return x.toFixed(3);}).join(':'),v.toFixed(3),rp.ox.toFixed(1),rp.oy.toFixed(1),rp.tx.toFixed(1),rp.ty.toFixed(1),'am'+AREA_MODE,'tk'+tickerEl.offsetTop+'/'+tickerEl.offsetHeight,CG.is,CG.ib,CG.bal,CG.gt,CG.gsat,CG.gbr,PRSIG],i,j;
  TGF++;for(i=0;i<NP;i++){if(Math.abs(i-ca)<1&&(tlStale[i]||!TL[i]))tlMeasure(i);}
  if(GA.dirty)gaBuild();var mna='ga'+GA.gen+'fg'+FGgen,minor=mna+(AURA?Math.floor(performance.now()/66):0);
