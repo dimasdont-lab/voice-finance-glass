@@ -149,6 +149,8 @@ input{font:inherit;color:inherit}
 #boot .blogo img{display:block;width:100%;height:100%}
 #boot .bbar{display:none}
 #boot .bwrap.p2 .bglow{opacity:0;transition:opacity .12s}
+#boot.ba .bglow,#boot.ba .brays{opacity:0!important}
+#boot .bwrap.p1 .bglow,#boot .bwrap.p1 .brays{opacity:0!important}
 #boot .bwrap.p1 .blogo,#boot .bwrap.p2 .blogo{opacity:0}
 #boot .bwrap.p1 .bbar,#boot .bwrap.p2 .bbar{opacity:0}
 /* перший кадр = заставка iOS (apple-touch-startup-image): логотип одразу великий, потім плавно зменшується до звичного розміру. Значення 2.4 має збігатися з tools/make-splash.ps1 */

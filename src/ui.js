@@ -168,6 +168,7 @@ function sheetHtml(kind,ov){
    SEC('Ободок екрана')+'<button class="btnw" data-s="aura">'+auraLabel()+'</button><button class="btnw" data-s="auramode">'+auraModeLabel()+'</button>'+
    RNG('fg','a','Інтенсивність (прозорість)',200)+RNG('fg','ah','Відтінок (зсув, °)',360)+RNG('fg','as','Насиченість',200)+RNG('fg','av','Яскравість',200)+
    SEC('Слід пальця')+'<button class="btnw" data-s="fgwave">'+fgWaveLabel()+'</button><button class="btnw" data-s="fgglow">'+fgGlowLabel()+'</button>'+RNG('fg','i','Інтенсивність',200)+RNG('fg','w','Ширина',100)+RNG('fg','l','Тривалість',100)+
+   SEC('Завантаження')+'<button class="btnw" data-s="bfx">'+bfxLabel()+'</button><div class="mkinfo" style="padding:2px 4px 6px">Дотик до екрана завантаження пропускає заставку.</div>'+
    '<button class="btnw" data-s="cgreset">Скинути кольори скла, ободка й сліду</button>'+
    SEC('Синхронізація між пристроями (шифрована)')+
    '<div class="fr"><label>Ключ синхронізації (однаковий на всіх пристроях)</label><input data-sy="key" autocomplete="off" autocapitalize="characters" spellcheck="false" value="'+esc(syGetKey())+'" placeholder="XXXX-XXXX-XXXX-XXXX"></div>'+
@@ -320,6 +321,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='syncreplace')syImport('replace');
   else if(s==='logcopy')logCopy();
   else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);setCG('gt',65);setCG('gsat',50);setCG('gbr',50);setFGS('a',50);setFGS('ah',0);setFGS('as',100);setFGS('av',100);setFGS('i',56);setFGS('w',62);setFGS('l',30);[].forEach.call(curSheet.body.querySelectorAll('[data-fg]'),function(i){i.value=FGS[i.dataset.fg];});[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
+  else if(s==='bfx'){try{localStorage.setItem('vf-bfx',localStorage.getItem('vf-bfx')==='0'?'1':'0');}catch(e){}t.textContent=bfxLabel();}
   else if(s==='fgwave'){setFGS('tw',FGS.tw?0:1);t.textContent=fgWaveLabel();LG('ui',fgWaveLabel());}
   else if(s==='fgglow'){setFGS('tg',FGS.tg?0:1);t.textContent=fgGlowLabel();LG('ui',fgGlowLabel());}
   else if(s==='auramode'){setFGS('am',FGS.am?0:1);t.textContent=auraModeLabel();LG('ui',auraModeLabel());}

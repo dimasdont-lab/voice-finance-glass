@@ -81,6 +81,7 @@ function setFGS(k,v){FGS[k]=v;try{localStorage.setItem('vf-fg',JSON.stringify(FG
 var AURA=(function(){try{var v=localStorage.getItem('vf-aura');return v===null?1:+v?1:0;}catch(e){return 1;}})();
 function fgGlowLabel(){return'Світіння під пальцем: '+(FGS.tg?'увімкнено':'вимкнено');}
 function fgWaveLabel(){return'Хвилі за пальцем: '+(FGS.tw?'увімкнено':'вимкнено');}
+function bfxLabel(){var o=false;try{o=localStorage.getItem('vf-bfx')==='0';}catch(e){}return'Заставка завантаження: '+(o?'вимкнена':'увімкнена')+' (з наступного запуску)';}
 function auraModeLabel(){return'Колір ободка: '+(FGS.am?'за балансом (зелений / червоний)':'райдужний');}
 function auraLabel(){return'Райдужний ореол екрана: '+(AURA?'увімкнено':'вимкнено');}
 function toggleAura(){AURA=AURA?0:1;try{localStorage.setItem('vf-aura',String(AURA));}catch(e){}LG('ui',auraLabel());}
