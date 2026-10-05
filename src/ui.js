@@ -76,7 +76,7 @@ root.addEventListener('click',function(e){
   if(a==='back')app.back();
   else if(a==='tx')app.editTransaction(id);
   else if(a==='balance')nav.navigate('balanceAnalysis');
-  else if(a==='egg'){if(BH.sup)return;var er=t.getBoundingClientRect();lensToggle(er.left+er.width/2,er.top-30);}
+  else if(a==='egg'){var er=t.getBoundingClientRect();lensToggle(er.left+er.width/2,er.top-30);}
   else if(a==='tpl'){var tx0=fin.useTemplate(id);toast('Додано: '+(tx0.note||'')+' '+money(tx0.amount,tx0.currency));}
   else if(a==='budgets')nav.openOverlay('budgets');
   else if(a==='recurring')nav.openOverlay('recurring');
@@ -884,10 +884,7 @@ function bhStart(){
 function bhBackOut(){BH.ph=2;BHt0=performance.now();LG('egg','чорна діра: вилітання');BHraf=requestAnimationFrame(bhStep);}
 /* поки діра працює, інтерфейс не реагує; коли все всмоктано — будь-який тап повертає */
 ['pointerdown','click','touchstart'].forEach(function(n){window.addEventListener(n,function(e){if(!BH.ph)return;e.stopPropagation();if(e.cancelable)e.preventDefault();if(n==='pointerdown'&&BH.ph===3)bhBackOut();},{capture:true,passive:false});});
-/* утримання краплі ~0.6 с — чорна діра (звичайний тап по краплі, як і раніше, — лінза) */
-(function(){var tm=0,dn=null;
- root.addEventListener('pointerdown',function(e){var b=e.target.closest&&e.target.closest('.eggd');if(!b)return;dn={x:e.clientX,y:e.clientY};clearTimeout(tm);tm=setTimeout(function(){dn=null;BH.sup=1;setTimeout(function(){BH.sup=0;},700);bhStart();},600);});
- ['pointerup','pointercancel'].forEach(function(n){root.addEventListener(n,function(){clearTimeout(tm);dn=null;});});
- root.addEventListener('pointermove',function(e){if(dn&&Math.hypot(e.clientX-dn.x,e.clientY-dn.y)>8){clearTimeout(tm);dn=null;}});
- root.addEventListener('contextmenu',function(e){if(e.target.closest&&e.target.closest('.eggd'))e.preventDefault();});
-})();
+/* активація: 13 тапів підряд по скляній лінзі (пауза між тапами до 0.8 с); лічильник — у lensTap (engine.js) */
+var BHtap={n:0,t:0};
+function lensTap(){var now=performance.now();BHtap.n=now-BHtap.t<800?BHtap.n+1:1;BHtap.t=now;
+ if(BHtap.n>=13){BHtap.n=0;LG('egg','13 тапів по лінзі');bhStart();return true;}return false;}

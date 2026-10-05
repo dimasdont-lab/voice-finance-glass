@@ -257,7 +257,7 @@ function lensStep(dt){
  function up(e){if(!LN.drag||e.pointerId!==pid)return;e.stopPropagation();e.preventDefault();LN.drag=null;pid=null;
   if(performance.now()-last.t>90){LN.vx*=.2;LN.vy*=.2;}   /* палець зупинився перед відпусканням — кидка немає */
   var sp=Math.hypot(LN.vx,LN.vy);if(sp>3200){LN.vx*=3200/sp;LN.vy*=3200/sp;}
-  if(moved<6)LN.wob=Math.min(.08,LN.wob+.05);dirty=true;}
+  if(moved<6){if(lensTap())return;LN.wob=Math.min(.08+BHtap.n*.004,LN.wob+.05+BHtap.n*.004);LN.ev-=.6+BHtap.n*.25;}dirty=true;}   /* тап: здригається, щоразу сильніше; 13-й — чорна діра */
  window.addEventListener('pointerup',up,true);window.addEventListener('pointercancel',up,true);
  ['touchstart','touchmove'].forEach(function(n){window.addEventListener(n,function(e){var t=e.touches[0];if(!t)return;if(LN.drag||(n==='touchstart'&&hit(t))){e.preventDefault();e.stopPropagation();}},{capture:true,passive:false});});
  window.addEventListener('click',function(e){if(hit(e)){e.stopPropagation();e.preventDefault();}},true);
