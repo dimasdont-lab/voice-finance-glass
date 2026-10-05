@@ -1,5 +1,5 @@
 import {createFinance,PERIODS} from './finance-core.mjs';
-import {createInputParser} from './input-parser.mjs';
+import {createInputParser,learnKeys} from './input-parser.mjs';
 import {createNavigation} from './navigation.mjs';
 import {MARKET_PERIODS} from './market-service.mjs';
 
@@ -7,7 +7,7 @@ const clone = value => JSON.parse(JSON.stringify(value));
 
 /** Headless interaction controller. Host UI chooses every visual/detail. */
 export function createApplication({finance=createFinance(),navigation=createNavigation(),markets=null}={}) {
-  const parser=createInputParser({getCategories:()=>finance.getState().categories});
+  const parser=createInputParser({getCategories:()=>finance.getState().categories,getLearned:()=>finance.getState().learned||[]});
   const listeners=new Set();
   const ui={homeQuery:'',debtQuery:'',debtSort:'name-asc',debtView:'owed',accountsExpanded:false,
     periods:{balance:'1M',account:'1M',flow:'1M',market:'1M'},form:null,inputText:'',parsedInput:null,scanFileName:''};
@@ -46,6 +46,15 @@ export function createApplication({finance=createFinance(),navigation=createNavi
     const result=form.kind==='debt'
       ?finance.saveDebt(form.values,{id:form.editingId||undefined})
       :finance.saveTransaction(form.values,{id:form.editingId||undefined});
+    if (form.kind!=='debt') {   // ручний вибір категорії → запам'ятати слова запису
+      try {
+        const text=[form.values.note,form.values.client].filter(Boolean).join(' ').trim();
+        if (text && form.values.category) {
+          const auto=parser.parse(text);
+          if (auto.kind==='transaction' && auto.category!==form.values.category) finance.learnCategory(learnKeys(text),form.values.category);
+        }
+      } catch (e) { /* навчання не має ламати збереження */ }
+    }
     navigation.closeOverlay(form.kind);ui.form=null;emit('form:saved');return result;
   }
   function deleteFormRecord() {

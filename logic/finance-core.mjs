@@ -39,7 +39,7 @@ const defaultUid = () => {
 export function freshState() {
   return {
     categories:copy(DEFAULT_CATEGORIES), transactions:[], debts:[], goal:8000,
-    speechLang:'uk-UA', accounts:[], balanceSnapshots:[], marketSelection:[...DEFAULT_MARKETS], templates:[], recurring:[]
+    speechLang:'uk-UA', accounts:[], balanceSnapshots:[], marketSelection:[...DEFAULT_MARKETS], templates:[], recurring:[], learned:[]
   };
 }
 
@@ -58,7 +58,7 @@ export function normalizeState(input) {
     accounts:list(input.accounts).filter(account => account.source !== 'demo' && !String(account.id).endsWith('-demo')),
     balanceSnapshots:list(input.balanceSnapshots).filter(snapshot => snapshot.source !== 'demo'),
     marketSelection:input.marketSelection?.length ? [...input.marketSelection] : [...DEFAULT_MARKETS],
-    templates:list(input.templates), recurring:list(input.recurring)
+    templates:list(input.templates), recurring:list(input.recurring), learned:list(input.learned)
   };
 }
 
@@ -259,6 +259,7 @@ export function createFinance({storage = null, storageKey = STORAGE_KEY, clock =
     if (state.categories.length <= 1) throw new Error('Потрібна хоча б одна категорія');
     if (!state.categories.some(category => category.id === id)) return false;
     state.categories = state.categories.filter(category => category.id !== id);
+    state.learned = (state.learned || []).filter(e => e.c !== id);
     state.transactions = state.transactions.map(tx => tx.category === id ? {...tx,category:state.categories[0].id} : tx);
     commit('category:delete',{id});
     return true;
@@ -340,7 +341,7 @@ export function createFinance({storage = null, storageKey = STORAGE_KEY, clock =
    * Налаштування (ліміт, мова, вибір ринків) зберігаються. Вимагає явного підтвердження. */
   function resetAll({confirmed = false} = {}) {
     if (!confirmed) throw new Error('Потрібне підтвердження');
-    state.templates = []; state.recurring = [];
+    state.templates = []; state.recurring = []; state.learned = [];
     state.transactions = []; state.debts = []; state.accounts = []; state.balanceSnapshots = []; state.categories = copy(DEFAULT_CATEGORIES);
     commit('data:reset',{});
     return true;
@@ -401,6 +402,21 @@ export function createFinance({storage = null, storageKey = STORAGE_KEY, clock =
     if (made.length) commit('recurring:run',{count:made.length});
     return made;
   }
+  /** Запам'ятовує, що слова (ключі з learnKeys) належать до категорії: наступні подібні записи визначаються автоматично. */
+  function learnCategory(keys, categoryId) {
+    if (!state.categories.some(c => c.id === categoryId)) return 0;
+    const ks = [...new Set((keys || []).map(String).filter(k => k.length >= 2))].slice(0,12);
+    if (!ks.length) return 0;
+    const map = new Map(state.learned.map(e => [e.w,e]));
+    for (const k of ks) {
+      const e = map.get(k);
+      if (e) { if (e.c === categoryId) e.n = Math.min(50,(e.n || 1)+1); else { e.c = categoryId; e.n = 1; } }
+      else state.learned.push({w:k,c:categoryId,n:1});
+    }
+    if (state.learned.length > 600) state.learned = state.learned.slice(-600);
+    commit('category:learn',{count:ks.length});
+    return ks.length;
+  }
   function setCategoryBudget(id, amount) {
     const cat = state.categories.find(c => c.id === id);
     if (!cat) throw new Error('Категорію не знайдено');
@@ -444,7 +460,7 @@ export function createFinance({storage = null, storageKey = STORAGE_KEY, clock =
     transactions,recentTransactions:(query = '') => transactions({query,limit:query?30:5}),
     categoryById:id => copy(categoryById(id)),categorySummary,debtTotals,debtGroups,personProfiles,personProfile,insights,goals,
     accountSnapshots,balanceAnalysis,activeAccounts:() => copy(state.accounts.filter(a => a.isActive)),
-    exportJSON:() => JSON.stringify(state,null,2),clearData,importSnapshot,resetAll,saveTemplate,deleteTemplate,useTemplate,saveRecurring,deleteRecurring,runDueRecurring,setCategoryBudget,
+    exportJSON:() => JSON.stringify(state,null,2),clearData,importSnapshot,resetAll,saveTemplate,deleteTemplate,useTemplate,saveRecurring,deleteRecurring,runDueRecurring,setCategoryBudget,learnCategory,
     setMarketSelection(ids) { state.marketSelection=[...new Set(ids)].slice(0,20); commit('markets:select',{ids:state.marketSelection}); return [...state.marketSelection]; },
     // Goal/language are persisted settings in main's schema; no new UI is supplied.
     setGoal(value) { state.goal=positiveAmount(value); commit('goal:set',{goal:state.goal}); },

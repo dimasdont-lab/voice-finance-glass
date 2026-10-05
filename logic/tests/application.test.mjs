@@ -151,3 +151,27 @@ test('receipt preview URLs are released, non-images never run OCR',()=>{
   assert.equal(preview.select({name:'file.pdf',type:'application/pdf'}).previewURL,null);
   assert.deepEqual(revoked,['blob:test']);preview.dispose();
 });
+
+test('manual category choice is learned; synonyms and custom-category vocabulary work',()=>{
+  const app=setup();
+  const cat=app.finance.addCategory('Куріння');
+  // без навчання: слова з розширеного словника для категорії «Куріння» вже працюють
+  assert.equal(app.parser.parse('22 кальян').category,cat.id);
+  assert.equal(app.parser.parse('мінус 22 терея').category,cat.id);
+  // категорія без словника: користувач вручну кладе запис — слова запам'ятовуються
+  const hobby=app.finance.addCategory('Хобі');
+  assert.notEqual(app.parser.parse('мінус 55 фарби акрил').category,hobby.id);
+  app.openTransaction({type:'expense',amount:55,note:'фарби акрил',category:hobby.id});
+  app.saveForm();
+  assert.equal(app.parser.parse('34 акрил').category,hobby.id);
+  assert.equal(app.parser.parse('фарби 12').category,hobby.id);
+  // синоніми: навчили на «стіки для Айкоса» — «22 тереа» і «22 стіків» потрапляють туди ж
+  app.openTransaction({type:'expense',amount:22,note:'стіки для Айкоса',category:cat.id});
+  app.saveForm();
+  assert.equal(app.parser.parse('22 тереа').category,cat.id);
+  assert.equal(app.parser.parse('-22 стіків').category,cat.id);
+  assert.equal(app.parser.parse('22 iqos').category,cat.id);
+  // видалення категорії стирає вивчене
+  app.finance.deleteCategory(hobby.id);
+  assert.notEqual(app.parser.parse('34 акрил').category,hobby.id);
+});

@@ -44,6 +44,7 @@ ${r('src/engine.js')}
 ${r('src/tiles.js')}
 ${r('src/market.js')}
 ${r('src/ui.js')}
+${r('src/galaxy.js')}
 })();</script></body></html>`;
 
 fs.mkdirSync(path.join(root, 'docs'), {recursive: true});

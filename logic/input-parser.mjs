@@ -167,9 +167,66 @@ function extraCategory(x,categories){
   }
   return bestScore>=1?best:null;
 }
-function detectCategory(t, categories=[]){
+/* ---- Додано у Voice Finance Glass: вивчені користувачем слова, синоніми, словник для користувацьких категорій ---- */
+const LEARN_STOP=new Set(['для','на','за','по','від','до','из','the','and','мінус','минус','плюс','купив','купила','купили','купити','куплено','оплата','оплатив','оплатила','pln','zl','грн','uah','eur','usd','євро','долар','доларів','злотих','злоті','злот','витрата','дохід','операція','покупка','купівля','мені','мне','ще','при','над','під','через','щоб','як','що','це','цей','цього']);
+/* групи синонімів: слова з однієї групи вважаються одним ключем (Айкос = Терея = стіки) */
+const SYN_GROUPS=[
+  ['айкос','iqos','терея','тереа','terea','heets','хітс','хітси','стік','стіки','стики','стик','sticks'],
+  ['кальян','hookah','shisha','шиша','кальянів','кальяну'],
+  ['вейп','vape','випа','pod','под','жижа','рідина','жидкость'],
+  ['сигарет','цигарка','цигарки','сигарети','сигарета','cigarette','cigarettes','папіроси','папиросы','marlboro','мальборо','winston','вінстон','camel','кемел','lm','парламент'],
+  ['канабіс','канабис','cannabis','марихуана','марихуану','марихуаною','weed','гашиш','hash','hashish','бошки','шишки','мариджуана','джойнт','joint','косяк','bong','бонг','трава'],
+  ['тютюн','табак','tobacco','самокрутка','самокрутки','папір','гільзи','гильзы','snus','снюс','нікотин','никотин'],
+  ['зажигалка','запальничка','зажигалки','запальнички','lighter','сірники','спички']
+];
+function stemOf(w){w=foldText(w);return w.length>=5?w.slice(0,4):w;}
+const SYN_MAP=new Map();SYN_GROUPS.forEach((g,i)=>g.forEach(w=>SYN_MAP.set(stemOf(w),'g'+i)));
+/** Ключі для навчання й порівняння: основи слів, синоніми зведені до однієї групи. */
+function learnKeys(text){
+  const out=new Set();
+  for(const w of foldText(text).split(/[^\p{L}'-]+/u)){
+    if(!w||w.length<3||LEARN_STOP.has(w))continue;
+    const s=stemOf(w);out.add(SYN_MAP.get(s)||s);
+  }
+  return [...out];
+}
+/* слова для користувацьких категорій: якщо така категорія існує (за назвою), ці слова відносимо до неї */
+const NAME_HINTS=[
+  {re:/(кур|smok|тютюн|табак|tobacco|нікотин|никотин|вейп|кальян|сигар|корінн|коринн|cannab|канаб|weed|iqos|айкос|hookah)/,words:'айкос iqos терея тереа terea heets хітс стіки стики стік стик sticks сигарет сигарети цигарк папіроси мальборо marlboro вінстон winston camel парламент тютюн табак tobacco самокрутк гільзи снюс snus нікотин вейп vape жижа рідина жидкость кальян hookah shisha шиша вугілля вугілля вугіллячко канабіс канабис cannabis марихуан weed гашиш hash бошки шишки джойнт joint косяк бонг bong запальничк зажигалк lighter сірники спички курити курение куріння курево'},
+  {re:/(алко|alcohol|спирт|пив|wine|вино|бар\b|паб)/,words:'пиво пивко вино горілка водка віскі виски whisky whiskey коньяк ром джин текіла tequila шампанське шампанское beer wodka piwo wino alkohol лікер ликер сидр бренді паб pub'},
+  {re:/(спорт|зал|gym|фітнес|fitness|трен)/,words:'спортзал абонемент тренування тренування тренер gym fitness кросфіт йога yoga басейн бассейн протеїн протеин креатин bcaa'},
+  {re:/(здоров|аптек|health|pharm|apteka|медиц|лікар|врач)/,words:'аптека ліки лекарства таблетки вітаміни витамины лікар врач стоматолог зуби аналізи analizy apteka lek leki witaminy dentysta pharmacy'},
+  {re:/(твар|pets|котик|собак)/,words:'корм ласощі когтеточка ветеринар ветеринарка наповнювач наполнитель повідець поводок weterynarz karma'},
+  {re:/(подар|gift|prezent|квіт|цвіт)/,words:'подарунок подарок букет квіти цветы prezent kwiaty flowers gift листівка открытка'},
+  {re:/(краса|красот|beauty|барбер|перукар|салон|nail|манікюр)/,words:'барбер перукарня парикмахерская стрижка манікюр маникюр nails салон косметолог масаж massage barber fryzjer paznokcie'},
+  {re:/(навч|освіт|курс|education|school|учеб)/,words:'курси навчання обучение репетитор школа університет универ підручник книга книжка udemy coursera lekcja szkola'}
+];
+const HINT_INDEX=NAME_HINTS.map(h=>({re:h.re,keys:new Set(learnKeys(h.words)),words:[...new Set(h.words.split(/\s+/).map(foldText).filter(w=>w.length>=5))]}));
+function hintCategory(x,categories){
+  const keys=new Set(learnKeys(x));let best=null,bestScore=0;
+  for(const c of categories){
+    const nm=foldText(c.name||'');if(!nm)continue;
+    for(const h of HINT_INDEX){
+      if(!h.re.test(nm))continue;
+      let score=0;for(const k of keys)if(h.keys.has(k))score+=2;
+      for(const w of h.words)if(x.includes(w))score+=1;
+      if(score>bestScore){bestScore=score;best=c.id;}
+    }
+  }
+  return bestScore>=2?best:null;
+}
+function learnedCategory(t,categories,learned){
+  if(!learned||!learned.length)return null;
+  const keys=new Set(learnKeys(t));if(!keys.size)return null;
+  const score={};for(const e of learned){if(keys.has(e.w)&&categories.some(c=>c.id===e.c))score[e.c]=(score[e.c]||0)+Math.min(5,e.n||1);}
+  let best=null,bs=0;for(const id of Object.keys(score))if(score[id]>bs){bs=score[id];best=id;}return best;
+}
+function detectCategory(t, categories=[], learned=[]){
+  const own=learnedCategory(t,categories,learned);if(own)return own;
   const merchant=findMerchant(t);if(merchant&&categories.some(c=>c.id===merchant.category))return merchant.category;
-  const x=foldText(t);const rules=[
+  const x=foldText(t);
+  const hint=hintCategory(x,categories);if(hint)return hint;
+  const rules=[
     ['groceries',/(продукт|харч|молок|хліб|хлеб|овоч|фрукт|мяс|риба|вода|напій|закуп|магазин|супермаркет|grocer|supermarket|sklep|spozyw|zakupy|jedzeni|warzyw|owoc|mleko|chleb)/],
     ['transport',/(uber|bolt|таксі|такси|taxi|транспорт|metro|метро|автобус|трамва|поїзд|поезд|квиток|білет|tramw|pociag|bilet|benzyn|бензин|дизел|палив|fuel|parking|парков|авто|машин|serwis.*auto)/],
     ['food',/(ресторан|кафе|кава|coffee|чай|pizza|піца|пицца|burger|бургер|food|їжа|обід|вечеря|снідан|доставка|sniad|obiad|kolac|restaur|kawiarn|lunch|dinner|breakfast|sushi|суші)/],
@@ -206,15 +263,15 @@ function detectDebt(raw){
   if(!person){const stop=new Set(['борг','долг','debt','dług','dlug','клієнт','клиент','client','klient','мені','мне','я','винен','винна','винні','терміново','срочно','urgent','pln','zł','zl','грн','uah','eur','usd','злотих','злоті','євро','доларів']);const words=raw.match(/[\p{L}'’\-]+/gu)||[],candidate=words.find(w=>!stop.has(foldText(w))&&/^[A-ZА-ЯІЇЄҐŁŚŻŹĆŃ]/u.test(w))||words.find(w=>!stop.has(foldText(w)));person=candidate||''}
   return{direction,person,urgent:/(термінов|срочн|urgent)/.test(x)};
 }
-function parseInput(text,{categories=[],resolveCategory}={}){
+function parseInput(text,{categories=[],resolveCategory,learned=[]}={}){
   const raw=String(text||'').trim(),debt=detectDebt(raw),merchant=findMerchant(raw),type=detectType(raw);
   if(debt)return{kind:'debt',...debt,amount:detectAmount(raw),currency:detectCurrency(raw),note:raw,transcript:raw};
-  return{kind:'transaction',type,amount:detectAmount(raw),currency:detectCurrency(raw),category:resolveCategory?resolveCategory(raw):detectCategory(raw,categories),client:detectClient(raw,type),merchant:merchant?merchant.canonical:'',note:raw,transcript:raw};
+  return{kind:'transaction',type,amount:detectAmount(raw),currency:detectCurrency(raw),category:resolveCategory?resolveCategory(raw):detectCategory(raw,categories,learned),client:detectClient(raw,type),merchant:merchant?merchant.canonical:'',note:raw,transcript:raw};
 }
 
-export {normalizeWords,foldText,NUMBER_WORDS,wordsToNumber,detectAmount,detectCurrency,detectType,MERCHANTS,editDistance,findMerchant,detectCategory,detectClient,detectDebt,parseInput};
+export {learnKeys,normalizeWords,foldText,NUMBER_WORDS,wordsToNumber,detectAmount,detectCurrency,detectType,MERCHANTS,editDistance,findMerchant,detectCategory,detectClient,detectDebt,parseInput};
 export const parseVoice=parseInput;
-export function createInputParser({getCategories=()=>[],resolveCategory}={}){
-  return {parse(text){return parseInput(text,{categories:getCategories(),resolveCategory})}};
+export function createInputParser({getCategories=()=>[],getLearned=()=>[],resolveCategory}={}){
+  return {parse(text){return parseInput(text,{categories:getCategories(),learned:getLearned(),resolveCategory})}};
 }
 
