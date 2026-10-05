@@ -159,7 +159,7 @@ function sheetHtml(kind,ov){
    '<button class="btnw" data-s="markets">Валюти в бігучій строці</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button>'+
    '<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="area">'+areaLabel()+'</button><button class="btnw" data-s="aura">'+auraLabel()+'</button>'+
    '<div class="mkinfo" style="padding:12px 0 2px">Кольорове скло</div>'+
-   [['is','Значки: насиченість'],['ib','Значки: яскравість'],['bal','Віджет балансу: сила кольору']].map(function(q){return'<div class="fr"><label>'+q[1]+'</label><input type="range" min="0" max="100" data-cg="'+q[0]+'" value="'+CG[q[0]]+'"></div>';}).join('')+[['i','Слід пальця: яскравість'],['w','Слід пальця: ширина'],['l','Слід пальця: тривалість']].map(function(q){return'<div class="fr"><label>'+q[1]+'</label><input type="range" min="0" max="100" data-fg="'+q[0]+'" value="'+FGS[q[0]]+'"></div>';}).join('')+'<button class="btnw" data-s="cgreset">Скинути кольори скла</button><div class="mkinfo" style="padding:14px 0 4px">Синхронізація між пристроями (шифрована)</div>'+
+   [['is','Значки: насиченість'],['ib','Значки: яскравість'],['bal','Віджет балансу: сила кольору']].map(function(q){return'<div class="fr"><label>'+q[1]+'</label><input type="range" min="0" max="100" data-cg="'+q[0]+'" value="'+CG[q[0]]+'"></div>';}).join('')+[['a','Ободок екрана: інтенсивність',200],['i','Слід пальця: інтенсивність',200],['w','Слід пальця: ширина',100],['l','Слід пальця: тривалість',100]].map(function(q){return'<div class="fr"><label>'+q[1]+'</label><input type="range" min="0" max="'+q[2]+'" data-fg="'+q[0]+'" value="'+FGS[q[0]]+'"></div>';}).join('')+'<button class="btnw" data-s="cgreset">Скинути кольори скла</button><div class="mkinfo" style="padding:14px 0 4px">Синхронізація між пристроями (шифрована)</div>'+
    '<div class="fr"><label>Ключ синхронізації (однаковий на всіх пристроях)</label><input data-sy="key" autocomplete="off" autocapitalize="characters" spellcheck="false" value="'+esc(syGetKey())+'" placeholder="XXXX-XXXX-XXXX-XXXX"></div>'+
    '<button class="btnw" data-s="syncgen">Створити новий ключ</button><button class="btnw" data-s="syncexp">Зашифрувати й поділитися даними</button>'+
    '<div class="fr"><label>Код з іншого пристрою</label><textarea data-sy="code" rows="3" autocomplete="off" spellcheck="false" placeholder="VFSYNC1...."></textarea></div>'+
@@ -307,7 +307,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='syncmerge')syImport('merge');
   else if(s==='syncreplace')syImport('replace');
   else if(s==='logcopy')logCopy();
-  else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);setFGS('i',56);setFGS('w',62);setFGS('l',30);[].forEach.call(curSheet.body.querySelectorAll('[data-fg]'),function(i){i.value=FGS[i.dataset.fg];});[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
+  else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);setFGS('a',50);setFGS('i',56);setFGS('w',62);setFGS('l',30);[].forEach.call(curSheet.body.querySelectorAll('[data-fg]'),function(i){i.value=FGS[i.dataset.fg];});[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
   else if(s==='aura'){toggleAura();t.textContent=auraLabel();sheetStale();}
   else if(s==='area'){cycleArea();t.textContent=areaLabel();sheetStale();}
   else if(s==='glines'){setGlassLines(!GLINES);t.textContent=glinesLabel();sheetStale();}
@@ -788,7 +788,7 @@ function fgStep(){
  var n=0,x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
  for(i=0;i<pts.length;i++){var q=pts[i],al=Math.pow(Math.max(0,q[2]),1.4),r=BR*(1-Math.min(1,q[3]/3)*.3)*(.55+.45*q[2]);if(al<.01||r<1)continue;
   var pc=fgPal(q[4]/3800+q[0]/900);FGu[n*4]=q[0];FGu[n*4+1]=q[1];FGu[n*4+2]=r*.55;FGu[n*4+3]=al*IN*1.4;FGcu[n*3]=pc[0]/255*.78;FGcu[n*3+1]=pc[1]/255*.78;FGcu[n*3+2]=pc[2]/255*.78;n++;
-  x0=Math.min(x0,q[0]-r*1.2);y0=Math.min(y0,q[1]-r*1.2);x1=Math.max(x1,q[0]+r*1.2);y1=Math.max(y1,q[1]+r*1.2);}
+  x0=Math.min(x0,q[0]-r*1.4);y0=Math.min(y0,q[1]-r*1.4);x1=Math.max(x1,q[0]+r*1.4);y1=Math.max(y1,q[1]+r*1.4);}   /* світіння сягає √6·0.55r ≈ 1.35r */
  FGn=n;FGbb=n?[x0,y0,x1,y1]:null;
  FGact=n>0?1:0;FGgen++;dirty=true;
  if(FGp.length||FGdown)FGraf=requestAnimationFrame(fgStep);else{FGgen++;}
