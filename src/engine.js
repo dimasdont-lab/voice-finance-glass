@@ -723,7 +723,8 @@ function recStep(dt){
  var top={ox:VW/2,oy:0,tx:0,ty:-.05*VH},ul={ox:0,oy:0,tx:-.045*VW,ty:-.04*VH},mv=false;
  /* налаштування над «Додатково»: шари розходяться — екран тягнеться до лівого краю, панель до правого кута */
  var ulS={ox:0,oy:0,tx:-.07*VW,ty:-.05*VH},trc={ox:VW,oy:0,tx:.05*VW,ty:-.05*VH};
- var L={pg:sh?ulS:dd?top:ul,mn:dd?top:trc,sh:top};   /* меню-випадайка (dd) ділить шар mn і мусить рухатись разом із аркушем */
+ var drw={ox:0,oy:VH/2,tx:-.19*VW,ty:0};   /* бокова панель: сторінка зсувається вліво (разом зі стисненням −20%) */
+ var L={pg:sh?ulS:dd?top:mo?drw:ul,mn:dd?top:trc,sh:top};   /* меню-випадайка (dd) ділить шар mn і мусить рухатись разом із аркушем */
  ['pg','mn','sh'].forEach(function(k){
   var o=rec[k],d=tg[k]-o.v;
   if(Math.abs(d)>.0015){o.v+=d*(1-Math.exp(-dt*5.5));mv=true;}else if(d!==0){o.v=tg[k];mv=true;}
@@ -735,7 +736,9 @@ function recStep(dt){
  applyRec(pagesEl,rec.pg);
  var bsx=Math.min(1,rec.pg.v),bsv=bsx>.003?'blur('+(bsx*BLS).toFixed(1)+'px)':'';
  if(TGC._f!==bsv){TGC._f=bsv;TGC.style.filter=bsv;}
- if(tickerEl._f!==bsv){tickerEl._f=bsv;tickerEl.style.filter=bsv;}
+ if(menu.kind==='more'&&(menu.on||rec.pg.v>.003)){applyRec(tickerEl,rec.pg);tickerEl._dr=1;tickerEl._f=null;}   /* бігучий рядок їде разом зі сторінкою */
+ else{if(tickerEl._dr){tickerEl._dr=0;tickerEl.style.transform='';tickerEl._rk=null;tickerEl._f=null;}
+  if(tickerEl._f!==bsv){tickerEl._f=bsv;tickerEl.style.filter=bsv;}}
  var ev=Math.min(1,rec.pg.v).toFixed(3);if(edgeEl._ev!==ev){edgeEl._ev=ev;edgeEl.style.opacity=ev;edgeEl.style.visibility=ev>0?'visible':'hidden';}
 }
 function applyRec(el,o){
@@ -813,7 +816,7 @@ function panelStep(P,dt,L,k,dm,fade,bl){
   d.wx+=(340*(t.sx-d.sx)-20*d.wx)*h;d.sx+=d.wx*h;d.wy+=(340*(t.sy-d.sy)-20*d.wy)*h;d.sy+=d.wy*h;}
  var sc=Math.max(0,P.s),grow=P.mode==='grow',kk=kOf(L.v);
  var cx0=P.tx+P.tw/2,cy0=P.ty+P.th/2,Qx,Qy,Qs=grow?sc:1;
- if(grow){Qx=P.ax+(cx0-P.ax)*sc;Qy=P.ay+(cy0-P.ay)*sc;}else{Qx=cx0;Qy=cy0+(1-sc)*P.rise;}
+ if(grow){Qx=P.ax+(cx0-P.ax)*sc;Qy=P.ay+(cy0-P.ay)*sc;}else if(P.mode==='slide'){Qx=cx0+(1-sc)*P.slide;Qy=cy0;}else{Qx=cx0;Qy=cy0+(1-sc)*P.rise;}
  var cx=L.ox+kk*(Qx-L.ox)+L.tx*L.v,cy=L.oy+kk*(Qy-L.oy)+L.ty*L.v,s2=Qs*kk,sx=Math.max(1e-3,s2*(1+d.sx)),sy=Math.max(1e-3,s2*(1+d.sy));
  var hw=Math.max(.5,P.tw/2*sx),hh=Math.max(.5,P.th/2*sy);
  var ef=P===sheetP?EF_SHEET:(P===menu&&menu.kind==='more')?EF_MORE:EF_DEF,kx=d.x>0?ef.xp:ef.xn,ky=d.y>0?ef.yp:ef.yn;
@@ -943,7 +946,7 @@ function frame(t){
  var settled=!drag&&Math.abs(target-x)<0.05&&Math.abs(v)<0.5&&Math.abs(j)<0.002&&Math.abs(jv)<0.05;
  if(settled){x=target;v=0;j=0;jv=0;}
  /* панель ховається під клавіатуру / повертається */
- var hT=((mode===1&&op.age>.14)||(mode===2&&cl.age<A1-.06)||sheetOn||boot.hold||BH.ph===3)?1:0;
+ var hT=((mode===1&&op.age>.14)||(mode===2&&cl.age<A1-.06)||sheetOn||boot.hold||BH.ph===3||(menu.on&&menu.kind==='more'))?1:0;
  if(hide!==hT){hide+=(hT-hide)*(1-Math.exp(-dt*9));if(Math.abs(hT-hide)<.002)hide=hT;dirty=true;}
  var off=hide*hideOff();
  if(off!==lastOff){lastOff=off;dock.style.transform=off>.1?'translate3d(0,'+off+'px,0)':'';}
@@ -1005,7 +1008,7 @@ function frame(t){
  if(tickerEl._gl!==tkOn){tickerEl._gl=tkOn;tickerEl.classList.toggle('tkgl',!!tkOn);dirty=true;}
  BTN=0;BTK='';
  if(menuA>0.002||sheetA>0.002){var bl=[];
-  if(menuA>0.002&&menu.kind==='more')[].forEach.call(menu.el.querySelectorAll('.gbtn'),function(b){bl.push([b,0]);});
+  if(menuA>0.002&&menu.kind==='more')[].forEach.call(menu.el.querySelectorAll('.gbtn,.gcard'),function(b){bl.push([b,0]);});
   var ckS=null;if(sheetA>0.002&&typeof curSheet!=='undefined'&&curSheet&&curSheet.body){var sp0=scrollParent(curSheet.body.querySelector('.btnw,.gbtn')||curSheet.body,curSheet.el)||curSheet.body;ckS=sp0.getBoundingClientRect();[].forEach.call(curSheet.body.querySelectorAll('.btnw,.gbtn'),function(b){bl.push([b,1]);});}
   var ckM=menuA>0.002&&menu.kind==='more'?(scrollParent(menu.el.querySelector('.gbtn')||menu.el,menu.el)||menu.el).getBoundingClientRect():null;
   for(var bi=0;bi<bl.length&&BTN<14;bi++){var be=bl[bi][0],r=be.getBoundingClientRect(),ck=bl[bi][1]?ckS:ckM;if(r.width<2||r.bottom<0||r.top>VH)continue;

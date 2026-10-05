@@ -73,7 +73,13 @@ input{font:inherit;color:inherit}
 /* ---------- скляне меню (Додатково / списки) ---------- */
 #menuShade{position:fixed;inset:0;z-index:27;display:none}
 #menu{position:fixed;z-index:30;left:0;top:0;display:none;color:#fff;overflow:hidden;will-change:transform,opacity;border-radius:24px;touch-action:pan-y}
-#menu.more{border-radius:62px;padding:24px 24px 22px;overflow-y:auto;overscroll-behavior:contain}
+#menu.more{border-radius:62px;padding:24px 16px 22px;overflow-y:auto;overscroll-behavior:contain}
+#menu .drh{display:flex;align-items:center;justify-content:space-between;padding:2px 6px 8px}
+#menu .drh h2{margin:0;font-size:27px;font-weight:750;letter-spacing:-.4px}
+#menu .drx{width:36px;height:36px;border-radius:18px;font-size:15px;color:rgba(255,255,255,.75)}
+#menu .gcard{position:relative;margin:12px 0 0;padding:10px 12px 8px;border-radius:26px}
+#menu .qa .gbtn{flex:1;width:auto;margin:0;height:46px;border-radius:23px;font-size:13.5px}
+#menu .qa{margin:10px 0 2px}
 #menu .mh{font-size:12px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.62);padding:10px 6px 4px}
 #menu .mh:first-child{padding-top:2px}
 #menu .qa{display:flex;gap:8px;margin:6px 0 2px}
@@ -356,3 +362,11 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 .gm .gmop{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--ln);font-size:14px}
 .gm .gmop span{flex:1;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gm .gmop em{font-style:normal;font-weight:650}
+
+/* бокова панель «Додатково»: компактніші відступи, щоб назви категорій не обрізались */
+#menu.more{padding-left:12px;padding-right:12px}
+#menu .drh h2{font-size:24px}
+#menu .gcard{padding:10px 6px 8px}
+#menu .mr{gap:8px;padding:8px 4px;font-size:14.5px}
+#menu .mr .ic{width:28px;height:28px;border-radius:14px;font-size:12px}
+#menu .mr .v{font-size:12.5px}
