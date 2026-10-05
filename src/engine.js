@@ -216,7 +216,7 @@ function bkGlt(){   /* зменшена копія шару скла відже�
  gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,bkGT);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,bkCv);gl.activeTexture(gl.TEXTURE0);
 }
 /* ---- пасхалка: скляна лінза ⌀100, яку можна кидати; невагомість, відскок від країв, желейне тремтіння ---- */
-var LN={on:0,s:0,sv:0,x:0,y:0,vx:0,vy:0,e:0,ev:0,a:0,wob:0,imp:0,drag:null,R:50};
+var LN={on:0,s:0,sv:0,x:0,y:0,vx:0,vy:0,e:0,ev:0,a:0,wob:0,imp:0,drag:null,R:70};   /* лінза ⌀140 */
 function lensToggle(x,y){
  if(LN.on){LN.on=0;LG('egg','лінза сховалась');return;}
  LN.on=1;LN.s=0;LN.sv=0;LN.x=x;LN.y=y;LN.vx=(Math.random()-.5)*120;LN.vy=-260;LN.e=0;LN.ev=0;LN.wob=.04;LN.imp=0;dirty=true;LG('egg','лінза з\'явилась');
@@ -1067,6 +1067,6 @@ function frame(t){
  }
  if(!shown&&full[sel]){shown=true;cv.style.opacity=1;}
  if(moving||!settled||scrolling||mode||hide!==hT||menuA>0.002&&menuA<.999||sheetA>0.002&&sheetA<.999||recMoving||boot.on&&boot.phase===2||menu.dragging||sheetP.dragging)lastMotion=t;
- if(t-lastMotion>150&&!BH.ph)pump(t);   /* важкі знімки — тільки коли нічого не рухається */
+ if(t-lastMotion>150&&!BH.ph&&!WF.mv)pump(t);   /* важкі знімки — тільки коли нічого не рухається */
  scrollingNow=!!scrolling;pfS('frame',performance.now()-pf0);
 }

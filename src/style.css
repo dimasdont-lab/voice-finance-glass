@@ -329,3 +329,6 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 .fr.rng{display:block;min-height:0;padding:10px 0 12px}
 .fr.rng>label{display:block;font-size:14px;margin-bottom:9px}
 .fr.rng input[type=range]{display:block;width:100%;margin:0;box-sizing:border-box}
+
+/* від'єднаний віджет: скло малює шейдер під DOM, тож текст інших віджетів позаду притлумлюємо темною підкладкою (це не скло, лише затемнення) */
+.wfd{background:rgba(8,8,12,.62)!important;border-radius:28px;box-shadow:0 18px 50px rgba(0,0,0,.45)!important}
