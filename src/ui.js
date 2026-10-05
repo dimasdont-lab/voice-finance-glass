@@ -853,40 +853,44 @@ function bhEase(x){return x<=0?0:x>=1?1:x*x*(3-2*x);}
 function bhBack(x){x=Math.max(0,Math.min(1,x));var c=1.4;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);}
 function bhCollect(){
  BHI=[];var hx=BH.x,hy=BH.y,mx=1;
- var add=function(el,css){if(!el)return;var r=el.getBoundingClientRect();if(r.width<1||r.bottom<0||r.top>VH||r.right<-VW*1.05||r.left>VW*2.05)return;var bx=r.left+r.width/2,by=r.top+r.height/2,d=Math.hypot(bx-hx,by-hy);mx=Math.max(mx,d);
-  var st0=el.style;BHI.push({el:el,css:css,bx:bx,by:by,d:d,a0:Math.atan2(by-hy,bx-hx),o0:{opacity:st0.opacity,visibility:st0.visibility,transformOrigin:st0.transformOrigin}});if(css){el.style.transformOrigin=(hx-r.left).toFixed(1)+'px '+(hy-r.top).toFixed(1)+'px';}};
+ var add=function(el,css){if(!el)return;var r=el.getBoundingClientRect();if(r.width<1||r.bottom<0||r.top>VH||r.right<-VW*1.4||r.left>VW*2.4)return;var bx=r.left+r.width/2,by=r.top+r.height/2,d=Math.hypot(bx-hx,by-hy);mx=Math.max(mx,d);
+  var st0=el.style;BHI.push({el:el,css:css,nb:!css&&BH.pg.some(function(j){return inn[j].contains(el);}),bx:bx,by:by,d:d,a0:Math.atan2(by-hy,bx-hx),o0:{opacity:st0.opacity,visibility:st0.visibility,transformOrigin:st0.transformOrigin}});if(css){el.style.transformOrigin=(hx-r.left).toFixed(1)+'px '+(hy-r.top).toFixed(1)+'px';}};
  /* сторінка й сусідні вкладки (ліва/права серед головних трьох; якщо сусіда немає — лише наявний) */
- BH.pg=[];if(sel<=2){for(var j=Math.max(0,sel-1);j<=Math.min(2,sel+1);j++)if(j!==sel)BH.pg.push(j);}
- BH.pg.forEach(function(j){pg[j].style.visibility='visible';pg[j].style.transform='translate3d('+((j-ca)*100)+'%,0,0)';});
+ BH.pg=[];if(sel<=2){for(var j=0;j<=2;j++)if(j!==sel)BH.pg.push(j);}
+ BH.po=BH.pg.length?.34:1;
+ BH.pg.forEach(function(j){pg[j].style.visibility='visible';pg[j].style.transform='translate3d('+((j-sel)*BH.po*100)+'%,0,0)';});
  [sel].concat(BH.pg).forEach(function(j){[].forEach.call(inn[j].children,function(el){if(!el.classList.contains('egg'))add(el,0);});});   /* крапля лишається */
  add(tickerEl,1);add(document.getElementById('dock'),1);add(cv,1);
  /* док і його скло на полотні мають рухатись разом: однакова затримка */
  var dk=BHI.find(function(i){return i.el.id==='dock';});
- BHI.forEach(function(i){i.dl=.3+2.0*(i.d/mx);if(i.el===cv&&dk)i.dl=dk.dl;});
+ BHI.forEach(function(i){i.dl=.25+1.7*(i.d/mx)+(i.nb?.12:0);if(i.el===cv&&dk)i.dl=dk.dl;});
 }
-function bhApply(i,e){   /* e: 0 — на місці, 1 — у діру */
- var s=Math.max(.001,Math.pow(1-e,1.25)),op=1-bhEase((e-.72)/.28);
- if(i.css){i.el.style.scale=s.toFixed(4);i.el.style.rotate=(e*e*160).toFixed(2)+'deg';i.el.style.opacity=op.toFixed(3);return;}
- var th=5.6*Math.pow(e,1.4),rr=(1-e),dx=BH.x+Math.cos(i.a0+th)*i.d*rr-i.bx,dy=BH.y+Math.sin(i.a0+th)*i.d*rr-i.by;
- i.el._ps={s:s,dx:dx,dy:dy};i.el.style.scale=s.toFixed(4);i.el.style.translate=dx.toFixed(2)+'px '+dy.toFixed(2)+'px';i.el.style.opacity=op.toFixed(3);
+function bhApply(i,e,fade){   /* e: 0 — на місці, 1 — у діру (e вже прискорений) */
+ var s=Math.max(.001,Math.pow(1-e,1.2)),op=(1-bhEase((e-.8)/.2))*(fade==null?1:fade);
+ if(i.css){var sx=s*(1+1.3*e),sy=s*(1-.35*e);i.el.style.scale=sx.toFixed(4)+' '+sy.toFixed(4);i.el.style.rotate=(Math.pow(e,1.5)*420).toFixed(2)+'deg';i.el.style.opacity=op.toFixed(3);return;}
+ var rr=Math.pow(1-e,1.15),th=1.7*(1/(rr+.09)-1/1.09)+1.1*e,ph=i.a0+th;
+ var dx=BH.x+Math.cos(ph)*i.d*rr-i.bx,dy=BH.y+Math.sin(ph)*i.d*rr-i.by;
+ var st=1+2.6*Math.pow(e,1.1),sr=1-.62*e,sn=Math.abs(Math.sin(ph)),cs=Math.abs(Math.cos(ph)),jx=sr+(st-sr)*sn,jy=sr+(st-sr)*cs;   /* витяг вздовж орбіти */
+ i.el._ps={s:s,jx:jx,jy:jy,dx:dx,dy:dy};i.el.style.scale=(s*jx).toFixed(4)+' '+(s*jy).toFixed(4);i.el.style.translate=dx.toFixed(2)+'px '+dy.toFixed(2)+'px';i.el.style.opacity=op.toFixed(3);
 }
 function bhClear(){BHI.forEach(function(i){var st=i.el.style;st.scale='';st.translate='';st.rotate='';st.opacity=i.o0.opacity;st.visibility=i.o0.visibility;st.transformOrigin=i.o0.transformOrigin;if(!i.css)i.el._ps=null;});BHI=[];}   /* повертаємо власні стилі рушія (напр. opacity полотна) */
 function bhStep(t){
  BHraf=0;var u=(t-BHt0)/1000,sig=0;
  if(BH.ph===1){                      /* всмоктування */
   var gr=bhEase(u/.6);BH.r=BHR0*gr;BH.k=gr;
-  BHI.forEach(function(i){var e=Math.pow(Math.max(0,Math.min(1,(u-i.dl)/2.2)),1.8);bhApply(i,e);sig+=e;});
-  BH.au=1-bhEase((u-3.2)/1.4);
-  if(u>5.9){var sh=bhEase((u-5.9)/.8);BH.r=BHR0*(1-sh);BH.k=1-sh;}
-  if(u>=6.75){BH.ph=3;BH.r=0;BH.k=0;BH.au=0;hide=1;
+  var eat=0;BHI.forEach(function(i){var e=Math.pow(Math.max(0,Math.min(1,(u-i.dl)/2.7)),2.5);bhApply(i,e,i.nb?bhEase(u/.35):null);sig+=e;if(e>=1)eat++;});
+  BH.r=BHR0*(.88+.3*eat/Math.max(1,BHI.length))*gr;
+  BH.au=1-bhEase((u-2.6)/1.4);
+  if(u>5.5){var sh=bhEase((u-5.5)/.8);BH.r=BHR0*1.18*(1-sh);BH.k=1-sh;}
+  if(u>=6.3){BH.ph=3;BH.r=0;BH.k=0;BH.au=0;hide=1;
    BHI.forEach(function(i){if(i.el===cv){var st=cv.style;st.scale='';st.rotate='';st.opacity=i.o0.opacity;st.visibility=i.o0.visibility;}else i.el.style.visibility='hidden';});
    bhEggShow(1);LG('egg','чорна діра: усе всмоктано — пауза (хвилі, крапля, лінза; подвійний тап — повернути)');}
  }else if(BH.ph===2){               /* вилітання назад */
   var g2=bhEase(u/.35);BH.r=BHR0*g2;BH.k=g2;
-  BHI.forEach(function(i){var p=(u-.3-i.dl*.45)/1.0;if(p>0)i.el.style.visibility=i.o0.visibility;bhApply(i,p<=0?1:1-bhBack(p));sig+=p;});
+  BHI.forEach(function(i){var p=(u-.3-i.dl*.45)/1.0;if(p>0)i.el.style.visibility=i.o0.visibility;bhApply(i,p<=0?1:1-bhBack(p),i.nb?(1-bhEase((u-1.2)/.4)):null);sig+=p;});
   BH.au=bhEase((u-.8)/.8);
   if(u>1.5){var s2=bhEase((u-1.5)/.5);BH.r=BHR0*(1-s2);BH.k=1-s2;}
-  if(u>=2.4){BH.ph=0;BH.r=0;BH.k=0;BH.au=1;bhClear();BH.pg.forEach(function(j){pstyle[j]=null;});BH.pg=[];tlAll();LG('egg','чорна діра: усе повернулось');}
+  if(u>=2.4){BH.ph=0;BH.r=0;BH.k=0;BH.au=1;bhClear();BH.pg.forEach(function(j){pstyle[j]=null;});BH.pg=[];BH.po=1;tlAll();LG('egg','чорна діра: усе повернулось');}
  }
  PRSIG='bh'+sig.toFixed(3)+BH.r.toFixed(2);dirty=true;
  if(BH.ph===1||BH.ph===2)BHraf=requestAnimationFrame(bhStep);
