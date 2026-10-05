@@ -164,7 +164,7 @@ function sheetHtml(kind,ov){
    RNG('cg','gt','Бари, цифри й графіки: сила кольору',100)+RNG('cg','gsat','Бари, цифри й графіки: насиченість',100)+RNG('cg','gbr','Бари, цифри й графіки: яскравість',100)+
    SEC('Ободок екрана')+'<button class="btnw" data-s="aura">'+auraLabel()+'</button><button class="btnw" data-s="auramode">'+auraModeLabel()+'</button>'+
    RNG('fg','a','Інтенсивність (прозорість)',200)+RNG('fg','ah','Відтінок (зсув, °)',360)+RNG('fg','as','Насиченість',200)+RNG('fg','av','Яскравість',200)+
-   SEC('Слід пальця')+RNG('fg','i','Інтенсивність',200)+RNG('fg','w','Ширина',100)+RNG('fg','l','Тривалість',100)+
+   SEC('Слід пальця')+'<button class="btnw" data-s="fgwave">'+fgWaveLabel()+'</button><button class="btnw" data-s="fgglow">'+fgGlowLabel()+'</button>'+RNG('fg','i','Інтенсивність',200)+RNG('fg','w','Ширина',100)+RNG('fg','l','Тривалість',100)+
    '<button class="btnw" data-s="cgreset">Скинути кольори скла, ободка й сліду</button>'+
    SEC('Синхронізація між пристроями (шифрована)')+
    '<div class="fr"><label>Ключ синхронізації (однаковий на всіх пристроях)</label><input data-sy="key" autocomplete="off" autocapitalize="characters" spellcheck="false" value="'+esc(syGetKey())+'" placeholder="XXXX-XXXX-XXXX-XXXX"></div>'+
@@ -317,6 +317,8 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='syncreplace')syImport('replace');
   else if(s==='logcopy')logCopy();
   else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);setCG('gt',65);setCG('gsat',50);setCG('gbr',50);setFGS('a',50);setFGS('ah',0);setFGS('as',100);setFGS('av',100);setFGS('i',56);setFGS('w',62);setFGS('l',30);[].forEach.call(curSheet.body.querySelectorAll('[data-fg]'),function(i){i.value=FGS[i.dataset.fg];});[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
+  else if(s==='fgwave'){setFGS('tw',FGS.tw?0:1);t.textContent=fgWaveLabel();LG('ui',fgWaveLabel());}
+  else if(s==='fgglow'){setFGS('tg',FGS.tg?0:1);t.textContent=fgGlowLabel();LG('ui',fgGlowLabel());}
   else if(s==='auramode'){setFGS('am',FGS.am?0:1);t.textContent=auraModeLabel();LG('ui',auraModeLabel());}
   else if(s==='aura'){toggleAura();t.textContent=auraLabel();sheetStale();}
   else if(s==='area'){cycleArea();t.textContent=areaLabel();sheetStale();}
@@ -807,8 +809,9 @@ function fgStep(){
  FGact=n>0?1:0;FGgen++;dirty=true;
  if(FGp.length||FGdown)FGraf=requestAnimationFrame(fgStep);else{FGgen++;}
 }
-document.addEventListener('pointerdown',function(e){if(!BH.ph)rippleAdd(e.clientX,e.clientY,1);if(e.target.closest&&e.target.closest('input,textarea'))return;FGdown=true;fgAdd(e.clientX,e.clientY,true);},true);
-document.addEventListener('pointermove',function(e){if(!(FGdown||e.buttons))return;var ev=e.getCoalescedEvents?e.getCoalescedEvents():null;if(ev&&ev.length){ev.forEach(function(q){fgAdd(q.clientX,q.clientY,false);});}else fgAdd(e.clientX,e.clientY,false);},true);
+var WK={x:0,y:0,t:0};function wakeAt(x,y){if(BH.ph)return;var now=performance.now(),d=Math.hypot(x-WK.x,y-WK.y);if(d<26&&now-WK.t<140)return;var v=d/Math.max(8,now-WK.t);WK.x=x;WK.y=y;WK.t=now;rippleAdd(x,y,Math.max(.3,Math.min(1.15,.3+v*.45)));}
+document.addEventListener('pointerdown',function(e){if(!BH.ph&&FGS.tw){rippleAdd(e.clientX,e.clientY,1);WK.x=e.clientX;WK.y=e.clientY;WK.t=performance.now();}if(e.target.closest&&e.target.closest('input,textarea'))return;FGdown=true;if(!FGS.tg)return;fgAdd(e.clientX,e.clientY,true);},true);
+document.addEventListener('pointermove',function(e){if(!(FGdown||e.buttons))return;if(FGS.tw)wakeAt(e.clientX,e.clientY);if(!FGS.tg)return;var ev=e.getCoalescedEvents?e.getCoalescedEvents():null;if(ev&&ev.length){ev.forEach(function(q){fgAdd(q.clientX,q.clientY,false);});}else fgAdd(e.clientX,e.clientY,false);},true);
 ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){FGdown=false;kickFg();},true);});
 
 /* голосовий ввід прибрано: стерти його сліди на пристрої (налаштування, запобіжники, кеш моделей Whisper) */

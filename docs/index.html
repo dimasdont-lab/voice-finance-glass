@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-05 03:10 UTC';
+<script>window.__VF_BUILD='2026-10-05 03:14 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -2724,9 +2724,11 @@ function setGlassLines(on){GLINES=!!on;try{localStorage.setItem('vf-glines',on?'
 /* скло під графіком: 1 — А (уся площа під лінією), 2 — Б (смуга під лінією), 0 — вимкнено. Перемикач у Налаштуваннях */
 /* райдужний живий ореол по контуру екрана (під склом), можна вимкнути в налаштуваннях */
 /* слід від жесту: повзунки в налаштуваннях (яскравість, ширина, тривалість) */
-var FGS=(function(){var d={a:50,i:56,w:62,l:30,am:0,ah:0,as:100,av:100};try{var j=JSON.parse(localStorage.getItem('vf-fg')||'null');if(j)for(var k in d)if(typeof j[k]==='number')d[k]=j[k];}catch(e){}return d;})();
+var FGS=(function(){var d={a:50,i:56,w:62,l:30,am:0,ah:0,as:100,av:100,tg:0,tw:1};try{var j=JSON.parse(localStorage.getItem('vf-fg')||'null');if(j)for(var k in d)if(typeof j[k]==='number')d[k]=j[k];}catch(e){}return d;})();
 function setFGS(k,v){FGS[k]=v;try{localStorage.setItem('vf-fg',JSON.stringify(FGS));}catch(e){}}
 var AURA=(function(){try{var v=localStorage.getItem('vf-aura');return v===null?1:+v?1:0;}catch(e){return 1;}})();
+function fgGlowLabel(){return'Світіння під пальцем: '+(FGS.tg?'увімкнено':'вимкнено');}
+function fgWaveLabel(){return'Хвилі за пальцем: '+(FGS.tw?'увімкнено':'вимкнено');}
 function auraModeLabel(){return'Колір ободка: '+(FGS.am?'за балансом (зелений / червоний)':'райдужний');}
 function auraLabel(){return'Райдужний ореол екрана: '+(AURA?'увімкнено':'вимкнено');}
 function toggleAura(){AURA=AURA?0:1;try{localStorage.setItem('vf-aura',String(AURA));}catch(e){}LG('ui',auraLabel());}
@@ -3985,7 +3987,7 @@ function frame(t){
 /* ===== 7. Скляні віджети: окремий WebGL-шар під текстом. Малює фон із сіткою й плитки з заломленням сітки.
    Вкладене скло: кнопки «Доходи/Витрати», міні-картки (шар 1), круглі значки (шар 2), заповнення прогрес-барів (шар 3, свій колір).
    Скляні лінії графіків: ланцюжки капсул (до 4 ліній), колір лінії, заломлення сітки. Вимикаються разом із GLINES ===== */
-var BH={ph:0,x:0,y:0,r:0,k:0,au:1,pg:[]},RPL=[],RPU=new Float32Array(24),RPn=0,RPsig='',FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
+var BH={ph:0,x:0,y:0,r:0,k:0,au:1,pg:[]},RPL=[],RPU=new Float32Array(64),RPn=0,RPsig='',FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
 var GLASS_LINE_OK=false;
 var tgR=new Float32Array(TMAX*4),tgM=new Float32Array(TMAX*4),tgC=new Float32Array(TMAX*4);
 var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2]];
@@ -4019,7 +4021,7 @@ var FXFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','
 'void main(){vec2 p=vec2(gl_FragCoord.x/u_res.x,1.-gl_FragCoord.y/u_res.y)*u_vp;gl_FragColor=vec4(fgAt(p)+auraAt(p),1.);}'].join('\n');
 var FX={p:null,U:{},fb:null,tex:null,w:0,h:0},ABC=[.72,.72,.82];   /* поточний колір балансу для ободка (плавно) */
 var BGFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
-'uniform vec2 u_vp;uniform vec2 u_res;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform sampler2D u_fx;uniform float u_fxk;uniform float u_clean;uniform vec4 u_bh;uniform vec4 u_rp[6];uniform float u_rn;',
+'uniform vec2 u_vp;uniform vec2 u_res;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform sampler2D u_fx;uniform float u_fxk;uniform float u_clean;uniform vec4 u_bh;uniform vec4 u_rp[16];uniform float u_rn;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
 'vec3 fgAt(vec2 p){return vec3(0.);}',
 'vec3 auraAt(vec2 p){return u_fxk>0.?texture2D(u_fx,vec2(p.x/u_vp.x,1.-p.y/u_vp.y)).rgb:vec3(0.);}',
@@ -4027,7 +4029,7 @@ GLSL_BG,
 'void main(){vec2 p=vec2(gl_FragCoord.x/u_res.x,1.-gl_FragCoord.y/u_res.y)*u_vp;',
 ' if(u_clean>.5){gl_FragColor=vec4(mix(vec3(.0196,.0196,.0275),u_gcol,.17*gridL(p+u_go-u_vp*.5)),1.);return;}',
 /* пасхалка «чорна діра»: u_bh = центр, радіус горизонту, сила. Гравітаційна лінза (зображення з-за діри), закрутка, чорний диск, кільце фотонів */
-' if(u_rn>.5){vec2 o=vec2(0.);for(int i=0;i<6;i++){if(float(i)>=u_rn)break;vec4 r=u_rp[i];vec2 dr=p-r.xy;float L=length(dr)+.001;',
+' if(u_rn>.5){vec2 o=vec2(0.);for(int i=0;i<16;i++){if(float(i)>=u_rn)break;vec4 r=u_rp[i];vec2 dr=p-r.xy;float L=length(dr)+.001;',
 '  float R=r.z*300.,w=18.+r.z*34.,x=(L-R)/w,fa=1.-r.z/1.7;float env=exp(-x*x)*fa*fa*smoothstep(0.,40.,L);o+=dr/L*sin(x*4.2)*env*7.*r.w;}p+=o;}',
 ' if(u_bh.w>.001){vec2 d=p-u_bh.xy;float L=max(length(d),1.),R=u_bh.z,k=u_bh.w;',
 '  float E=R*1.3;float f=1.-k*E*E/(L*L+E*E*.35);float a=k*2.2*R*R/(L*L+R*R);float ca=cos(a),sa=sin(a);vec2 q=u_bh.xy+vec2(ca*d.x-sa*d.y,sa*d.x+ca*d.y)*f;',
@@ -4227,8 +4229,8 @@ function tlAllStale(){for(var i=0;i<NP;i++)tlStale[i]=1;}
 window.addEventListener('resize',tlAllStale);
 setTimeout(tlAllStale,1200);setTimeout(tlAllStale,3500);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(tlAllStale);
-/* хвилі від тапів по фону: до 6 одночасно, кожна живе 1.7 с */
-function rippleAdd(x,y,a){RPL.push({x:x,y:y,t:performance.now(),a:a||1});if(RPL.length>6)RPL.shift();RPn=RPL.length;dirty=true;}
+/* хвилі по фону від тапів і від руху пальця: до 16 одночасно, кожна живе 1.7 с */
+function rippleAdd(x,y,a){RPL.push({x:x,y:y,t:performance.now(),a:a||1});if(RPL.length>16)RPL.shift();RPn=RPL.length;dirty=true;}
 function rpTick(){var now=performance.now();RPL=RPL.filter(function(r){return now-r.t<1700;});RPn=RPL.length;var s='';
  for(var i=0;i<RPn;i++){var r=RPL[i],age=(now-r.t)/1000;RPU[i*4]=r.x;RPU[i*4+1]=r.y;RPU[i*4+2]=age;RPU[i*4+3]=r.a;s+=age.toFixed(3);}RPsig='rp'+s;if(RPn)dirty=true;}
 function bgPrep(W,H,fxOn){
@@ -4657,7 +4659,7 @@ function sheetHtml(kind,ov){
    RNG('cg','gt','Бари, цифри й графіки: сила кольору',100)+RNG('cg','gsat','Бари, цифри й графіки: насиченість',100)+RNG('cg','gbr','Бари, цифри й графіки: яскравість',100)+
    SEC('Ободок екрана')+'<button class="btnw" data-s="aura">'+auraLabel()+'</button><button class="btnw" data-s="auramode">'+auraModeLabel()+'</button>'+
    RNG('fg','a','Інтенсивність (прозорість)',200)+RNG('fg','ah','Відтінок (зсув, °)',360)+RNG('fg','as','Насиченість',200)+RNG('fg','av','Яскравість',200)+
-   SEC('Слід пальця')+RNG('fg','i','Інтенсивність',200)+RNG('fg','w','Ширина',100)+RNG('fg','l','Тривалість',100)+
+   SEC('Слід пальця')+'<button class="btnw" data-s="fgwave">'+fgWaveLabel()+'</button><button class="btnw" data-s="fgglow">'+fgGlowLabel()+'</button>'+RNG('fg','i','Інтенсивність',200)+RNG('fg','w','Ширина',100)+RNG('fg','l','Тривалість',100)+
    '<button class="btnw" data-s="cgreset">Скинути кольори скла, ободка й сліду</button>'+
    SEC('Синхронізація між пристроями (шифрована)')+
    '<div class="fr"><label>Ключ синхронізації (однаковий на всіх пристроях)</label><input data-sy="key" autocomplete="off" autocapitalize="characters" spellcheck="false" value="'+esc(syGetKey())+'" placeholder="XXXX-XXXX-XXXX-XXXX"></div>'+
@@ -4810,6 +4812,8 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='syncreplace')syImport('replace');
   else if(s==='logcopy')logCopy();
   else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);setCG('gt',65);setCG('gsat',50);setCG('gbr',50);setFGS('a',50);setFGS('ah',0);setFGS('as',100);setFGS('av',100);setFGS('i',56);setFGS('w',62);setFGS('l',30);[].forEach.call(curSheet.body.querySelectorAll('[data-fg]'),function(i){i.value=FGS[i.dataset.fg];});[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
+  else if(s==='fgwave'){setFGS('tw',FGS.tw?0:1);t.textContent=fgWaveLabel();LG('ui',fgWaveLabel());}
+  else if(s==='fgglow'){setFGS('tg',FGS.tg?0:1);t.textContent=fgGlowLabel();LG('ui',fgGlowLabel());}
   else if(s==='auramode'){setFGS('am',FGS.am?0:1);t.textContent=auraModeLabel();LG('ui',auraModeLabel());}
   else if(s==='aura'){toggleAura();t.textContent=auraLabel();sheetStale();}
   else if(s==='area'){cycleArea();t.textContent=areaLabel();sheetStale();}
@@ -5300,8 +5304,9 @@ function fgStep(){
  FGact=n>0?1:0;FGgen++;dirty=true;
  if(FGp.length||FGdown)FGraf=requestAnimationFrame(fgStep);else{FGgen++;}
 }
-document.addEventListener('pointerdown',function(e){if(!BH.ph)rippleAdd(e.clientX,e.clientY,1);if(e.target.closest&&e.target.closest('input,textarea'))return;FGdown=true;fgAdd(e.clientX,e.clientY,true);},true);
-document.addEventListener('pointermove',function(e){if(!(FGdown||e.buttons))return;var ev=e.getCoalescedEvents?e.getCoalescedEvents():null;if(ev&&ev.length){ev.forEach(function(q){fgAdd(q.clientX,q.clientY,false);});}else fgAdd(e.clientX,e.clientY,false);},true);
+var WK={x:0,y:0,t:0};function wakeAt(x,y){if(BH.ph)return;var now=performance.now(),d=Math.hypot(x-WK.x,y-WK.y);if(d<26&&now-WK.t<140)return;var v=d/Math.max(8,now-WK.t);WK.x=x;WK.y=y;WK.t=now;rippleAdd(x,y,Math.max(.3,Math.min(1.15,.3+v*.45)));}
+document.addEventListener('pointerdown',function(e){if(!BH.ph&&FGS.tw){rippleAdd(e.clientX,e.clientY,1);WK.x=e.clientX;WK.y=e.clientY;WK.t=performance.now();}if(e.target.closest&&e.target.closest('input,textarea'))return;FGdown=true;if(!FGS.tg)return;fgAdd(e.clientX,e.clientY,true);},true);
+document.addEventListener('pointermove',function(e){if(!(FGdown||e.buttons))return;if(FGS.tw)wakeAt(e.clientX,e.clientY);if(!FGS.tg)return;var ev=e.getCoalescedEvents?e.getCoalescedEvents():null;if(ev&&ev.length){ev.forEach(function(q){fgAdd(q.clientX,q.clientY,false);});}else fgAdd(e.clientX,e.clientY,false);},true);
 ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){FGdown=false;kickFg();},true);});
 
 /* голосовий ввід прибрано: стерти його сліди на пристрої (налаштування, запобіжники, кеш моделей Whisper) */

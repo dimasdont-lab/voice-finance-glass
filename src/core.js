@@ -76,9 +76,11 @@ function setGlassLines(on){GLINES=!!on;try{localStorage.setItem('vf-glines',on?'
 /* скло під графіком: 1 — А (уся площа під лінією), 2 — Б (смуга під лінією), 0 — вимкнено. Перемикач у Налаштуваннях */
 /* райдужний живий ореол по контуру екрана (під склом), можна вимкнути в налаштуваннях */
 /* слід від жесту: повзунки в налаштуваннях (яскравість, ширина, тривалість) */
-var FGS=(function(){var d={a:50,i:56,w:62,l:30,am:0,ah:0,as:100,av:100};try{var j=JSON.parse(localStorage.getItem('vf-fg')||'null');if(j)for(var k in d)if(typeof j[k]==='number')d[k]=j[k];}catch(e){}return d;})();
+var FGS=(function(){var d={a:50,i:56,w:62,l:30,am:0,ah:0,as:100,av:100,tg:0,tw:1};try{var j=JSON.parse(localStorage.getItem('vf-fg')||'null');if(j)for(var k in d)if(typeof j[k]==='number')d[k]=j[k];}catch(e){}return d;})();
 function setFGS(k,v){FGS[k]=v;try{localStorage.setItem('vf-fg',JSON.stringify(FGS));}catch(e){}}
 var AURA=(function(){try{var v=localStorage.getItem('vf-aura');return v===null?1:+v?1:0;}catch(e){return 1;}})();
+function fgGlowLabel(){return'Світіння під пальцем: '+(FGS.tg?'увімкнено':'вимкнено');}
+function fgWaveLabel(){return'Хвилі за пальцем: '+(FGS.tw?'увімкнено':'вимкнено');}
 function auraModeLabel(){return'Колір ободка: '+(FGS.am?'за балансом (зелений / червоний)':'райдужний');}
 function auraLabel(){return'Райдужний ореол екрана: '+(AURA?'увімкнено':'вимкнено');}
 function toggleAura(){AURA=AURA?0:1;try{localStorage.setItem('vf-aura',String(AURA));}catch(e){}LG('ui',auraLabel());}

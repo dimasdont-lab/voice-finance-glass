@@ -1,7 +1,7 @@
 /* ===== 7. Скляні віджети: окремий WebGL-шар під текстом. Малює фон із сіткою й плитки з заломленням сітки.
    Вкладене скло: кнопки «Доходи/Витрати», міні-картки (шар 1), круглі значки (шар 2), заповнення прогрес-барів (шар 3, свій колір).
    Скляні лінії графіків: ланцюжки капсул (до 4 ліній), колір лінії, заломлення сітки. Вимикаються разом із GLINES ===== */
-var BH={ph:0,x:0,y:0,r:0,k:0,au:1,pg:[]},RPL=[],RPU=new Float32Array(24),RPn=0,RPsig='',FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
+var BH={ph:0,x:0,y:0,r:0,k:0,au:1,pg:[]},RPL=[],RPU=new Float32Array(64),RPn=0,RPsig='',FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
 var GLASS_LINE_OK=false;
 var tgR=new Float32Array(TMAX*4),tgM=new Float32Array(TMAX*4),tgC=new Float32Array(TMAX*4);
 var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2]];
@@ -35,7 +35,7 @@ var FXFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','
 'void main(){vec2 p=vec2(gl_FragCoord.x/u_res.x,1.-gl_FragCoord.y/u_res.y)*u_vp;gl_FragColor=vec4(fgAt(p)+auraAt(p),1.);}'].join('\n');
 var FX={p:null,U:{},fb:null,tex:null,w:0,h:0},ABC=[.72,.72,.82];   /* поточний колір балансу для ободка (плавно) */
 var BGFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
-'uniform vec2 u_vp;uniform vec2 u_res;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform sampler2D u_fx;uniform float u_fxk;uniform float u_clean;uniform vec4 u_bh;uniform vec4 u_rp[6];uniform float u_rn;',
+'uniform vec2 u_vp;uniform vec2 u_res;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform sampler2D u_fx;uniform float u_fxk;uniform float u_clean;uniform vec4 u_bh;uniform vec4 u_rp[16];uniform float u_rn;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
 'vec3 fgAt(vec2 p){return vec3(0.);}',
 'vec3 auraAt(vec2 p){return u_fxk>0.?texture2D(u_fx,vec2(p.x/u_vp.x,1.-p.y/u_vp.y)).rgb:vec3(0.);}',
@@ -43,7 +43,7 @@ GLSL_BG,
 'void main(){vec2 p=vec2(gl_FragCoord.x/u_res.x,1.-gl_FragCoord.y/u_res.y)*u_vp;',
 ' if(u_clean>.5){gl_FragColor=vec4(mix(vec3(.0196,.0196,.0275),u_gcol,.17*gridL(p+u_go-u_vp*.5)),1.);return;}',
 /* пасхалка «чорна діра»: u_bh = центр, радіус горизонту, сила. Гравітаційна лінза (зображення з-за діри), закрутка, чорний диск, кільце фотонів */
-' if(u_rn>.5){vec2 o=vec2(0.);for(int i=0;i<6;i++){if(float(i)>=u_rn)break;vec4 r=u_rp[i];vec2 dr=p-r.xy;float L=length(dr)+.001;',
+' if(u_rn>.5){vec2 o=vec2(0.);for(int i=0;i<16;i++){if(float(i)>=u_rn)break;vec4 r=u_rp[i];vec2 dr=p-r.xy;float L=length(dr)+.001;',
 '  float R=r.z*300.,w=18.+r.z*34.,x=(L-R)/w,fa=1.-r.z/1.7;float env=exp(-x*x)*fa*fa*smoothstep(0.,40.,L);o+=dr/L*sin(x*4.2)*env*7.*r.w;}p+=o;}',
 ' if(u_bh.w>.001){vec2 d=p-u_bh.xy;float L=max(length(d),1.),R=u_bh.z,k=u_bh.w;',
 '  float E=R*1.3;float f=1.-k*E*E/(L*L+E*E*.35);float a=k*2.2*R*R/(L*L+R*R);float ca=cos(a),sa=sin(a);vec2 q=u_bh.xy+vec2(ca*d.x-sa*d.y,sa*d.x+ca*d.y)*f;',
@@ -243,8 +243,8 @@ function tlAllStale(){for(var i=0;i<NP;i++)tlStale[i]=1;}
 window.addEventListener('resize',tlAllStale);
 setTimeout(tlAllStale,1200);setTimeout(tlAllStale,3500);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(tlAllStale);
-/* хвилі від тапів по фону: до 6 одночасно, кожна живе 1.7 с */
-function rippleAdd(x,y,a){RPL.push({x:x,y:y,t:performance.now(),a:a||1});if(RPL.length>6)RPL.shift();RPn=RPL.length;dirty=true;}
+/* хвилі по фону від тапів і від руху пальця: до 16 одночасно, кожна живе 1.7 с */
+function rippleAdd(x,y,a){RPL.push({x:x,y:y,t:performance.now(),a:a||1});if(RPL.length>16)RPL.shift();RPn=RPL.length;dirty=true;}
 function rpTick(){var now=performance.now();RPL=RPL.filter(function(r){return now-r.t<1700;});RPn=RPL.length;var s='';
  for(var i=0;i<RPn;i++){var r=RPL[i],age=(now-r.t)/1000;RPU[i*4]=r.x;RPU[i*4+1]=r.y;RPU[i*4+2]=age;RPU[i*4+3]=r.a;s+=age.toFixed(3);}RPsig='rp'+s;if(RPn)dirty=true;}
 function bgPrep(W,H,fxOn){
