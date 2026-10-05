@@ -833,7 +833,7 @@ function vwEnsure(){
  };
  return VW_.w;
 }
-/* iPhone/iPad: лише wasm (WebGPU поряд із WebGL-склом вичерпує пам'ять і Safari перезапускає сторінку) */
+/* iPhone/iPad: лише wasm. Журнал 6: на iOS WebGPU-сесія ONNX валить сторінку при створенні (і small, і base), wasm працює */
 var VW_IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 /* запобіжник: якщо сторінка впала під час завантаження/розпізнавання, наступного разу голос не вмикається сам */
 function vwGuard(on){try{if(on)localStorage.setItem('vf-voice-busy',VOX.model);else localStorage.removeItem('vf-voice-busy');}catch(e){}}
@@ -841,7 +841,7 @@ function vwCrashed(){try{return localStorage.getItem('vf-voice-busy')||'';}catch
 setInterval(function(){if(VO.on||VO.busy||VW_.loading)vwSave();},2000);   /* під час голосу журнал зберігається часто: якщо iOS уб'є сторінку, буде видно етап */
 var vwIdleT=0;function vwSave(){try{if(window.__vfSave)window.__vfSave();}catch(e){}}
 function vwIdle(){clearTimeout(vwIdleT);vwIdleT=setTimeout(function(){if(VW_.w&&!VO.on&&!VW_.loading){VW_.w.terminate();VW_.w=null;VW_.ready=false;LG('voice','Whisper вивантажено з пам\'яті');}},45000);}
-function vwPreload(){var w=vwEnsure();if(w&&!VW_.loading&&(!VW_.ready||VW_.model!==VOX.model)){VW_.loading=true;VW_.ready=false;VW_.lp=-1;vwGuard(1);LG('voice','завантаження Whisper');vwSave();w.postMessage({type:'load',model:VOX.model,noGpu:false});}}
+function vwPreload(){var w=vwEnsure();if(w&&!VW_.loading&&(!VW_.ready||VW_.model!==VOX.model)){VW_.loading=true;VW_.ready=false;VW_.lp=-1;vwGuard(1);LG('voice','завантаження Whisper');vwSave();w.postMessage({type:'load',model:VOX.model,noGpu:VW_IOS});}}
 function voiceOpen(){
  if(VO.on)return;
  var crm=vwCrashed();
@@ -904,7 +904,7 @@ function voiceFinish(){
  for(var i=0;i<n;i++){var x=i*ratio,j=Math.floor(x),fr=x-j;a16[i]=all[j]*(1-fr)+(all[j+1]||0)*fr;}
  vst(VW_.ready?'Розпізнаю…':'Завантаження моделі '+VW_.pct+'% (лише перший раз)');
  var w=vwEnsure();if(!w){vst('Розпізнавання недоступне');setTimeout(function(){voiceClose();tapInput(true);},900);return;}
- vwGuard(1);LG('voice','розпізнаю '+(a16.length/16000).toFixed(1)+' с');vwSave();w.postMessage({type:'run',audio:a16,lang:VOX.lang,model:VOX.model,noGpu:false},[a16.buffer]);
+ vwGuard(1);LG('voice','розпізнаю '+(a16.length/16000).toFixed(1)+' с');vwSave();w.postMessage({type:'run',audio:a16,lang:VOX.lang,model:VOX.model,noGpu:VW_IOS},[a16.buffer]);
 }
 function voiceResult(text){
  voiceClose();text=String(text||'').replace(/\[[^\]]*\]|\([^)]*\)|\*[^*]*\*/g,'').replace(/\s+/g,' ').trim();
