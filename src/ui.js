@@ -806,13 +806,13 @@ var vstEl=document.createElement('div');vstEl.id='vst';document.body.appendChild
 var vkbEl=document.createElement('button');vkbEl.id='vkb';vkbEl.textContent='⌨ Клавіатура';document.body.appendChild(vkbEl);
 function vst(msg){vstEl.textContent=msg||'';}
 var VWSRC="import {pipeline,env} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js';\n"+
-"env.allowLocalModels=false;let asr=null,cur='';\n"+
+"env.allowLocalModels=false;try{env.backends.onnx.wasm.numThreads=1;}catch(e){}let asr=null,cur='',noGpu=false;\n"+
 "async function load(model){if(asr&&cur===model)return;cur=model;asr=null;const prog=p=>{if(p&&p.status==='progress'&&p.total)postMessage({type:'progress',file:p.file,loaded:p.loaded,total:p.total});};\n"+
-" let dev=(self.navigator&&self.navigator.gpu)?'webgpu':'wasm';\n"+
+" let dev=(!noGpu&&self.navigator&&self.navigator.gpu)?'webgpu':'wasm';\n"+
 " try{asr=await pipeline('automatic-speech-recognition',model,{device:dev,dtype:dev==='webgpu'?{encoder_model:'fp32',decoder_model_merged:'q4'}:'q8',progress_callback:prog});}\n"+
 " catch(e){if(dev!=='wasm'){dev='wasm';asr=await pipeline('automatic-speech-recognition',model,{device:'wasm',dtype:'q8',progress_callback:prog});}else throw e;}\n"+
 " postMessage({type:'ready',dev});}\n"+
-"self.onmessage=async e=>{const m=e.data;try{if(m.type==='load'){await load(m.model);return;}\n"+
+"self.onmessage=async e=>{const m=e.data;if(m.noGpu)noGpu=true;try{if(m.type==='load'){await load(m.model);return;}\n"+
 " if(m.type==='run'){await load(m.model);const o={task:'transcribe',chunk_length_s:30,return_timestamps:false};if(m.lang)o.language=m.lang;const out=await asr(m.audio,o);postMessage({type:'text',text:(out&&out.text||'').trim()});}}\n"+
 " catch(err){postMessage({type:'error',msg:String(err&&err.message||err)});}};";
 function vwEnsure(){
@@ -821,18 +821,28 @@ function vwEnsure(){
  var files={};
  VW_.w.onmessage=function(e){var m=e.data;
   if(m.type==='progress'){files[m.file]=[m.loaded,m.total];var a=0,b=0;for(var k in files){a+=files[k][0];b+=files[k][1];}VW_.pct=b?Math.round(a/b*100):0;if(VO.busy||VO.on)vst('Завантаження моделі '+VW_.pct+'% (лише перший раз)');}
-  else if(m.type==='ready'){VW_.ready=true;VW_.loading=false;VW_.dev=m.dev;VW_.model=VOX.model;LG('voice','Whisper готовий ('+m.dev+')');if(VO.busy)vst('Розпізнаю…');}
-  else if(m.type==='text'){LG('voice','розпізнано: '+m.text);voiceResult(m.text);}
-  else if(m.type==='error'){LG('voice','помилка Whisper: '+m.msg);VO.busy=0;vst('Не вдалося розпізнати');setTimeout(function(){voiceClose();},1200);}
+  else if(m.type==='ready'){VW_.ready=true;VW_.loading=false;VW_.dev=m.dev;VW_.model=VOX.model;if(!VO.busy)vwGuard(0);LG('voice','Whisper готовий ('+m.dev+')');if(VO.busy)vst('Розпізнаю…');}
+  else if(m.type==='text'){vwGuard(0);vwIdle();LG('voice','розпізнано: '+m.text);voiceResult(m.text);}
+  else if(m.type==='error'){vwGuard(0);VW_.loading=false;LG('voice','помилка Whisper: '+m.msg);VO.busy=0;vst('Не вдалося розпізнати');setTimeout(function(){voiceClose();},1200);}
  };
  return VW_.w;
 }
-function vwPreload(){var w=vwEnsure();if(w&&!VW_.loading&&(!VW_.ready||VW_.model!==VOX.model)){VW_.loading=true;VW_.ready=false;w.postMessage({type:'load',model:VOX.model});}}
+/* iPhone/iPad: лише wasm (WebGPU поряд із WebGL-склом вичерпує пам'ять і Safari перезапускає сторінку) */
+var VW_IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+/* запобіжник: якщо сторінка впала під час завантаження/розпізнавання, наступного разу голос не вмикається сам */
+function vwGuard(on){try{if(on)localStorage.setItem('vf-voice-busy',String(Date.now()));else localStorage.removeItem('vf-voice-busy');}catch(e){}}
+function vwCrashed(){try{return !!localStorage.getItem('vf-voice-busy');}catch(e){return false;}}
+var vwIdleT=0;
+function vwIdle(){clearTimeout(vwIdleT);vwIdleT=setTimeout(function(){if(VW_.w&&!VO.on&&!VW_.loading){VW_.w.terminate();VW_.w=null;VW_.ready=false;LG('voice','Whisper вивантажено з пам\'яті');}},45000);}
+function vwPreload(){var w=vwEnsure();if(w&&!VW_.loading&&(!VW_.ready||VW_.model!==VOX.model)){VW_.loading=true;VW_.ready=false;vwGuard(1);w.postMessage({type:'load',model:VOX.model,noGpu:VW_IOS});}}
 function voiceOpen(){
  if(VO.on)return;
+ if(vwCrashed()){vwGuard(0);LG('voice','минулого разу сторінка впала під час розпізнавання');toast('Минулого разу розпізнаванню не вистачило пам\'яті. Спробуйте ще раз або виберіть клавіатуру в налаштуваннях');}
  var c=cells();VO.ax=c.cx(KS);VO.ay=DR.top+DR.height/2;VO.on=1;VO.busy=0;VO.tlo=VO.thi=VO.tlv=0;
  document.documentElement.classList.add('vox');vst('Слухаю…');
- vwPreload();
+ clearTimeout(vwIdleT);
+ /* модель вантажимо паралельно лише на комп'ютері; на iPhone після запису, щоб не конкурувати з мікрофоном і склом за пам'ять */
+ if(!VW_IOS)vwPreload();
  VA.buf=[];VA.len=0;VA.speech=0;VA.quiet=0;VA.t0=performance.now();VA.stopAt=0;
  try{
   if(!VA.ctx){var AC=window.AudioContext||window.webkitAudioContext;VA.ctx=new AC();}
@@ -879,14 +889,14 @@ function voiceFinish(){
  for(var i=0;i<n;i++){var x=i*ratio,j=Math.floor(x),fr=x-j;a16[i]=all[j]*(1-fr)+(all[j+1]||0)*fr;}
  vst(VW_.ready?'Розпізнаю…':'Завантаження моделі '+VW_.pct+'% (лише перший раз)');
  var w=vwEnsure();if(!w){vst('Розпізнавання недоступне');setTimeout(function(){voiceClose();tapInput(true);},900);return;}
- w.postMessage({type:'run',audio:a16,lang:VOX.lang,model:VOX.model},[a16.buffer]);
+ vwGuard(1);w.postMessage({type:'run',audio:a16,lang:VOX.lang,model:VOX.model,noGpu:VW_IOS},[a16.buffer]);
 }
 function voiceResult(text){
  voiceClose();text=String(text||'').replace(/\[[^\]]*\]|\([^)]*\)|\*[^*]*\*/g,'').replace(/\s+/g,' ').trim();
  if(!text){toast('Нічого не розпізнано');return;}
  try{app.activateButton('input');app.submitInput(calcText(text));}catch(err){console.error(err);toast(err.message||'Помилка');}
 }
-function voiceClose(){VO.on=0;VO.busy=0;vaStop();vst('');document.documentElement.classList.remove('vox');}
+function voiceClose(){VO.on=0;VO.busy=0;vaStop();vwIdle();vst('');document.documentElement.classList.remove('vox');}
 document.addEventListener('pointerdown',function(e){
  if(!VO.on)return;
  if(e.target===vkbEl){e.preventDefault();e.stopPropagation();voiceClose();setTimeout(function(){tapInput(true);},60);return;}

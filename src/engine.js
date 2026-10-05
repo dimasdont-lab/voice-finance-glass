@@ -75,8 +75,8 @@ GLSL_BG,
 '  ci+=vec3(rim*(0.009+0.045*sp));col=mix(col,ci,clamp(-d/(1.5*u_s)+0.5,0.,1.));}',
 ' return col;}',
 'float sphD(vec2 px){vec2 q=px-u_vs.xy;float ang=atan(q.y,q.x),t=u_va.w;',
-' float wob=u_va.y*(.16*sin(ang*3.+t*2.3)+.11*sin(ang*5.-t*3.1)+.07*sin(ang*8.+t*4.7))+(.025+.05*u_va.z)*sin(ang*2.+t*.9)+.018*sin(ang*4.-t*1.3);',
-' return length(q)-u_vs.z*(1.+u_va.x*.24+wob);}',
+' float wob=u_va.y*.2*(.16*sin(ang*3.+t*2.3)+.11*sin(ang*5.-t*3.1)+.07*sin(ang*8.+t*4.7))+(.025+.01*u_va.z)*sin(ang*2.+t*.9)+.018*sin(ang*4.-t*1.3);',
+' return length(q)-u_vs.z*(1.+u_va.x*.048+wob);}',
 'vec3 vPal(float h){h=fract(h)*4.;vec3 a=vec3(1.,.26,.52),b=vec3(.58,.3,1.),c=vec3(.18,.55,1.),d=vec3(1.,.6,.26);float u=fract(h);u=u*u*(3.-2.*u);return h<1.?mix(a,b,u):h<2.?mix(b,c,u):h<3.?mix(c,d,u):mix(d,a,u);}',
 'vec3 vGlow(vec2 q){float R=u_vs.z,t=u_va.w,ang=atan(q.y,q.x),r=length(q)/R;',
 ' float rr=.42*(1.+u_va.x*.55+u_va.z*.35)+u_va.y*(.12*sin(ang*4.+t*3.)+.08*sin(ang*7.-t*4.4))+.03*sin(ang*3.+t*1.2);',
@@ -860,7 +860,7 @@ function frame(t){
   if(typeof voAnalyse==='function')voAnalyse(t);
   var tgv=VO.on?1:0;for(var vq=0;vq<2;vq++){var hv=dt/2;VO.v+=(150*(tgv-VO.s)-20*VO.v)*hv;VO.s+=VO.v*hv;}
   if(!VO.on&&VO.s<.004&&Math.abs(VO.v)<.05){VO.s=0;VO.v=0;}
-  var kf=1-Math.exp(-dt*14);VO.lo+=(VO.tlo-VO.lo)*kf;VO.hi+=(VO.thi-VO.hi)*(1-Math.exp(-dt*20));VO.lv+=(VO.tlv-VO.lv)*kf;
+  var kf=1-Math.exp(-dt*14);VO.lo+=(VO.tlo-VO.lo)*kf;VO.hi+=(VO.thi-VO.hi)*(1-Math.exp(-dt*10));VO.lv+=(VO.tlv-VO.lv)*kf;
   var es=Math.max(0,Math.min(1.15,VO.s)),R0=Math.min(VW*.27,112);
   VO.cx=VO.ax+(VW/2-VO.ax)*es;VO.cy=VO.ay+(VH*.47-VO.ay)*es-Math.sin(Math.min(1,es)*Math.PI)*40;VO.r=22+(R0-22)*Math.max(0,es);
   dirty=true;
