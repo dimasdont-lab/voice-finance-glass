@@ -54,6 +54,7 @@ PAGE_IDS.forEach(function(id){
 });
 
 function setBlocks(i,list){
+ list=list.concat([B_('egg','<button class="eggd" data-act="egg" aria-label="Крапля"></button>')]);   /* пасхалка внизу кожної сторінки */
  var host=inn[i],ch=host.children,k;
  for(k=0;k<list.length;k++){
   var it=list[k],sig=it.c+'|'+it.h,el=ch[k];

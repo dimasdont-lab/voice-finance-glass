@@ -318,3 +318,8 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 
 .tools.tpl{display:flex;flex-wrap:wrap;gap:8px;padding:0 2px}
 .fr select{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--ln);border-radius:12px;color:#fff;font:inherit;padding:10px}
+
+/* пасхалка: маленька крапля внизу кожної сторінки */
+.egg{display:flex;justify-content:center;padding:22px 0 30px}
+.eggd{width:13px;height:13px;padding:0;margin:0;border:1px solid rgba(255,255,255,.28);border-radius:0 50% 50% 50%;transform:rotate(45deg);background:radial-gradient(circle at 62% 62%,rgba(255,255,255,.5),rgba(255,255,255,.06) 70%);box-shadow:0 0 10px rgba(255,255,255,.12);opacity:.55;-webkit-tap-highlight-color:transparent;cursor:pointer}
+.eggd:active{opacity:.9}

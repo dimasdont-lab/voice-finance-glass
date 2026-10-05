@@ -76,6 +76,7 @@ root.addEventListener('click',function(e){
   if(a==='back')app.back();
   else if(a==='tx')app.editTransaction(id);
   else if(a==='balance')nav.navigate('balanceAnalysis');
+  else if(a==='egg'){var er=t.getBoundingClientRect();lensToggle(er.left+er.width/2,er.top-30);}
   else if(a==='tpl'){var tx0=fin.useTemplate(id);toast('Додано: '+(tx0.note||'')+' '+money(tx0.amount,tx0.currency));}
   else if(a==='budgets')nav.openOverlay('budgets');
   else if(a==='recurring')nav.openOverlay('recurring');
