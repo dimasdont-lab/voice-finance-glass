@@ -336,3 +336,23 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 /* утримання пальця (хвиля, від'єднання віджета) не виділяє текст і не відкриває системне меню; поля вводу виділяються як звичайно */
 html,body,#pages,#dock,#ticker,#sheets,#menu{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+
+
+/* мінігра «Успіх» */
+.egg{gap:18px;align-items:center}
+.eggg{width:22px;height:22px;padding:0;border:0;background:none;color:rgba(255,255,255,.35);font-size:14px;line-height:22px;-webkit-tap-highlight-color:transparent}
+.gm .gmhd{display:flex;justify-content:space-between;align-items:flex-end;padding:4px 2px 8px}
+.gm .gmbal{font-size:30px;font-weight:750;letter-spacing:-.5px}
+.gm{overflow-x:hidden}.gm .gmrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:5px 0}
+.gm .gmrow .lbl{flex-basis:100%;font-size:12px;margin-bottom:-2px}
+.gm .gmrow b{margin-left:auto;font-size:17px}
+.gm select{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--ln);border-radius:12px;color:#fff;font:inherit;padding:8px 10px}
+.gm .chip{border:1px solid var(--ln);background:rgba(255,255,255,.05);color:var(--mu);border-radius:14px;padding:5px 8px;font-size:12.5px;font-weight:600}
+.gm .chip.on{color:#fff;background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.25)}
+#gmCv{display:block;width:100%;height:230px;margin:6px 0 8px}
+.gm .gmlong{color:#66d896!important}
+.gm .gmpos{min-height:22px;padding:8px 2px 0;font-size:14px;color:var(--mu)}
+.gm .in{color:#66d896}.gm .out{color:#ff7d83}
+.gm .gmop{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--ln);font-size:14px}
+.gm .gmop span{flex:1;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gm .gmop em{font-style:normal;font-weight:650}

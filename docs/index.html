@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-05 03:55 UTC';
+<script>window.__VF_BUILD='2026-10-05 03:58 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -410,6 +410,26 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 /* утримання пальця (хвиля, від'єднання віджета) не виділяє текст і не відкриває системне меню; поля вводу виділяються як звичайно */
 html,body,#pages,#dock,#ticker,#sheets,#menu{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+
+
+/* мінігра «Успіх» */
+.egg{gap:18px;align-items:center}
+.eggg{width:22px;height:22px;padding:0;border:0;background:none;color:rgba(255,255,255,.35);font-size:14px;line-height:22px;-webkit-tap-highlight-color:transparent}
+.gm .gmhd{display:flex;justify-content:space-between;align-items:flex-end;padding:4px 2px 8px}
+.gm .gmbal{font-size:30px;font-weight:750;letter-spacing:-.5px}
+.gm{overflow-x:hidden}.gm .gmrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:5px 0}
+.gm .gmrow .lbl{flex-basis:100%;font-size:12px;margin-bottom:-2px}
+.gm .gmrow b{margin-left:auto;font-size:17px}
+.gm select{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--ln);border-radius:12px;color:#fff;font:inherit;padding:8px 10px}
+.gm .chip{border:1px solid var(--ln);background:rgba(255,255,255,.05);color:var(--mu);border-radius:14px;padding:5px 8px;font-size:12.5px;font-weight:600}
+.gm .chip.on{color:#fff;background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.25)}
+#gmCv{display:block;width:100%;height:230px;margin:6px 0 8px}
+.gm .gmlong{color:#66d896!important}
+.gm .gmpos{min-height:22px;padding:8px 2px 0;font-size:14px;color:var(--mu)}
+.gm .in{color:#66d896}.gm .out{color:#ff7d83}
+.gm .gmop{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--ln);font-size:14px}
+.gm .gmop span{flex:1;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gm .gmop em{font-style:normal;font-weight:650}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -2709,7 +2729,7 @@ PAGE_IDS.forEach(function(id){
 });
 
 function setBlocks(i,list){
- list=list.concat([B_('egg','<button class="eggd" data-act="egg" aria-label="Крапля"></button>')]);   /* пасхалка внизу кожної сторінки */
+ list=list.concat([B_('egg','<button class="eggd" data-act="egg" aria-label="Крапля"></button><button class="eggg" data-act="game" aria-label="Мінігра «Успіх»">↗</button>')]);   /* пасхалка внизу кожної сторінки */
  var host=inn[i],ch=host.children,k;
  for(k=0;k<list.length;k++){
   var it=list[k],sig=it.c+'|'+it.h,el=ch[k];
@@ -4504,7 +4524,7 @@ root.addEventListener('pointerup',mcrossHide);root.addEventListener('pointercanc
 
 /* ===== 6. Інтерфейс: події, аркуші, скляні меню, синхронізація зі станом логіки ===== */
 var sheetsEl=document.getElementById('sheets'),scrimEl=document.getElementById('scrim'),toastEl=document.getElementById('toast');
-var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet','confirmWipe','budgets','recurring'];
+var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet','confirmWipe','budgets','recurring','game'];
 var CURS=['PLN','EUR','USD','GBP'],curSheet=null,lastScreen='',toastT=0;
 
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){toastEl.classList.remove('on');},2200);}
@@ -4580,6 +4600,7 @@ root.addEventListener('click',function(e){
   if(a==='back')app.back();
   else if(a==='tx')app.editTransaction(id);
   else if(a==='balance')nav.navigate('balanceAnalysis');
+  else if(a==='game'){var gr=t.getBoundingClientRect();growAnchor={x:gr.left+gr.width/2,y:gr.top+gr.height/2};nav.openOverlay('game');gmMount();}
   else if(a==='egg'){var er=t.getBoundingClientRect();lensToggle(er.left+er.width/2,er.top-30);}
   else if(a==='tpl'){var tx0=fin.useTemplate(id);toast('Додано: '+(tx0.note||'')+' '+money(tx0.amount,tx0.currency));}
   else if(a==='budgets')nav.openOverlay('budgets');
@@ -4648,6 +4669,7 @@ function sheetHtml(kind,ov){
   return h;
  }
  if(kind==='marketSheet')return marketSheetHtml(ov.data&&ov.data.marketId);
+ if(kind==='game')return gmHtml();
  if(kind==='budgets'){var cs2=fin.getState().categories;return'<div class="sh"><span style="min-width:70px"></span><h3>Бюджети</h3><button class="ok" data-s="cancel">Закрити</button></div><div class="mkinfo" style="padding:0 0 8px">Сума на місяць. Порожньо — без бюджету. Після 80% прийде попередження.</div>'+cs2.map(function(c){return'<div class="fr"><label>'+esc(c.name)+' <span style="opacity:.6">(цього місяця '+esc(money(monthSpend(c.id)))+')</span></label><input data-bud="'+esc(c.id)+'" inputmode="decimal" autocomplete="off" value="'+(c.budget?esc(c.budget):'')+'" placeholder="—"></div>';}).join('')+'<button class="btnw pri" data-s="savebud">Зберегти бюджети</button>';}
  if(kind==='recurring'){var rl=fin.getState().recurring||[],cl2=fin.getState().categories;return'<div class="sh"><span style="min-width:70px"></span><h3>Повторювані</h3><button class="ok" data-s="cancel">Закрити</button></div>'+(rl.length?rl.map(function(r,i){return'<div class="row'+(i?'':' first')+'">'+icon(r.name,hashCol(r.category))+'<div class="rc"><b>'+esc(r.name)+'</b><span>'+r.day+' числа · '+esc(money(r.amount,r.currency))+'</span></div><button data-s="delrec" data-id="'+esc(r.id)+'" style="color:var(--ac);font-weight:600;padding:8px">Видалити</button></div>';}).join(''):'<div class="empty">Поки порожньо.</div>')+
   '<div class="mkinfo" style="padding:14px 0 4px">Новий платіж</div><div class="fr"><label>Назва</label><input data-rc="name" placeholder="Netflix, оренда, зарплата" autocomplete="off"></div><div class="fr"><label>Сума, zł</label><input data-rc="amount" inputmode="decimal" autocomplete="off"></div><div class="fr"><label>День місяця</label><input data-rc="day" inputmode="numeric" value="1" autocomplete="off"></div>'+
@@ -4757,7 +4779,7 @@ function showSheet(top){
  el.style.display='block';
  sheetP.el=el;curSheet={key:key,kind:top.kind,el:el,body:body,html:html};
  el.classList.remove('ghost');
- var anc=top.kind==='input'?sendAnchor:((top.kind==='transactionList'||top.kind==='marketSheet'||top.kind==='confirmWipe')&&growAnchor)?growAnchor:null,grow=!!anc;growAnchor=null;
+ var anc=top.kind==='input'?sendAnchor:((top.kind==='transactionList'||top.kind==='marketSheet'||top.kind==='confirmWipe'||top.kind==='game')&&growAnchor)?growAnchor:null,grow=!!anc;growAnchor=null;
  sheetP.mode=grow?'grow':'rise';
  if(grow){sheetP.ax=anc.x;sheetP.ay=anc.y;}
  sheetP.kind=top.kind;
@@ -5488,5 +5510,91 @@ function wfStep(t){
  window.addEventListener('click',function(e){if(WF.sup||wfFind(e.target)){e.stopPropagation();e.preventDefault();}},true);
  ['touchstart','touchmove'].forEach(function(n){window.addEventListener(n,function(e){var t=e.touches[0];if(!t)return;if(WF.drag||(n==='touchstart'&&wfFind(e.target))){if(e.cancelable)e.preventDefault();e.stopPropagation();}},{capture:true,passive:false});});
 })();
+
+/* ---------- мінігра «Успіх»: несправжня біржа, угоди завжди в плюс ----------
+   Баланс гри випадковий (4 725–99 999 $) при кожному відкритті і живе лише в пам'яті цього вікна:
+   жодних викликів finance-core, нічого не зберігається, з балансом застосунку не пов'язаний. */
+var GM=null;
+function gmFmt(v,d){var a=Math.abs(v),s=a>=1e12?(a/1e12).toFixed(2)+' трлн':a>=1e9?(a/1e9).toFixed(2)+' млрд':a>=1e6?(a/1e6).toFixed(2)+' млн':a.toLocaleString('uk-UA',{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d});return(v<0?'−':'')+s;}
+function gmPairs(){var c=VF.marketCatalog(),by={};c.forEach(function(m){by[m.id]=m;});var ids=(MK.selection||[]).filter(function(id){return by[id];});if(!ids.length)ids=c.slice(0,6).map(function(m){return m.id;});
+ return ids.map(function(id){var d=MK.data[id];return{id:id,label:by[id].label,px:d&&isFinite(d.value)&&d.value>0?d.value:null};});}
+function gmHtml(){
+ var ps=gmPairs();
+ return'<div class="sh"><span style="min-width:70px"></span><h3>Успіх ↗</h3><button class="ok" data-s="cancel">Закрити</button></div><div class="gm">'+
+  '<div class="gmhd"><div><div class="lbl">Баланс гри · не ваші гроші</div><div class="gmbal" id="gmBal">—</div></div><div class="gmpnl" id="gmPnl"></div></div>'+
+  '<div class="gmrow"><select id="gmPair">'+ps.map(function(p){return'<option value="'+esc(p.id)+'">'+esc(p.label)+'</option>';}).join('')+'</select><b id="gmPx">—</b></div>'+
+  '<div class="gmrow gmtf">'+['1м','5м','15м','1г'].map(function(t,i){return'<button class="chip'+(i===0?' on':'')+'" data-gtf="'+[1,5,15,60][i]+'">'+t+'</button>';}).join('')+'</div><div class="gmrow"><button class="chip on" data-gmode="line">Лінія</button><button class="chip" data-gmode="candle">Свічки</button></div>'+
+  '<canvas id="gmCv"></canvas>'+
+  '<div class="gmrow"><span class="lbl">Сума</span>'+[10,25,50,100].map(function(p){return'<button class="chip'+(p===25?' on':'')+'" data-gamt="'+p+'">'+p+'%</button>';}).join('')+'</div>'+
+  '<div class="gmrow"><span class="lbl">Плече</span>'+[10,50,100].map(function(l){return'<button class="chip'+(l===50?' on':'')+'" data-glev="'+l+'">×'+l+'</button>';}).join('')+'</div>'+
+  '<div class="cwr"><button class="btnw gmlong" data-gm="long">Лонг ↑</button><button class="btnw dng" data-gm="short">Шорт ↓</button></div>'+
+  '<div class="gmpos" id="gmPos"></div>'+
+  '<div class="mkinfo" style="padding:14px 0 4px">Останні операції</div><div id="gmOps"><div class="empty">Ще жодної угоди. Тут завжди тільки плюс.</div></div>'+
+ '</div>';
+}
+/* історія: хвилинні свічки випадковим блуканням, що закінчуються на справжній поточній ціні */
+function gmHistory(px){var n=2880,c=[],p=px,i;var walk=[p];for(i=0;i<n;i++){p=p/(1+(Math.random()-.5)*.0028);walk.push(p);}walk.reverse();
+ for(i=0;i<n;i++){var o=walk[i],cl=walk[i+1],h=Math.max(o,cl)*(1+Math.random()*.0009),l=Math.min(o,cl)*(1-Math.random()*.0009);c.push({o:o,h:h,l:l,c:cl});}return c;}
+function gmSetPair(id){var p=gmPairs().find(function(q){return q.id===id;})||gmPairs()[0];if(!p)return;
+ var px=p.px||({btc:65000,eth:3200}[String(p.id).toLowerCase().split(/[^a-z]/)[0]]||100);
+ GM.pid=p.id;GM.label=p.label;GM.c=gmHistory(px);GM.sub=0;GM.pos=null;GM.real=!!p.px;}
+function gmMount(){
+ var tries=0;(function wait(){var cv=document.getElementById('gmCv');if(!cv){if(++tries<60)requestAnimationFrame(wait);return;}
+  GM={bal:Math.round((4725+Math.random()*(99999-4725))*100)/100,tf:1,mode:'line',amt:25,lev:50,ops:[],pos:null,dirty:1};
+  gmSetPair(document.getElementById('gmPair').value);LG('egg','мінігра «Успіх»: баланс гри '+GM.bal+' $');
+  clearInterval(gmMount.iv);gmMount.iv=setInterval(gmTick,100);gmDraw();gmUi();})();
+}
+function gmTick(){
+ var cv=document.getElementById('gmCv');if(!cv||!GM){clearInterval(gmMount.iv);GM=null;return;}
+ var last=GM.c[GM.c.length-1],p=last.c,P=GM.pos,step;
+ if(P){P.k++;var want=P.dir*p*(.00016+Math.random()*.00016);step=want+(Math.random()-.5)*p*.00018;   /* угода: ціна йде в потрібний бік */
+  if(P.k>=30){var mv=Math.max(.004,(p+step-P.entry)*P.dir/P.entry),pnl=P.stake*P.lev*mv;GM.bal+=pnl;
+   GM.ops.unshift({side:P.dir>0?'LONG':'SHORT',pair:GM.label,lev:P.lev,stake:P.stake,pnl:pnl,entry:P.entry,exit:p+step});if(GM.ops.length>30)GM.ops.pop();GM.pos=null;
+   LG('egg','«Успіх»: '+(P.dir>0?'лонг':'шорт')+' ×'+P.lev+' +'+Math.round(pnl)+' $');}}
+ else step=(Math.random()-.5)*p*.0011;
+ var np=Math.max(p*.5,p+step);
+ GM.sub++;if(GM.sub>=10){GM.sub=0;GM.c.push({o:np,h:np,l:np,c:np});if(GM.c.length>4000)GM.c.shift();}
+ else{last.c=np;last.h=Math.max(last.h,np);last.l=Math.min(last.l,np);}
+ gmDraw();gmUi();
+}
+function gmCandles(){var k=GM.tf,src=GM.c,out=[],st=src.length%k;for(var i=st;i<src.length;i+=k){var g=src.slice(i,i+k);if(!g.length)continue;
+ out.push({o:g[0].o,c:g[g.length-1].c,h:Math.max.apply(null,g.map(function(q){return q.h;})),l:Math.min.apply(null,g.map(function(q){return q.l;}))});}return out.slice(-48);}
+function gmDraw(){
+ var cv=document.getElementById('gmCv');if(!cv)return;var w=cv.clientWidth||300,h=cv.clientHeight||220,dpr=Math.min(3,window.devicePixelRatio||1);
+ if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+ var x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+ var cs=gmCandles();if(cs.length<2)return;var lo=Infinity,hi=-Infinity;cs.forEach(function(q){lo=Math.min(lo,q.l);hi=Math.max(hi,q.h);});if(GM.pos){lo=Math.min(lo,GM.pos.entry);hi=Math.max(hi,GM.pos.entry);}
+ var pad=(hi-lo)*.12||1;lo-=pad;hi+=pad;var R=56,cw=(w-R)/cs.length,Y=function(v){return 8+(h-16)*(1-(v-lo)/(hi-lo));};
+ x.strokeStyle='rgba(255,255,255,.06)';x.lineWidth=1;for(var g=1;g<4;g++){x.beginPath();x.moveTo(0,h*g/4);x.lineTo(w-R,h*g/4);x.stroke();}
+ var up=cs[cs.length-1].c>=cs[0].o,col=up?'#66d896':'#ff7d83';
+ if(GM.mode==='candle'){cs.forEach(function(q,i){var cx=i*cw+cw/2,g2=q.c>=q.o;x.strokeStyle=x.fillStyle=g2?'#66d896':'#ff7d83';x.beginPath();x.moveTo(cx,Y(q.h));x.lineTo(cx,Y(q.l));x.stroke();
+  var y0=Y(Math.max(q.o,q.c)),y1=Y(Math.min(q.o,q.c));x.fillRect(cx-cw*.32,y0,cw*.64,Math.max(1,y1-y0));});}
+ else{x.beginPath();cs.forEach(function(q,i){var px=i*cw+cw/2,py=Y(q.c);i?x.lineTo(px,py):x.moveTo(px,py);});x.strokeStyle=col;x.lineWidth=2.2;x.lineJoin='round';x.stroke();
+  x.lineTo((cs.length-.5)*cw,h);x.lineTo(cw/2,h);x.closePath();var gr=x.createLinearGradient(0,0,0,h);gr.addColorStop(0,up?'rgba(102,216,150,.28)':'rgba(255,125,131,.28)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fill();}
+ var lp=cs[cs.length-1].c,ly=Y(lp);x.setLineDash([4,4]);x.strokeStyle='rgba(255,255,255,.35)';x.beginPath();x.moveTo(0,ly);x.lineTo(w-R,ly);x.stroke();
+ if(GM.pos){var ey=Y(GM.pos.entry);x.strokeStyle='rgba(255,210,90,.7)';x.beginPath();x.moveTo(0,ey);x.lineTo(w-R,ey);x.stroke();}
+ x.setLineDash([]);x.fillStyle=col;x.font='600 11px -apple-system,system-ui,sans-serif';x.fillText(gmFmt(lp,lp<10?4:2),w-R+4,ly+4);
+ x.fillStyle='rgba(255,255,255,.4)';x.fillText(gmFmt(hi,hi<10?4:2),w-R+4,14);x.fillText(gmFmt(lo,lo<10?4:2),w-R+4,h-6);
+}
+function gmUi(){
+ if(!GM)return;var $=function(id){return document.getElementById(id);};var lp=GM.c[GM.c.length-1].c;
+ if($('gmBal'))$('gmBal').textContent=gmFmt(GM.bal)+' $';
+ if($('gmPx'))$('gmPx').textContent=gmFmt(lp,lp<10?4:2)+(GM.real?'':' (умовна)');
+ var P=GM.pos,el=$('gmPos');
+ if(el){if(P){var mv=(lp-P.entry)*P.dir/P.entry,pnl=P.stake*P.lev*mv;el.innerHTML='<b class="'+(P.dir>0?'in':'out')+'">'+(P.dir>0?'LONG':'SHORT')+' ×'+P.lev+'</b> · вхід '+gmFmt(P.entry,P.entry<10?4:2)+' · <b class="'+(pnl>=0?'in':'out')+'">'+(pnl>=0?'+':'')+gmFmt(pnl)+' $</b>';}else el.textContent='';}
+ var ops=$('gmOps');if(ops&&ops._n!==GM.ops.length){ops._n=GM.ops.length;
+  if(GM.ops.length)ops.innerHTML=GM.ops.map(function(o){return'<div class="gmop"><b class="'+(o.side==='LONG'?'in':'out')+'">'+o.side+' ×'+o.lev+'</b><span>'+esc(o.pair)+' · ставка '+gmFmt(o.stake)+' $</span><em class="in">+'+gmFmt(o.pnl)+' $</em></div>';}).join('');}
+}
+document.getElementById('sheets').addEventListener('click',function(e){
+ if(!GM)return;var t=e.target.closest('[data-gm],[data-gtf],[data-gmode],[data-gamt],[data-glev]');if(!t)return;
+ var sel=function(attr){[].forEach.call(t.parentNode.querySelectorAll('['+attr+']'),function(b){b.classList.toggle('on',b===t);});};
+ if(t.dataset.gtf){GM.tf=+t.dataset.gtf;sel('data-gtf');}
+ else if(t.dataset.gmode){GM.mode=t.dataset.gmode;sel('data-gmode');}
+ else if(t.dataset.gamt){GM.amt=+t.dataset.gamt;sel('data-gamt');}
+ else if(t.dataset.glev){GM.lev=+t.dataset.glev;sel('data-glev');}
+ else if(t.dataset.gm&&!GM.pos){var lp=GM.c[GM.c.length-1].c,stake=GM.bal*GM.amt/100;GM.pos={dir:t.dataset.gm==='long'?1:-1,entry:lp,stake:stake,lev:GM.lev,k:0};}
+ gmDraw();gmUi();
+});
+document.getElementById('sheets').addEventListener('change',function(e){if(GM&&e.target.id==='gmPair'){gmSetPair(e.target.value);gmDraw();gmUi();}});
 
 })();</script></body></html>
