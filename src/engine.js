@@ -82,11 +82,12 @@ GLSL_BG,
 ' float rr=.42*(1.+u_va.x*.55+u_va.z*.35)+u_va.y*(.12*sin(ang*4.+t*3.)+.08*sin(ang*7.-t*4.4))+.03*sin(ang*3.+t*1.2);',
 ' float g=exp(-pow(max(r-rr*.25,0.)/(rr*.8),2.)*2.2);vec3 c=vPal(ang*.159+t*.07+r*.35);vec3 c2=vPal(ang*.159-t*.05+.5);',
 ' return (mix(c,c2,.5+.5*sin(t*.8+r*4.))*g*(.75+.9*u_va.z)+vec3(1.)*pow(g,6.)*.25*u_va.z);}',
-'vec4 sphGlass(vec2 px,float d){float R=u_vs.z;float t=clamp(-d/(R*.85),0.,1.);float e=1.5;',
-' vec2 n=normalize(vec2(sphD(px+vec2(e,0.))-sphD(px-vec2(e,0.)),sphD(px+vec2(0.,e))-sphD(px-vec2(0.,e)))+1e-5);',
-' vec2 q=px-u_vs.xy;vec2 zc=u_vs.xy-q*(.55-.35*t);vec2 of=n*pow(1.-t,1.5)*R*.55;float ab=.32*(.3+pow(1.-t,1.3));',
+'vec4 sphGlass(vec2 px,float d){float R=u_vs.z;float t=clamp(-d/(R*.9),0.,1.);',
+/* гладка лінза: нормаль від центру (без кінцевих різниць — вони ламались у центрі), зображення не перевертається */
+' vec2 q=px-u_vs.xy;float lq=length(q);vec2 n=lq>.5?q/lq:vec2(0.);float h=1.-t;',
+' vec2 zc=u_vs.xy+q*(.78+.12*t);vec2 of=n*h*h*R*.22;float ab=.05+.12*h*h;',
 ' vec3 ci=vec3(bgG(zc-of*(1.+ab)).r,bgG(zc-of).g,bgG(zc-of*(1.-ab)).b)*.8;',
-' vec2 gq=(zc-of)-u_vs.xy;ci+=vGlow(-gq*1.25);',
+' ci+=vGlow(q*1.1);',
 ' float fr=pow(1.-t,2.6);float sp=pow(max(dot(n,normalize(vec2(-.6,-.8))),0.),6.)+.4*pow(max(dot(n,normalize(vec2(.65,.75))),0.),4.);',
 ' ci+=vec3(fr*(.06+.35*sp))+vPal(atan(n.y,n.x)*.159+u_va.w*.1)*fr*.12;',
 ' return vec4(ci,clamp(-d/(1.5*u_s)+.5,0.,1.)*u_vs.w);}',
@@ -674,11 +675,12 @@ function refreshTabs(t){      /* неактивні сторінки-вклад�
 var edgeEl=document.getElementById('edge');
 function recStep(dt){
  var dd=(menu.on&&menu.kind==='dd')?1:0,mo=(menu.on&&menu.kind==='more')?1:0,sh=sheetOn?1:0;
- var tg={pg:Math.min(2,dd+mo+sh),mn:sh,sh:dd&&sh?1:0};
+ var vo=VO.on?1:0;   /* голос: інтерфейс відсувається й розмивається, як під верхнім вікном */
+ var tg={pg:Math.min(2,Math.max(vo,dd+mo+sh)),mn:sh,sh:dd&&sh?1:0};
  var top={ox:VW/2,oy:0,tx:0,ty:-.05*VH},ul={ox:0,oy:0,tx:-.045*VW,ty:-.04*VH},mv=false;
  /* налаштування над «Додатково»: шари розходяться — екран тягнеться до лівого краю, панель до правого кута */
  var ulS={ox:0,oy:0,tx:-.07*VW,ty:-.05*VH},trc={ox:VW,oy:0,tx:.05*VW,ty:-.05*VH};
- var L={pg:sh?ulS:dd?top:ul,mn:dd?top:trc,sh:top};   /* меню-випадайка (dd) ділить шар mn і мусить рухатись разом із аркушем */
+ var L={pg:sh?ulS:(dd||vo)?top:ul,mn:dd?top:trc,sh:top};   /* меню-випадайка (dd) ділить шар mn і мусить рухатись разом із аркушем */
  ['pg','mn','sh'].forEach(function(k){
   var o=rec[k],d=tg[k]-o.v;
   if(Math.abs(d)>.0015){o.v+=d*(1-Math.exp(-dt*5.5));mv=true;}else if(d!==0){o.v=tg[k];mv=true;}
@@ -823,6 +825,7 @@ function pfFrame(t){
    LG('perf','5с: кадрів '+PF.n+' (~'+Math.round(1000*PF.n/(t-PF.t0))+' к/с), інтервал середній '+(PF.sum/PF.n).toFixed(1)+' макс '+Math.round(PF.mx)+' мс; повільніше 33мс: '+PF.j33+', 50мс: '+PF.j50+', 100мс: '+PF.j100+' | js мс середнє/макс: '+parts.join(', ')+' | '+pfCtx());}
   PF.n=0;PF.sum=0;PF.mx=0;PF.j33=0;PF.j50=0;PF.j100=0;PF.secs={};PF.t0=t;}
 }
+function voSc(){return VO.on&&(VO.full||0)>=3&&Math.abs(VO.s-1)<.03&&Math.abs(VO.v)<.08&&!recMoving&&Math.abs(scrimV-.35)<.003&&menuA<=.002&&sheetA<=.002&&mode===0;}
 function frame(t){
  requestAnimationFrame(frame);var pf0=performance.now();pfFrame(t);
  vpSample(t);
@@ -852,7 +855,7 @@ function frame(t){
  recStep(dt);
  refreshTabs(t);
  if(intro.on)introStep(t);
- var pt0=performance.now();if(tgOK)drawTiles();pfS('tiles',performance.now()-pt0);
+ var pt0=performance.now();if(tgOK&&!voSc())drawTiles();pfS('tiles',performance.now()-pt0);
  if(menu.s>0||menu.on)stepMenu(dt);
  if(sheetP.s>0||sheetP.on)stepSheet(dt);
  bootStep(t,dt);
@@ -865,7 +868,8 @@ function frame(t){
   VO.cx=VO.ax+(VW/2-VO.ax)*es;VO.cy=VO.ay+(VH*.47-VO.ay)*es-Math.sin(Math.min(1,es)*Math.PI)*40;VO.r=22+(R0-22)*Math.max(0,es);
   dirty=true;
  }
- if(Math.abs(scrimV-scrimT)>.002){scrimV+=(scrimT-scrimV)*(1-Math.exp(-dt*10));dirty=true;}else if(scrimV!==scrimT){scrimV=scrimT;dirty=true;}
+ var scT=Math.max(scrimT,VO.on?.35:0);   /* голос: інтерфейс притемнюється під сферою */
+ if(Math.abs(scrimV-scT)>.002){scrimV+=(scT-scrimV)*(1-Math.exp(-dt*10));dirty=true;}else if(scrimV!==scT){scrimV=scT;dirty=true;}
  if(pendingSync&&mode===0){pendingSync=false;syncUI();}
  var gh=(menu.on&&menu.kind==='dd'&&curSheetOn()&&SH.on&&SH.ready&&!SH.want)?1:0;
  if(gh!==ghost){ghost=gh;if(sheetP.el)sheetP.el.classList.toggle('ghost',!!gh);dirty=true;}
@@ -1002,11 +1006,14 @@ function frame(t){
    gl.enable(gl.SCISSOR_TEST);
    for(var qi=0;qi<2;qi++){var q=rc[qi],qx=Math.floor(q[0]),qy=Math.max(0,Math.floor(q[1])),qw=Math.ceil(q[2]),qh=Math.ceil(q[3]);if(qy+qh>CH)qh=CH-qy;if(qh<=0||qw<=0)continue;gl.scissor(qx,CH-qy-qh,qw,qh);gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}
    gl.disable(gl.SCISSOR_TEST);
-  }else{gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}
+  }else if(voSc()){   /* сфера стоїть, фон застиг: малюємо лише квадрат навколо неї — GPU лишається Whisper */
+   var CW2=cv.width,CH2=cv.height,vr=VO.r*1.45*S,vx=Math.max(0,Math.floor((VO.cx-R.x)*S-vr)),vyT=Math.max(0,Math.floor((VO.cy-R.y)*S-vr)),vw=Math.min(CW2-vx,Math.ceil(vr*2)),vh=Math.min(CH2-vyT,Math.ceil(vr*2));
+   gl.enable(gl.SCISSOR_TEST);gl.scissor(vx,CH2-vyT-vh,vw,vh);gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);gl.disable(gl.SCISSOR_TEST);
+  }else{gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);if(VO.on&&Math.abs(VO.s-1)<.03&&Math.abs(VO.v)<.08&&!recMoving&&Math.abs(scrimV-.35)<.003)VO.full=(VO.full||0)+1;else VO.full=0;}
   dirty=false;boot.warm=0;pfS('draw',performance.now()-pd0);
  }
  if(!shown&&full[sel]){shown=true;cv.style.opacity=1;}
  if(moving||!settled||scrolling||mode||hide!==hT||menuA>0.002&&menuA<.999||sheetA>0.002&&sheetA<.999||recMoving||boot.on&&boot.phase===2||menu.dragging||sheetP.dragging)lastMotion=t;
- if(t-lastMotion>150)pump(t);   /* важкі знімки — тільки коли нічого не рухається */
+ if(t-lastMotion>150&&!VO.on)pump(t);   /* важкі знімки — тільки коли нічого не рухається */
  scrollingNow=!!scrolling;pfS('frame',performance.now()-pf0);
 }
