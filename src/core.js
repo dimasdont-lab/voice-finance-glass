@@ -77,12 +77,6 @@ function setGlassLines(on){GLINES=!!on;try{localStorage.setItem('vf-glines',on?'
 /* слід від жесту: повзунки в налаштуваннях (яскравість, ширина, тривалість) */
 var FGS=(function(){var d={i:56,w:62,l:30};try{var j=JSON.parse(localStorage.getItem('vf-fg')||'null');if(j)for(var k in d)if(typeof j[k]==='number')d[k]=j[k];}catch(e){}return d;})();
 function setFGS(k,v){FGS[k]=v;try{localStorage.setItem('vf-fg',JSON.stringify(FGS));}catch(e){}}
-/* голосовий ввід (Whisper на пристрої): увімкнення, мова, модель */
-var VOX=(function(){var d={on:1,lang:'ukrainian',model:'onnx-community/whisper-small',v:3};try{var j=JSON.parse(localStorage.getItem('vf-voice')||'null');if(j)for(var k in d)if(j[k]!==undefined&&(k!=='model'||j.v===3))d[k]=j[k];if(!j||j.v!==3)localStorage.setItem('vf-voice-crashes','0');d.v=3;}catch(e){}return d;})();
-function setVOX(k,v){VOX[k]=v;try{localStorage.setItem('vf-voice',JSON.stringify(VOX));}catch(e){}}
-var VOX_LANGS=[['ukrainian','Українська'],['polish','Польська'],['english','Англійська'],['russian','Російська'],['','Авто']];
-var VOX_MODELS=[['onnx-community/whisper-small','Точна (~250–500 МБ, перший раз довго)'],['onnx-community/whisper-base','Базова (~80 МБ, швидка, помиляється в числах)']];
-function voxLabel(k){var L=k==='lang'?VOX_LANGS:VOX_MODELS,v=VOX[k];for(var i=0;i<L.length;i++)if(L[i][0]===v)return L[i][1];return L[0][1];}
 var AURA=(function(){try{var v=localStorage.getItem('vf-aura');return v===null?1:+v?1:0;}catch(e){return 1;}})();
 function auraLabel(){return'Райдужний ореол екрана: '+(AURA?'увімкнено':'вимкнено');}
 function toggleAura(){AURA=AURA?0:1;try{localStorage.setItem('vf-aura',String(AURA));}catch(e){}LG('ui',auraLabel());}
