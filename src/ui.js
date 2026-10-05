@@ -149,7 +149,7 @@ function sheetHtml(kind,ov){
    '<div class="fr"><label>Місячний ліміт, zł</label><input data-g="goal" inputmode="decimal" value="'+esc(g)+'" autocomplete="off"></div>'+
    '<button class="btnw" data-s="goal">Зберегти ліміт</button>'+
    '<button class="btnw" data-s="markets">Валюти в бігучій строці</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button>'+
-   '<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="area">'+areaLabel()+'</button><button class="btnw" data-s="aura">'+auraLabel()+'</button>'+
+   '<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="area">'+areaLabel()+'</button><button class="btnw" data-s="aura">'+auraLabel()+'</button><div class="mkinfo" style="padding:12px 0 2px">Голосовий ввід (Whisper, на пристрої)</div><button class="btnw" data-s="vox">Кнопка «Ввід»: '+(VOX.on?'голос':'клавіатура')+'</button><button class="btnw" data-s="voxlang">Мова: '+esc(voxLabel('lang'))+'</button><button class="btnw" data-s="voxmodel">Модель: '+esc(voxLabel('model'))+'</button>'+
    '<div class="mkinfo" style="padding:12px 0 2px">Кольорове скло</div>'+
    [['is','Значки: насиченість'],['ib','Значки: яскравість'],['bal','Віджет балансу: сила кольору']].map(function(q){return'<div class="fr"><label>'+q[1]+'</label><input type="range" min="0" max="100" data-cg="'+q[0]+'" value="'+CG[q[0]]+'"></div>';}).join('')+[['i','Слід пальця: яскравість'],['w','Слід пальця: ширина'],['l','Слід пальця: тривалість']].map(function(q){return'<div class="fr"><label>'+q[1]+'</label><input type="range" min="0" max="100" data-fg="'+q[0]+'" value="'+FGS[q[0]]+'"></div>';}).join('')+'<button class="btnw" data-s="cgreset">Скинути кольори скла</button><div class="mkinfo" style="padding:14px 0 4px">Синхронізація між пристроями (шифрована)</div>'+
    '<div class="fr"><label>Ключ синхронізації (однаковий на всіх пристроях)</label><input data-sy="key" autocomplete="off" autocapitalize="characters" spellcheck="false" value="'+esc(syGetKey())+'" placeholder="XXXX-XXXX-XXXX-XXXX"></div>'+
@@ -287,6 +287,9 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='cash')app.openManualAccount('cash');
   else if(s==='export')exportData();
   else if(s==='mper')setMarketPeriod(t.dataset.v);
+  else if(s==='vox'){setVOX('on',VOX.on?0:1);t.textContent='Кнопка «Ввід»: '+(VOX.on?'голос':'клавіатура');sheetStale();}
+  else if(s==='voxlang'){openDropdown(t,VOX_LANGS.map(function(q){return{v:q[0]||'auto',l:q[1]};}),VOX.lang||'auto',function(v){setVOX('lang',v==='auto'?'':v);t.textContent='Мова: '+voxLabel('lang');sheetStale();});}
+  else if(s==='voxmodel'){openDropdown(t,VOX_MODELS.map(function(q){return{v:q[0],l:q[1]};}),VOX.model,function(v){setVOX('model',v);VW_.model='';t.textContent='Модель: '+voxLabel('model');sheetStale();});}
   else if(s==='wipeyes'){fin.resetAll({confirmed:true});LG('ui','повний скид даних');app.back();toast('Усі записи стерто');}
   else if(s==='logshare')logShare();
   else if(s==='synon')synToggle();
@@ -323,9 +326,10 @@ function seedDemo(){
 window.__seed=seedDemo;
 
 /* ---------- введення (скляна крапля) ---------- */
-function tapInput(){
+function tapInput(force){
  var ovs=nav.getState().overlays;
  if(ovs.some(function(o){return o.kind==='more';}))nav.closeOverlay('more');
+ if(VOX.on&&!force&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){voiceOpen();return;}
  openInput();
  try{app.activateButton('input');}catch(err){console.error(err);}
 }
@@ -783,3 +787,100 @@ function fgStep(){
 document.addEventListener('pointerdown',function(e){if(e.target.closest&&e.target.closest('input,textarea'))return;FGdown=true;fgAdd(e.clientX,e.clientY,true);},true);
 document.addEventListener('pointermove',function(e){if(!(FGdown||e.buttons))return;var ev=e.getCoalescedEvents?e.getCoalescedEvents():null;if(ev&&ev.length){ev.forEach(function(q){fgAdd(q.clientX,q.clientY,false);});}else fgAdd(e.clientX,e.clientY,false);},true);
 ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){FGdown=false;kickFg();},true);});
+
+/* ---------- голосовий ввід: скляна сфера з кнопки «Ввід» + Whisper у фоновому потоці (усе на пристрої) ---------- */
+var VW_={w:null,ready:false,loading:false,model:'',q:null,pct:0,dev:''},VA={ctx:null,st:null,src:null,an:null,sp:null,buf:[],len:0,sr:48000,fd:null,td:null,t0:0,speech:0,quiet:0,stopAt:0};
+var vstEl=document.createElement('div');vstEl.id='vst';document.body.appendChild(vstEl);
+var vkbEl=document.createElement('button');vkbEl.id='vkb';vkbEl.textContent='⌨ Клавіатура';document.body.appendChild(vkbEl);
+function vst(msg){vstEl.textContent=msg||'';}
+var VWSRC="import {pipeline,env} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js';\n"+
+"env.allowLocalModels=false;let asr=null,cur='';\n"+
+"async function load(model){if(asr&&cur===model)return;cur=model;asr=null;const prog=p=>{if(p&&p.status==='progress'&&p.total)postMessage({type:'progress',file:p.file,loaded:p.loaded,total:p.total});};\n"+
+" let dev=(self.navigator&&self.navigator.gpu)?'webgpu':'wasm';\n"+
+" try{asr=await pipeline('automatic-speech-recognition',model,{device:dev,dtype:dev==='webgpu'?{encoder_model:'fp32',decoder_model_merged:'q4'}:'q8',progress_callback:prog});}\n"+
+" catch(e){if(dev!=='wasm'){dev='wasm';asr=await pipeline('automatic-speech-recognition',model,{device:'wasm',dtype:'q8',progress_callback:prog});}else throw e;}\n"+
+" postMessage({type:'ready',dev});}\n"+
+"self.onmessage=async e=>{const m=e.data;try{if(m.type==='load'){await load(m.model);return;}\n"+
+" if(m.type==='run'){await load(m.model);const o={task:'transcribe',chunk_length_s:30,return_timestamps:false};if(m.lang)o.language=m.lang;const out=await asr(m.audio,o);postMessage({type:'text',text:(out&&out.text||'').trim()});}}\n"+
+" catch(err){postMessage({type:'error',msg:String(err&&err.message||err)});}};";
+function vwEnsure(){
+ if(VW_.w)return VW_.w;
+ try{VW_.w=new Worker(URL.createObjectURL(new Blob([VWSRC],{type:'text/javascript'})),{type:'module'});}catch(e){LG('voice','потік Whisper не створено: '+e);return null;}
+ var files={};
+ VW_.w.onmessage=function(e){var m=e.data;
+  if(m.type==='progress'){files[m.file]=[m.loaded,m.total];var a=0,b=0;for(var k in files){a+=files[k][0];b+=files[k][1];}VW_.pct=b?Math.round(a/b*100):0;if(VO.busy||VO.on)vst('Завантаження моделі '+VW_.pct+'% (лише перший раз)');}
+  else if(m.type==='ready'){VW_.ready=true;VW_.loading=false;VW_.dev=m.dev;VW_.model=VOX.model;LG('voice','Whisper готовий ('+m.dev+')');if(VO.busy)vst('Розпізнаю…');}
+  else if(m.type==='text'){LG('voice','розпізнано: '+m.text);voiceResult(m.text);}
+  else if(m.type==='error'){LG('voice','помилка Whisper: '+m.msg);VO.busy=0;vst('Не вдалося розпізнати');setTimeout(function(){voiceClose();},1200);}
+ };
+ return VW_.w;
+}
+function vwPreload(){var w=vwEnsure();if(w&&!VW_.loading&&(!VW_.ready||VW_.model!==VOX.model)){VW_.loading=true;VW_.ready=false;w.postMessage({type:'load',model:VOX.model});}}
+function voiceOpen(){
+ if(VO.on)return;
+ var c=cells();VO.ax=c.cx(KS);VO.ay=DR.top+DR.height/2;VO.on=1;VO.busy=0;VO.tlo=VO.thi=VO.tlv=0;
+ document.documentElement.classList.add('vox');vst('Слухаю…');
+ vwPreload();
+ VA.buf=[];VA.len=0;VA.speech=0;VA.quiet=0;VA.t0=performance.now();VA.stopAt=0;
+ try{
+  if(!VA.ctx){var AC=window.AudioContext||window.webkitAudioContext;VA.ctx=new AC();}
+  if(VA.ctx.state==='suspended')VA.ctx.resume();
+ }catch(e){LG('voice','AudioContext: '+e);}
+ navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}}).then(function(st){
+  if(!VO.on){st.getTracks().forEach(function(tk){tk.stop();});return;}
+  VA.st=st;VA.sr=VA.ctx.sampleRate;VA.src=VA.ctx.createMediaStreamSource(st);
+  VA.an=VA.ctx.createAnalyser();VA.an.fftSize=1024;VA.an.smoothingTimeConstant=.55;VA.fd=new Uint8Array(VA.an.frequencyBinCount);VA.td=new Float32Array(VA.an.fftSize);
+  VA.sp=VA.ctx.createScriptProcessor(4096,1,1);
+  VA.sp.onaudioprocess=function(ev){if(!VO.on||VO.busy)return;var d=ev.inputBuffer.getChannelData(0);VA.buf.push(new Float32Array(d));VA.len+=d.length;};
+  var mute=VA.ctx.createGain();mute.gain.value=0;
+  VA.src.connect(VA.an);VA.src.connect(VA.sp);VA.sp.connect(mute);mute.connect(VA.ctx.destination);
+  LG('voice','мікрофон увімкнено, '+VA.sr+' Гц');
+ }).catch(function(e){LG('voice','мікрофон недоступний: '+e);vst('Немає доступу до мікрофона');setTimeout(function(){voiceClose();tapInput(true);},900);});
+}
+function vaStop(){
+ try{if(VA.sp){VA.sp.disconnect();VA.sp.onaudioprocess=null;}if(VA.src)VA.src.disconnect();}catch(e){}
+ if(VA.st)VA.st.getTracks().forEach(function(tk){tk.stop();});
+ VA.st=null;VA.src=null;VA.sp=null;VA.an=null;
+}
+function voAnalyse(t){
+ if(VO.busy){var k=t/1000;VO.tlo=.18+.12*Math.sin(k*2.2);VO.thi=.25+.2*Math.sin(k*3.7);VO.tlv=.35+.15*Math.sin(k*1.6);return;}
+ if(!VA.an){VO.tlo=.05;VO.thi=.08*(1+Math.sin(t/300));VO.tlv=.1;return;}
+ VA.an.getByteFrequencyData(VA.fd);VA.an.getFloatTimeDomainData(VA.td);
+ var bw=VA.sr/VA.an.fftSize,lo=0,nl=0,hi=0,nh=0,i,f;
+ for(i=1;i<VA.fd.length;i++){f=i*bw;if(f>70&&f<350){lo+=VA.fd[i];nl++;}else if(f>1500&&f<7000){hi+=VA.fd[i];nh++;}}
+ lo=nl?lo/nl/255:0;hi=nh?hi/nh/255:0;
+ var rms=0;for(i=0;i<VA.td.length;i++)rms+=VA.td[i]*VA.td[i];rms=Math.sqrt(rms/VA.td.length);
+ var lv=Math.min(1,rms*9);
+ VO.tlo=Math.min(1,lo*1.8);VO.thi=Math.min(1,hi*3.2);VO.tlv=lv;
+ /* автозупинка: після мовлення 1.3 с тиші; максимум 20 с */
+ var now=performance.now();
+ if(lv>.09){VA.speech=1;VA.quiet=now;}
+ if(VA.speech&&now-VA.quiet>1300)voiceFinish();
+ else if(now-VA.t0>20000)voiceFinish();
+}
+function voiceFinish(){
+ if(!VO.on||VO.busy)return;
+ VO.busy=1;vaStop();
+ if(VA.len<VA.sr*.3){vst('Нічого не почув');setTimeout(function(){voiceClose();},700);return;}
+ var all=new Float32Array(VA.len),o=0;VA.buf.forEach(function(b){all.set(b,o);o+=b.length;});VA.buf=[];
+ var ratio=VA.sr/16000,n=Math.floor(all.length/ratio),a16=new Float32Array(n);
+ for(var i=0;i<n;i++){var x=i*ratio,j=Math.floor(x),fr=x-j;a16[i]=all[j]*(1-fr)+(all[j+1]||0)*fr;}
+ vst(VW_.ready?'Розпізнаю…':'Завантаження моделі '+VW_.pct+'% (лише перший раз)');
+ var w=vwEnsure();if(!w){vst('Розпізнавання недоступне');setTimeout(function(){voiceClose();tapInput(true);},900);return;}
+ w.postMessage({type:'run',audio:a16,lang:VOX.lang,model:VOX.model},[a16.buffer]);
+}
+function voiceResult(text){
+ voiceClose();text=String(text||'').replace(/\[[^\]]*\]|\([^)]*\)|\*[^*]*\*/g,'').replace(/\s+/g,' ').trim();
+ if(!text){toast('Нічого не розпізнано');return;}
+ try{app.activateButton('input');app.submitInput(calcText(text));}catch(err){console.error(err);toast(err.message||'Помилка');}
+}
+function voiceClose(){VO.on=0;VO.busy=0;vaStop();vst('');document.documentElement.classList.remove('vox');}
+document.addEventListener('pointerdown',function(e){
+ if(!VO.on)return;
+ if(e.target===vkbEl){e.preventDefault();e.stopPropagation();voiceClose();setTimeout(function(){tapInput(true);},60);return;}
+ e.preventDefault();e.stopPropagation();
+ var d=Math.hypot(e.clientX-VO.cx,e.clientY-VO.cy);
+ if(d<VO.r*1.25){if(!VO.busy)voiceFinish();}else if(!VO.busy)voiceClose();
+},true);
+
+window.__voDemo=function(on){if(on===false){voiceClose();return;}var c=cells();VO.ax=c.cx(KS);VO.ay=DR.top+DR.height/2;VO.on=1;VO.busy=1;document.documentElement.classList.add("vox");vst("Слухаю…");};

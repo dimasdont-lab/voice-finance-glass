@@ -315,3 +315,8 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 #menu .gbtn{display:block;width:calc(100% - 8px);margin:10px 4px 2px;height:46px;border-radius:23px;font-size:15px;font-weight:650;text-align:center}
 .cw{padding:6px 4px 2px;text-align:center}.cw h3{margin:4px 0 8px;font-size:20px}.cw p{margin:0 4px 14px;color:var(--mu);font-size:14px;line-height:1.4}
 .cwr{display:flex;gap:10px}.cwr .btnw{flex:1;margin-top:0;font-size:15px}
+
+/* голосовий ввід */
+#vst{position:fixed;left:0;right:0;top:calc(47% + min(27vw,112px) + 22px);text-align:center;font-size:15px;font-weight:600;color:rgba(255,255,255,.85);z-index:31;pointer-events:none;opacity:0;transition:opacity .3s;text-shadow:0 1px 8px rgba(0,0,0,.6)}
+#vkb{position:fixed;left:50%;transform:translateX(-50%);top:calc(47% + min(27vw,112px) + 54px);z-index:31;padding:9px 16px;border-radius:20px;font-size:14px;font-weight:600;color:rgba(255,255,255,.8);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);opacity:0;pointer-events:none;transition:opacity .3s}
+html.vox #vst,html.vox #vkb{opacity:1}html.vox #vkb{pointer-events:auto}
