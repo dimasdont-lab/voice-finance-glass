@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-05 03:40 UTC';
+<script>window.__VF_BUILD='2026-10-05 03:55 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -406,6 +406,10 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 
 /* від'єднаний віджет: скло малює шейдер під DOM, тож текст інших віджетів позаду притлумлюємо темною підкладкою (це не скло, лише затемнення) */
 .wfd{background:rgba(8,8,12,.62)!important;border-radius:28px;box-shadow:0 18px 50px rgba(0,0,0,.45)!important}
+
+/* утримання пальця (хвиля, від'єднання віджета) не виділяє текст і не відкриває системне меню; поля вводу виділяються як звичайно */
+html,body,#pages,#dock,#ticker,#sheets,#menu{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
