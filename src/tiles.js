@@ -9,9 +9,12 @@ var FXFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','
 'uniform vec2 u_vp;uniform vec2 u_res;uniform vec4 u_fp[24];uniform vec3 u_fc[24];uniform float u_fn;uniform float u_t;uniform float u_aura;uniform float u_amode;uniform vec3 u_abc;uniform vec3 u_ahsv;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
 /* слід під пальцем у стилі ободка Сірі: яскраве ядро, м'яке світіння навколо, білястий «розпечений» центр */
-'vec3 fgAt(vec2 p){vec3 c=vec3(0.);if(u_fn<.5)return c;for(int i=0;i<24;i++){if(float(i)>=u_fn)break;vec4 f=u_fp[i];vec2 d=p-f.xy;float q=dot(d,d)/(f.z*f.z);if(q<6.){',
-' vec3 fc=u_fc[i];float mg=(fc.r+fc.g+fc.b)/3.;fc=clamp(mg+(fc-mg)*1.35,0.,1.);float core=exp(-q*7.),mid=exp(-q*1.6),far=exp(-sqrt(q)*1.4);',
-' c=max(c,(fc*(core*1.15+mid*.62+far*.2)*1.25+vec3(1.,.86,.94)*core*core*.28)*f.w);}}return c;}',
+/* слід пальця — суцільна лінія: світіння від відрізків між сусідніми точками (радіус, сила й колір інтерполюються); w<0 — початок нового штриха */
+'vec3 fgAt(vec2 p){vec3 c=vec3(0.);if(u_fn<.5)return c;vec4 pa=u_fp[0];vec3 ca=u_fc[0];for(int i=0;i<24;i++){if(float(i)>=u_fn)break;vec4 f=u_fp[i];vec3 fc0=u_fc[i];',
+' vec4 A=(i==0||f.w<0.)?f:pa;vec3 cA=(i==0||f.w<0.)?fc0:ca;pa=f;ca=fc0;vec2 ab=f.xy-A.xy;float h=clamp(dot(p-A.xy,ab)/max(dot(ab,ab),1e-4),0.,1.);',
+' float r=mix(A.z,f.z,h),w=mix(abs(A.w),abs(f.w),h);vec2 d=p-(A.xy+ab*h);float q=dot(d,d)/(r*r);if(q<5.){',
+' vec3 fc=mix(cA,fc0,h);float mg=(fc.r+fc.g+fc.b)/3.;fc=clamp(mg+(fc-mg)*1.35,0.,1.);float core=exp(-q*7.),mid=exp(-q*1.6),far=exp(-sqrt(q)*1.4);',
+' c=max(c,(fc*(core*1.15+mid*.62+far*.2)*1.25+vec3(1.,.86,.94)*core*core*.28)*w*(1.-smoothstep(2.5,5.,q)));}}return c;}',
 /* палітра ободка: середнє між першою (м'якшою) і «як у Сірі» */
 'vec3 auraPal(float t){float f=fract(t)*4.;vec3 a=vec3(1.,.21,.51),b=vec3(.6,.26,1.),c=vec3(.2,.49,1.),d=vec3(1.,.55,.19);',
 ' vec3 c0=mix(a,b,smoothstep(0.,1.,clamp(f,0.,1.))),c1=mix(b,c,smoothstep(0.,1.,clamp(f-1.,0.,1.))),c2=mix(c,d,smoothstep(0.,1.,clamp(f-2.,0.,1.))),c3=mix(d,a,smoothstep(0.,1.,clamp(f-3.,0.,1.)));',

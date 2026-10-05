@@ -113,6 +113,9 @@ function catItems(){return app.finance.getState().categories.map(function(c){ret
 function accItems(){return[{v:'',l:'Без прив’язки'}].concat(fin.activeAccounts().map(function(a){return{v:a.id,l:(a.displayName||a.bankName)+' · '+a.currency};}));}
 var CURITEMS=CURS.map(function(c){return{v:c,l:c};});
 
+/* налаштування: заголовок розділу і повзунок (підпис зверху, повзунок на всю ширину під ним) */
+function SEC(t){return'<div class="sec2">'+esc(t)+'</div>';}
+function RNG(kind,k,label,max){var o=kind==='cg'?CG:FGS;return'<div class="fr rng"><label>'+esc(label)+'</label><input type="range" min="0" max="'+max+'" data-'+kind+'="'+k+'" value="'+o[k]+'"></div>';}
 function sheetHtml(kind,ov){
  var ix=app.getState().interaction,f=ix.form;
  if(kind==='transaction'&&f){var v=f.values;
@@ -154,25 +157,29 @@ function sheetHtml(kind,ov){
  if(kind==='settings'){
   var g=fin.getState().goal;
   return'<div class="sh"><span style="min-width:70px"></span><h3>Налаштування</h3><button class="ok" data-s="cancel">Закрити</button></div>'+
-   '<div class="fr"><label>Місячний ліміт, zł</label><input data-g="goal" inputmode="decimal" value="'+esc(g)+'" autocomplete="off"></div>'+
-   '<button class="btnw" data-s="goal">Зберегти ліміт</button>'+
-   '<button class="btnw" data-s="markets">Валюти в бігучій строці</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button>'+
-   '<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="area">'+areaLabel()+'</button><button class="btnw" data-s="aura">'+auraLabel()+'</button><button class="btnw" data-s="auramode">'+auraModeLabel()+'</button>'+
-   '<div class="mkinfo" style="padding:12px 0 2px">Кольорове скло</div>'+
-   [['is','Значки: насиченість'],['ib','Значки: яскравість'],['bal','Віджет балансу: сила кольору'],['gt','Скло барів, цифр і графіків: сила кольору'],['gsat','Скло барів, цифр і графіків: насиченість'],['gbr','Скло барів, цифр і графіків: яскравість']].map(function(q){return'<div class="fr"><label>'+q[1]+'</label><input type="range" min="0" max="100" data-cg="'+q[0]+'" value="'+CG[q[0]]+'"></div>';}).join('')+[['a','Ободок екрана: інтенсивність (прозорість)',200],['ah','Ободок: відтінок (зсув, °)',360],['as','Ободок: насиченість',200],['av','Ободок: яскравість',200],['i','Слід пальця: інтенсивність',200],['w','Слід пальця: ширина',100],['l','Слід пальця: тривалість',100]].map(function(q){return'<div class="fr"><label>'+q[1]+'</label><input type="range" min="0" max="'+q[2]+'" data-fg="'+q[0]+'" value="'+FGS[q[0]]+'"></div>';}).join('')+'<button class="btnw" data-s="cgreset">Скинути кольори скла</button><div class="mkinfo" style="padding:14px 0 4px">Синхронізація між пристроями (шифрована)</div>'+
+   SEC('Бюджет і рахунки')+'<div class="fr"><label>Місячний ліміт, zł</label><input data-g="goal" inputmode="decimal" value="'+esc(g)+'" autocomplete="off"></div>'+
+   '<button class="btnw" data-s="goal">Зберегти ліміт</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button><button class="btnw" data-s="markets">Валюти в бігучій строці</button>'+
+   SEC('Графіки')+'<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="area">'+areaLabel()+'</button>'+
+   SEC('Скло віджетів')+RNG('cg','is','Значки: насиченість',100)+RNG('cg','ib','Значки: яскравість',100)+RNG('cg','bal','Віджет балансу: сила кольору',100)+
+   RNG('cg','gt','Бари, цифри й графіки: сила кольору',100)+RNG('cg','gsat','Бари, цифри й графіки: насиченість',100)+RNG('cg','gbr','Бари, цифри й графіки: яскравість',100)+
+   SEC('Ободок екрана')+'<button class="btnw" data-s="aura">'+auraLabel()+'</button><button class="btnw" data-s="auramode">'+auraModeLabel()+'</button>'+
+   RNG('fg','a','Інтенсивність (прозорість)',200)+RNG('fg','ah','Відтінок (зсув, °)',360)+RNG('fg','as','Насиченість',200)+RNG('fg','av','Яскравість',200)+
+   SEC('Слід пальця')+RNG('fg','i','Інтенсивність',200)+RNG('fg','w','Ширина',100)+RNG('fg','l','Тривалість',100)+
+   '<button class="btnw" data-s="cgreset">Скинути кольори скла, ободка й сліду</button>'+
+   SEC('Синхронізація між пристроями (шифрована)')+
    '<div class="fr"><label>Ключ синхронізації (однаковий на всіх пристроях)</label><input data-sy="key" autocomplete="off" autocapitalize="characters" spellcheck="false" value="'+esc(syGetKey())+'" placeholder="XXXX-XXXX-XXXX-XXXX"></div>'+
    '<button class="btnw" data-s="syncgen">Створити новий ключ</button><button class="btnw" data-s="syncexp">Зашифрувати й поділитися даними</button>'+
    '<div class="fr"><label>Код з іншого пристрою</label><textarea data-sy="code" rows="3" autocomplete="off" spellcheck="false" placeholder="VFSYNC1...."></textarea></div>'+
    '<button class="btnw" data-s="syncmerge">Об’єднати з кодом (додати нове)</button><button class="btnw" data-s="syncreplace">Замінити мої дані даними з коду</button>'+
-   '<div class="mkinfo" style="padding:12px 0 4px">Автосинхронізація в реальному часі (приватний GitHub Gist)</div>'+
+   SEC('Автосинхронізація в реальному часі (приватний GitHub Gist)')+
    '<div class="fr"><label>GitHub-токен (право gist)</label><input data-sy="tok" type="password" autocomplete="off" value="'+esc(SYN.tok)+'"></div>'+
    '<div class="fr"><label>ID gist (на першому пристрої порожньо)</label><input data-sy="gid" autocomplete="off" spellcheck="false" value="'+esc(SYN.id)+'"></div>'+
    '<button class="btnw" data-s="synon">'+(SYN.on?'Вимкнути автосинхронізацію':'Увімкнути автосинхронізацію')+'</button><div class="mkinfo" data-sy-st style="padding:4px 0 8px">'+esc(synSt||(SYN.on?'Увімкнено':'Вимкнено'))+'</div>'+
    '<div class="mkinfo" style="padding:4px 0 8px">Дані шифруються на пристрої (AES-256-GCM, ключ із вашого ключа); код можна безпечно надіслати собі в Нотатки чи месенджер. Видалення при об’єднанні не переноситься.</div>'+
-   '<button class="btnw" data-s="csv">Експорт операцій у CSV</button><button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
+   SEC('Дані')+'<button class="btnw" data-s="csv">Експорт операцій у CSV</button><button class="btnw" data-s="export">Експорт JSON</button><button class="btnw" data-s="seed">Додати тестові дані для перегляду</button><button class="btnw dng" data-s="clear">Очистити операції та борги</button><div class="err" data-err></div>'+
+   SEC('Діагностика')+'<button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
    '<div class="mkinfo" style="padding-top:10px">Збірка: '+esc(window.__VF_BUILD||'?')+(navigator.standalone&&window.__vfFirstH&&screen.height-window.__vfFirstH>=40?'<br><span style="color:var(--ac)">Цей запуск почався з вікном '+window.__vfFirstH+' замість '+screen.height+': iOS відкрив застосунок з геометрією старої іконки. Видаліть іконку з робочого столу, оновіть сторінку в Safari й додайте іконку знову.</span>':'')+'</div>'+
-   '<button class="btnw" data-s="export">Експорт JSON</button><button class="btnw" data-s="seed">Додати тестові дані для перегляду</button>'+
-   '<button class="btnw dng" data-s="clear">Очистити операції та борги</button><div class="err" data-err></div>';
+   '';
  }
  if(kind==='markets'){
   var msel=MK.selection,mcat=VF.marketCatalog(),mby={};mcat.forEach(function(m){mby[m.id]=m;});
@@ -420,9 +427,9 @@ function gMove(x,y,t){
  if(!TG.drag){if(Math.hypot(dx,dy)<7)return;TG.drag=1;TG.moved=true;P.dragging=1;}
  var dt=Math.max(1,t-TG.tt);TG.vy=.6*TG.vy+.4*(y-TG.ty)/dt;TG.ty=y;TG.tt=t;
  var atTop=!TG.sc||TG.sc.scrollTop<=0&&TG.top0<=0,tg=P.tgt,pull=dy>14&&atTop&&dy>=Math.abs(dx)*1.6;   /* намір закрити: явно вниз, не по діагоналі, після невеликої «мертвої зони» */
- var sk=P===sheetP?.5:1,X=rb(dx)*sk,Y=pull?dy*.8:rb(dy)*sk;
- tg.x=pull?dx*.15:X;tg.y=Y;
- var ex=Math.min(14,Math.abs(tg.x)*.5),ey=Math.min(16,Math.abs(tg.y)*(pull?.18:.5));
+ var sh=P===sheetP,sk=sh?.22:1,X=rb(dx)*sk,Y=pull?dy*(sh?.42:.8):rb(dy)*sk;   /* вікно налаштувань іде за пальцем ледь-ледь */
+ tg.x=pull?dx*(sh?.06:.15):X;tg.y=Y;
+ var ek=sh?.4:1,ex=Math.min(14*ek,Math.abs(tg.x)*.5*ek),ey=Math.min(16*ek,Math.abs(tg.y)*(pull?.18:.5)*ek);
  tg.sx=(ex-.5*ey)/Math.max(60,P.tw);tg.sy=(ey-.5*ex)/Math.max(60,P.th);
  P.pull=pull;
 }
@@ -777,19 +784,21 @@ function kickFg(){if(!FGraf)FGraf=requestAnimationFrame(fgStep);}
 function fgStep(){
  FGraf=0;var now=performance.now(),LIFE=500+FGS.l*20,IN=FGS.i/100,BR=30+FGS.w*.75;
  FGp=FGp.filter(function(p){return now-p.t<LIFE;});
- /* шлях → рівномірні точки (не більше 24), кожна — м'яка пляма в шейдері */
+ /* шлях → рівномірні вершини (не більше 24), шейдер з'єднує їх у суцільну лінію */
  var pts=[],i,len=0;for(i=1;i<FGp.length;i++)if(!FGp[i].b)len+=Math.hypot(FGp[i].x-FGp[i-1].x,FGp[i].y-FGp[i-1].y);
- var step=Math.max(BR*.32,len/22),acc=step;
+ var step=Math.max(BR*.45,len/22),acc=step;
  for(i=0;i<FGp.length;i++){var b=FGp[i],ageB=1-(now-b.t)/LIFE;
   if(i>0&&!b.b){var a=FGp[i-1],ageA=1-(now-a.t)/LIFE,d=Math.hypot(b.x-a.x,b.y-a.y),u=0;
    while(acc<=d){u=acc/d;pts.push([a.x+(b.x-a.x)*u,a.y+(b.y-a.y)*u,ageA+(ageB-ageA)*u,b.v,a.t+(b.t-a.t)*u]);acc+=step;}acc-=d;}
-  else{pts.push([b.x,b.y,ageB,b.v,b.t]);acc=step;}}
+  else{pts.push([b.x,b.y,ageB,b.v,b.t,1]);acc=step;}}   /* 1 — початок штриха */
  if(FGp.length){var L=FGp[FGp.length-1];pts.push([L.x,L.y,1-(now-L.t)/LIFE,L.v,L.t]);}
- if(pts.length>24)pts=pts.slice(pts.length-24);
+ if(pts.length>24){pts=pts.slice(pts.length-24);pts[0][5]=1;}
+ /* просте згладжування: ковзне середнє [¼ ½ ¼] у межах штриха, кінці лишаються на місці */
+ for(var sm=0;sm<2;sm++){var sp=pts.map(function(q){return q.slice();});for(i=1;i<pts.length-1;i++){if(pts[i][5]||pts[i+1][5])continue;sp[i][0]=(pts[i-1][0]+2*pts[i][0]+pts[i+1][0])/4;sp[i][1]=(pts[i-1][1]+2*pts[i][1]+pts[i+1][1])/4;}pts=sp;}
  var n=0,x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
- for(i=0;i<pts.length;i++){var q=pts[i],al=Math.pow(Math.max(0,q[2]),1.4),r=BR*(1-Math.min(1,q[3]/3)*.3)*(.55+.45*q[2]);if(al<.01||r<1)continue;
-  var pc=fgPal(q[4]/3800+q[0]/900);FGu[n*4]=q[0];FGu[n*4+1]=q[1];FGu[n*4+2]=r*.55;FGu[n*4+3]=al*IN*1.4;FGcu[n*3]=pc[0]/255*.78;FGcu[n*3+1]=pc[1]/255*.78;FGcu[n*3+2]=pc[2]/255*.78;n++;
-  x0=Math.min(x0,q[0]-r*1.4);y0=Math.min(y0,q[1]-r*1.4);x1=Math.max(x1,q[0]+r*1.4);y1=Math.max(y1,q[1]+r*1.4);}   /* світіння сягає √6·0.55r ≈ 1.35r */
+ for(i=0;i<pts.length;i++){var q=pts[i],al=Math.pow(Math.max(0,q[2]),1.4),r=BR*(1-Math.min(1,q[3]/3)*.3)*(.55+.45*q[2]);if(al<.01||r<1){if(i+1<pts.length)pts[i+1][5]=1;continue;}
+  var pc=fgPal(q[4]/3800+q[0]/900);FGu[n*4]=q[0];FGu[n*4+1]=q[1];FGu[n*4+2]=r*.55;FGu[n*4+3]=al*IN*1.4*(q[5]||!n?-1:1);FGcu[n*3]=pc[0]/255*.78;FGcu[n*3+1]=pc[1]/255*.78;FGcu[n*3+2]=pc[2]/255*.78;n++;
+  x0=Math.min(x0,q[0]-r*1.5);y0=Math.min(y0,q[1]-r*1.5);x1=Math.max(x1,q[0]+r*1.5);y1=Math.max(y1,q[1]+r*1.5);}   /* світіння сягає √5·0.55r ≈ 1.23r, з запасом */
  FGn=n;FGbb=n?[x0,y0,x1,y1]:null;
  FGact=n>0?1:0;FGgen++;dirty=true;
  if(FGp.length||FGdown)FGraf=requestAnimationFrame(fgStep);else{FGgen++;}
