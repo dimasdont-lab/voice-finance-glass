@@ -809,7 +809,7 @@ function fgStep(){
  FGact=n>0?1:0;FGgen++;dirty=true;
  if(FGp.length||FGdown)FGraf=requestAnimationFrame(fgStep);else{FGgen++;}
 }
-var WK={x:0,y:0,t:0};function wakeAt(x,y){if(BH.ph)return;var now=performance.now(),d=Math.hypot(x-WK.x,y-WK.y);if(d<26&&now-WK.t<140)return;var v=d/Math.max(8,now-WK.t);WK.x=x;WK.y=y;WK.t=now;rippleAdd(x,y,Math.max(.3,Math.min(1.15,.3+v*.45)));}
+var WK={x:0,y:0,t:0};function wakeAt(x,y){if(BH.ph)return;var now=performance.now(),d=Math.hypot(x-WK.x,y-WK.y);if(d<44&&now-WK.t<200)return;var v=d/Math.max(8,now-WK.t);WK.x=x;WK.y=y;WK.t=now;rippleAdd(x,y,Math.max(.22,Math.min(.8,.22+v*.3)));}
 document.addEventListener('pointerdown',function(e){if(!BH.ph&&FGS.tw){rippleAdd(e.clientX,e.clientY,1);WK.x=e.clientX;WK.y=e.clientY;WK.t=performance.now();}if(e.target.closest&&e.target.closest('input,textarea'))return;FGdown=true;if(!FGS.tg)return;fgAdd(e.clientX,e.clientY,true);},true);
 document.addEventListener('pointermove',function(e){if(!(FGdown||e.buttons))return;if(FGS.tw)wakeAt(e.clientX,e.clientY);if(!FGS.tg)return;var ev=e.getCoalescedEvents?e.getCoalescedEvents():null;if(ev&&ev.length){ev.forEach(function(q){fgAdd(q.clientX,q.clientY,false);});}else fgAdd(e.clientX,e.clientY,false);},true);
 ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){FGdown=false;kickFg();},true);});
