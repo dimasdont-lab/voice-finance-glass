@@ -150,6 +150,7 @@ input{font:inherit;color:inherit}
 #boot.lit .blogo{box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 36px rgba(255,70,80,.4);transition:box-shadow .7s ease-out}
 #boot .blogo img{display:block;width:100%;height:100%}
 #boot .bbar{display:none}
+#boot .blogo,#boot .bglow,#boot .brays{opacity:0!important}
 /* смуга біля краю скла: вміст там малює шейдер із заломленням, тому живий DOM біля краю прозорий */
 .rim{-webkit-mask-image:linear-gradient(to right,transparent 14px,#000 30px,#000 calc(100% - 30px),transparent calc(100% - 14px)),linear-gradient(to bottom,transparent 14px,#000 30px,#000 calc(100% - 30px),transparent calc(100% - 14px));-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent 14px,#000 30px,#000 calc(100% - 30px),transparent calc(100% - 14px)),linear-gradient(to bottom,transparent 14px,#000 30px,#000 calc(100% - 30px),transparent calc(100% - 14px));mask-composite:intersect}
 #boot.gx .brays,#boot.gx .bglow{display:none!important}
@@ -347,6 +348,7 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 /* від'єднаний віджет лишається повністю скляним; віджети під ним притлумлюються (wfUnder) */
 .inner.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:12px}
 .inner.g4>div{grid-column:1/-1;min-width:0}
+#wfadd{position:fixed;z-index:37;width:50px;height:50px;border-radius:25px;display:none;align-items:center;justify-content:center;padding:0;background:none;border:0}
 #wfh{position:fixed;z-index:37;width:36px;height:36px;display:none;align-items:center;justify-content:center;touch-action:none;color:#fff;-webkit-tap-highlight-color:transparent}
 
 /* утримання пальця (хвиля, від'єднання віджета) не виділяє текст і не відкриває системне меню; поля вводу виділяються як звичайно */
@@ -467,3 +469,15 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 .cat .b{height:7px!important;border-radius:4px!important}.cat .b i{border-radius:4px!important}
 .wpb .bar{height:7px!important}
 .wb .bar.wv{max-width:9px!important;border-radius:4px!important}
+/* папка: тривимірна «стопка» плиток */
+.fbx{display:block;width:100%;text-align:left;color:inherit}
+.f3d{position:relative;height:44px;width:60px;margin:0 0 6px;perspective:220px}
+.f3d i{position:absolute;left:0;top:0;width:44px;height:34px;border-radius:9px;border:1px solid rgba(255,255,255,.28);background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(255,255,255,.05));transform-origin:50% 100%}
+.f3d i:nth-child(1){transform:translate3d(14px,-2px,-40px) rotateY(-18deg) rotateX(18deg);opacity:.5}
+.f3d i:nth-child(2){transform:translate3d(7px,3px,-20px) rotateY(-18deg) rotateX(18deg);opacity:.75}
+.f3d i:nth-child(3){transform:translate3d(0,8px,0) rotateY(-18deg) rotateX(18deg)}
+.fnm{font-size:17px;font-weight:650}.fct{font-size:12.5px;color:var(--mu);margin-top:2px}
+.inner.g4{grid-template-columns:repeat(var(--gcn,4),minmax(0,1fr))}
+.page[data-p=home] .inner.g4,.page[data-p=insights] .inner.g4,.page[data-p=debts] .inner.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@container (max-width:150px){.f3d{transform:scale(.7);transform-origin:0 0;height:32px;margin-bottom:2px}.fct{display:none}.fnm{font-size:13px}}
+.inner.g4>.tile.cmp .f3d,.inner.g4>.tile.cmp .fct{display:none}

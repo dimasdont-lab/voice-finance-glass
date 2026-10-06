@@ -865,7 +865,7 @@ root.addEventListener('pointerdown',function(){if(mode===1&&document.activeEleme
 var TAB_IDS=['analytics','debts','home','more'];
 var TAB_ROOT=['insights','debts','home'];
 function tabAtRoot(i){try{return i>2||nav.getState().screen===TAB_ROOT[i];}catch(e){return true;}}   /* з будь-якої підсторінки повторний тап по вкладці повертає на її початкову сторінку */
-function actTab(i){try{app.activateButton(TAB_IDS[i]);}catch(err){console.error(err);}}
+function actTab(i){if(FLD.id)closeFolder();try{app.activateButton(TAB_IDS[i]);}catch(err){console.error(err);}}
 dock.addEventListener('pointerdown',function(e){
  e.preventDefault();if(mode===1)return;
  kbClick=false;
@@ -873,7 +873,7 @@ dock.addEventListener('pointerdown',function(e){
  clearTimeout(DKP.lp);DKP.sx=e.clientX;DKP.sy=e.clientY;DKP.pid=e.pointerId;DKP.lp=setTimeout(dkLift,360);
  if(grab){drag={id:e.pointerId,off:x-px,start:x};dragTarget=x;try{btnsBox.setPointerCapture(e.pointerId);}catch(_){}}
  else if(sl===KS){kbTap={id:e.pointerId,x:e.clientX,y:e.clientY};kbClick=true;}
- else{var i=sl>KS?sl-1:sl;if(i===dockSel&&i!==3&&tabAtRoot(i))return;dir=(c.cx(slotOf[i])-x)>=0?1:-1;actTab(i);}
+ else{var i=sl>KS?sl-1:sl;if(i===dockSel&&i!==3&&tabAtRoot(i)&&!FLD.id)return;dir=(c.cx(slotOf[i])-x)>=0?1:-1;actTab(i);}
 });
 dock.addEventListener('pointermove',function(e){
  if(DKP.lp&&Math.hypot(e.clientX-DKP.sx,e.clientY-DKP.sy)>16){clearTimeout(DKP.lp);DKP.lp=0;}
@@ -1039,7 +1039,7 @@ function applyRec(el,o){
  el.style.filter='blur('+(Math.min(1,o.v)*BLS).toFixed(1)+'px) brightness('+(1-RD*o.v).toFixed(3)+')';
 }
 /* ---- екран завантаження ---- */
-var boot={on:1,hold:1,phase:0,t0:0,t1:0,t2:0,p:0,cx:0,cy:0,rmax:0,r:0,r0:0,DUR:(/[?&]slowboot/.test(location.search)?14:2.4),MIN:1.3,warm:0,
+var boot={on:1,hold:1,phase:0,t0:0,t1:0,t2:0,p:0,cx:0,cy:0,rmax:0,r:0,r0:0,DUR:(/[?&]slowboot/.test(location.search)?14:2.4),MIN:.5,warm:0,
  el:document.getElementById('boot'),bar:document.querySelector('#boot .bbar i'),wrap:document.querySelector('#boot .bwrap'),logo:document.querySelector('#boot .blogo'),ring:document.querySelector('#boot .bring')};
 function rrPts(cx,cy,hw,hh,r,n){
  var p=[],k,i,a,cs=[[cx+hw-r,cy-hh+r,-90],[cx+hw-r,cy+hh-r,0],[cx-hw+r,cy+hh-r,90],[cx-hw+r,cy-hh+r,180]];
@@ -1062,7 +1062,7 @@ function bfxS(a,b,x){var t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t
 function bfxEO(x){x=Math.max(0,Math.min(1,x));return 1-Math.pow(1-x,3);}
 function bfxIO(x){x=Math.max(0,Math.min(1,x));return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;}
 function bfxInit(){
- if(BFX.init)return;BFX.init=1;
+ if(BFX.init)return;BFX.init=1;return;   /* заставку з вибухами вимкнено: лише чорний екран і розкриття скла з точки */
  var off0=false;try{off0=localStorage.getItem('vf-bfx')==='0';}catch(e){}
  if(BFX.red||off0||/[?&]nobfx/.test(location.search))return;
  var img=BFX.icon=bfxIcon();   /* логотип — намальована користувачем картинка, вбудована в збірку */
@@ -1214,7 +1214,7 @@ function bootStep(t,dt){
   var ws=boot.wrap.style;ws.setProperty('--gs',boot.gs.toFixed(3));ws.setProperty('--rs',(boot.gs*1.1).toFixed(3));ws.setProperty('--ro',Math.min(1,boot.gs*1.6).toFixed(3));ws.setProperty('--rr',(t*.012%360).toFixed(1)+'deg');
   if(el>.25&&!boot.lit){boot.lit=1;boot.el.classList.add('lit');}
   if(boot.phase===0&&boot.p>=1){boot.phase=1;boot.t1=t;LG('boot','фаза 1: логотип зник, '+Math.round(el*1000)+' мс від старту анімації');if(BFX.on){if(BFX.skip)boot.t1=t-(BFX.C*BFX.k-.3)*1000;}else boot.wrap.classList.add('p1');boot.warm=1;dirty=true;}
-  else if(boot.phase===1&&!BFX.frz&&t-boot.t1>(BFX.on?BFX.C*BFX.k*1000:330)){
+  else if(boot.phase===1&&!BFX.frz&&t-boot.t1>(BFX.on?BFX.C*BFX.k*1000:60)){
    boot.phase=2;boot.t2=t;boot.wrap.classList.add('p2');
    var r=frect(boot.logo);boot.cx=r.left+r.width/2;boot.cy=r.top+r.height/2;introStart(t);LG('boot','фаза 2: розширення з '+Math.round(boot.cx)+','+Math.round(boot.cy)+' (SO '+SO+')');
    cv.style.opacity=1;dirty=true;
@@ -1345,6 +1345,7 @@ function vsStep(dt){
   var el=o.el,mx=el.scrollHeight-el.clientHeight,y=el.scrollTop+o.v*dt;if(y<=0||y>=mx){o.ovv=-o.v*.18;o.ov=0;y=Math.max(0,Math.min(mx,y));o.v=0;}
   el.scrollTop=y;o.v*=Math.exp(-2.2*dt);dirty=true;}
 }
+window.__st=function(){return{full:full.slice(),busy:busy,bp:boot.p,ph:boot.phase,lm:lastMotion,sel:sel,ca:ca,tgOK:tgOK,B2:B[2]&&B[2].length,T2:!!T[2]};};
 function frame(t){
  requestAnimationFrame(frame);var pf0=performance.now();pfFrame(t);
  vpSample(t);

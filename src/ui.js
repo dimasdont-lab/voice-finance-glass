@@ -76,7 +76,8 @@ root.addEventListener('click',function(e){
  var t=e.target.closest('[data-act]');if(!t)return;
  var a=t.dataset.act,id=t.dataset.id,v=t.dataset.v;
  try{
-  if(a==='back')app.back();
+  if(a==='back'){if(FLD.id)closeFolder();else app.back();}
+  else if(a==='fopen')openFolder(id);
   else if(a==='tx')app.editTransaction(id);
   else if(a==='balance')nav.navigate('balanceAnalysis');
   else if(a==='wnew')app.openTransaction();
@@ -388,7 +389,7 @@ function syncUI(){
  if(n.screen==='marketDetail')mkpEnter(n.params.marketId);
  var pi=PAGE_OF[n.screen];
  if(n.screen!==lastScreen){lastScreen=n.screen;if(pi>2)sy[pi]=0;}
- if(pi!==undefined)sel=pi;
+ if(FLD.id&&n.screen!==FLD.scr){FLD.id=null;}if(FLD.id)sel=9;else if(pi!==undefined)sel=pi;
  var more=n.overlays.some(function(o){return o.kind==='more';}),tab=more?3:(n.group==='insights'?0:n.group==='debts'?1:2);
  if(tab!==dockSel){dockSel=tab;dirty=true;}
  if(!drag)setOn(dockSel);
@@ -485,7 +486,7 @@ window.__dbg=function(){return{ms:menu.s,mo:menu.on,ss:sheetP.s,so:sheetP.on,rp:
 /* ---------- свайп від лівого краю праворуч або від правого краю ліворуч — «назад».
    Працює лише там, де є куди повертатись (вікно, меню або детальна сторінка); на вкладках дока свайп перегортає вкладки ---------- */
 var EB={on:0,x0:0,y0:0,t0:0,dx:0,P:null,side:1};
-function canBack(){var st=nav.getState();return st.overlays.length>0||PAGE_OF[st.screen]>2||menu.on;}
+function canBack(){var st=nav.getState();return st.overlays.length>0||PAGE_OF[st.screen]>2||menu.on||!!FLD.id;}
 document.addEventListener('touchstart',function(e){
  var t=e.touches[0];if(e.touches.length!==1||mode===1){EB.on=0;return;}
  var side=t.clientX<=26?1:t.clientX>=VW-26?-1:0;
@@ -503,7 +504,7 @@ function edgeEnd(e){
  var sd=EB.dx*EB.side,dt=Math.max(1,e.timeStamp-EB.t0);
  if(EB.P)EB.P.tgt.x=0;
  if(sd>70||(sd>34&&sd/dt>.55)){TG.moved=true;LG('swipe','назад від '+(EB.side>0?'лівого':'правого')+' краю');
-  try{if(menu.on&&menu.kind==='dd')closeMenu();else app.back();}catch(err){console.error(err);}
+  try{if(menu.on&&menu.kind==='dd')closeMenu();else if(FLD.id)closeFolder();else app.back();}catch(err){console.error(err);}
  }
 }
 document.addEventListener('touchend',edgeEnd);document.addEventListener('touchcancel',function(){if(EB.on&&EB.P)EB.P.tgt.x=0;EB.on=0;});
@@ -972,16 +973,16 @@ var WFL=[],WFraf=0,WFlast=0,WFcur=null;
 var WL=(function(){try{return JSON.parse(localStorage.getItem('vf-widgets')||'{}')||{};}catch(e){return{};}})();
 function wlSave(){try{localStorage.setItem('vf-widgets',JSON.stringify(WL));}catch(e){}}
 function wlKey(el){var hh=el.querySelector('h2,.lbl,.mh,.big'),tx=((hh&&hh.textContent)||'').trim().slice(0,28)||el.className;return[].indexOf.call(inn,el.parentNode)+':'+tx;}
-function wuUnit(){return Math.max(60,(VW-68)/4);}   /* висота й ширина одноколонкового віджета: мінімальна висота всіх віджетів */
-function wlApply(i){var host=inn[i];if(!host||i>2||!WL)return;document.documentElement.style.setProperty('--wu',wuUnit().toFixed(1)+'px');var ch=host.children,chg=false,k;
+function wuUnit(n){n=n||4;return Math.max(24,(VW-32-(n-1)*12)/n);}   /* висота й ширина одноколонкового віджета: мінімальна висота всіх віджетів */
+function wlApply(i){var host=inn[i];if(!host||(i>2&&i!==9)||!WL)return;var NC=i===9?FLD.cols:4,WU=wuUnit(NC);host._wu=WU;host.style.setProperty('--wu',WU.toFixed(1)+'px');var ch=host.children,chg=false,k;
  for(k=0;k<ch.length;k++){var el=ch[k],tile=el.classList.contains('tile'),dd=tile?WL[wlKey(el)]:null;
-  var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws1')?1:el.classList.contains('ws2')?2:4),gc=ds<4?'span '+ds:'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
-  if(el._gc!==gc||el._mh!==mh||el._od!==od){el._gc=gc;el._mh=mh;el._od=od;el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=wuUnit()*1.35));el.style.gridColumn=gc;if(el.classList.contains('acw'))el.style.aspectRatio=ds===1?'1':'auto';el.style.minHeight=mh;el.style.order=od;chg=true;}}
+  var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws1')?1:el.classList.contains('ws2')?2:4),gc=ds<4||NC!==4?'span '+Math.max(1,Math.min(NC,Math.round(ds*NC/4))):'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
+  if(el._gc!==gc||el._mh!==mh||el._od!==od||el._nc!==NC){el._nc=NC;el._gc=gc;el._mh=mh;el._od=od;el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=WU*1.35)||(NC>5&&!el.classList.contains('acw')));el.style.gridColumn=gc;if(el.classList.contains('acw'))el.style.aspectRatio=ds===1?'1':'auto';el.style.minHeight=mh;el.style.order=od;chg=true;}}
  if(chg){needSync[i]=1;tlStale[i]=1;dirty=true;}try{wgFill();}catch(e){}}
 for(var wli=0;wli<3;wli++)wlApply(wli);
 /* м'яке опускання віджета в сітку: стає на місце найближчого, решта розсуваються */
 function wfSlot(w){
- var el=w.el,host=el.parentNode,pi=[].indexOf.call(inn,host);if(pi<0||pi>2)return false;
+ var el=w.el,host=el.parentNode,pi=[].indexOf.call(inn,host);if(pi<0||(pi>2&&pi!==9))return false;
  var tiles=[].filter.call(host.children,function(x){return x.classList.contains('tile');}),r0=el.getBoundingClientRect(),cx=r0.left+r0.width/2,cy=r0.top+r0.height/2;
  var best=null,bd=1e9;tiles.forEach(function(x){if(x===el)return;var r=x.getBoundingClientRect(),dd=Math.hypot(r.left+r.width/2-cx,r.top+r.height/2-cy);if(dd<bd){bd=dd;best=x;}});
  if(!best)return false;
@@ -1001,15 +1002,18 @@ function wrhEnsure(){
  d.addEventListener('pointerdown',function(e){var w=WFcur;if(!w)return;e.stopPropagation();e.preventDefault();try{d.setPointerCapture(e.pointerId);}catch(_){}
   var host=w.el.parentNode,cs=getComputedStyle(host);WRZ={w:w,id:e.pointerId,x0:e.clientX,y0:e.clientY,w0:w.el.offsetWidth,h0:w.el.offsetHeight,iw:host.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),pi:[].indexOf.call(inn,host)};});
  d.addEventListener('pointermove',function(e){var Z=WRZ;if(!Z||e.pointerId!==Z.id)return;e.preventDefault();
-  var cell=(Z.iw-36)/4,span=Math.max(1,Math.min(4,Math.round((Z.w0+e.clientX-Z.x0+12)/(cell+12)))),h=Math.max(wuUnit(),Math.round(Z.h0+e.clientY-Z.y0)),key=wlKey(Z.w.el);
-  WL[key]=Object.assign(WL[key]||{},{s:span,h:h});wlApply(Z.pi);wfKick();});
+  var NC=Z.pi===9?FLD.cols:4,cell=(Z.iw-(NC-1)*12)/NC,span=Math.max(1,Math.min(NC,Math.round((Z.w0+e.clientX-Z.x0+12)/(cell+12)))),h=Math.max(wuUnit(NC),Math.round(Z.h0+e.clientY-Z.y0)),key=wlKey(Z.w.el);
+  WL[key]=Object.assign(WL[key]||{},{s:Math.max(1,Math.min(4,Math.round(span*4/NC))),h:h});wlApply(Z.pi);wfKick();});
  ['pointerup','pointercancel'].forEach(function(n){d.addEventListener(n,function(e){if(!WRZ||e.pointerId!==WRZ.id)return;WRZ=null;wlSave();LG('egg','розмір віджета збережено');});});
  return d;
 }
+var WAD=null;
+function wadEnsure(){if(WAD)return WAD;var d=document.createElement('button');d.id='wfadd';d.setAttribute('aria-label','Додати');d.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';document.body.appendChild(d);WAD=d;d.addEventListener('click',function(e){e.stopPropagation();wgAddMenu(d);});d.addEventListener('pointerdown',function(e){e.stopPropagation();});return d;}
 function wrhPlace(){
- if(!WFL.length||!WFcur||WFL.indexOf(WFcur)<0){if(WRH&&WRH.style.display!=='none'){WRH.style.display='none';if(!GX.on)fbSet([]);}return;}
- var d=wrhEnsure(),r=WFcur.el.getBoundingClientRect();d.style.display='flex';d.style.left=Math.min(VW-40,Math.max(4,r.right-34))+'px';d.style.top=Math.min(VH-40,Math.max(4,r.bottom-34))+'px';
- if(!GX.on)fbSet([{el:d,a:1,rad:.5}]);
+ if(!WFL.length||!WFcur||WFL.indexOf(WFcur)<0){if(WRH&&WRH.style.display!=='none'){WRH.style.display='none';if(WAD)WAD.style.display='none';if(!GX.on)fbSet([]);}return;}
+ var d=wrhEnsure(),a=wadEnsure(),r=WFcur.el.getBoundingClientRect();d.style.display='flex';d.style.left=Math.min(VW-40,Math.max(4,r.right-34))+'px';d.style.top=Math.min(VH-40,Math.max(4,r.bottom-34))+'px';
+ a.style.display='flex';a.style.left=((DKP.side==='l'?DKV+DKMV+16:16))+'px';a.style.top=(DKP.side==='b'?DR.top-62:VH-66)+'px';
+ if(!GX.on)fbSet([{el:d,a:1,rad:.5},{el:a,a:1,rad:1}]);
 }
 function wfFind(t){for(var i=0;i<WFL.length;i++)if(WFL[i].el.contains(t))return WFL[i];return null;}
 function wfDetach(el,x,y){

@@ -44,12 +44,13 @@ function chev(){return'<svg viewBox="0 0 12 12"><path d="M2.5 4.5 6 8l3.5-3.5"/>
 function curSym(c){return c;}
 
 /* ===== сторінки ===== */
-var PAGE_IDS=['insights','debts','home','balanceAnalysis','accountDetail','flowDetail','people','person','marketDetail'];
+var PAGE_IDS=['insights','debts','home','balanceAnalysis','accountDetail','flowDetail','people','person','marketDetail','folder'];
+var FLD={id:null,cols:4,scr:''};   /* відкрита папка (лише в інтерфейсі, сторінка №9) */
 var NP=PAGE_IDS.length;
 var PAGE_OF={};PAGE_IDS.forEach(function(n,i){PAGE_OF[n]=i;});
 var root=document.getElementById('pages'),pg=[],inn=[];
 PAGE_IDS.forEach(function(id){
- var s=document.createElement('section');s.className='page';s.dataset.p=id;s.innerHTML='<div class="inner'+(PAGE_IDS.indexOf(id)<3?' g4':'')+'"></div>';
+ var s=document.createElement('section');s.className='page';s.dataset.p=id;s.innerHTML='<div class="inner'+((PAGE_IDS.indexOf(id)<3||id==='folder')?' g4':'')+'"></div>';
  root.appendChild(s);pg.push(s);inn.push(s.firstChild);
 });
 
@@ -62,7 +63,7 @@ function setBlocks(i,list){
   else if(el.dataset.sig!==sig){el.className=it.c;el.innerHTML=it.h;el.dataset.sig=sig;}
  }
  while(host.children.length>list.length)host.removeChild(host.lastChild);
- if(i<3&&typeof wlApply==='function')wlApply(i);
+ if((i<3||i===9)&&typeof wlApply==='function')wlApply(i);
 }
 function B_(c,h){return{c:c,h:h};}
 
@@ -190,7 +191,7 @@ function blocksHome(){
   (tx.length?tx.map(function(x,i){return txRow(x,i===0);}).join(''):'<div class="empty">'+(ix.homeQuery?'Нічого не знайдено.':'Операцій поки немає. Натисніть «Ввід» і напишіть, наприклад: <b>кава 25 зл</b>.')+'</div>')));
  o.push(B_('tile','<div class="lbl">Місячний ліміт витрат</div><div class="mid">'+esc(money(g.limit))+'</div><div class="bar"><i style="width:'+g.percent.toFixed(1)+'%"></i></div><div class="cap">Витрачено '+esc(money(g.expense))+' · '+esc(pctTxt(g.percent))+' ліміту</div>'));
  o.push(B_('tile','<div class="lbl">Накопичення</div><div class="mid">'+esc(money(g.savings))+'</div><div class="cap">Доходи мінус витрати за весь період.</div>'));
- o=o.concat(wgBlocks());
+ o=o.concat(wgBlocks(WG));
  return o;
 }
 /* ---- Аналітика: цілі → аналітика ---- */
@@ -267,4 +268,5 @@ function renderPages(){
   var bl=cur==='balanceAnalysis'?blocksBalance(m):cur==='accountDetail'?blocksAccount(m):cur==='flowDetail'?blocksFlow(m):cur==='people'?blocksPeople(m):cur==='person'?blocksPerson(m):cur==='marketDetail'?blocksMarket():[hdr('Недоступно','',1)];
   setBlocks(i,bl);
  }
+ if(FLD.id)setBlocks(9,blocksFolder());
 }

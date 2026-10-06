@@ -6,16 +6,41 @@ var WG_LIST=[
  {id:'week',n:'Витрати за тиждень',s:4},{id:'upc',n:'Найближчі платежі',s:4},{id:'debt',n:'Хто винен',s:4},{id:'pair',n:'Курс валюти',s:2},
  {id:'pay',n:'Днів до доходу',s:2},{id:'quick',n:'Швидка операція',s:2},{id:'notes',n:'Нотатки',s:4},{id:'game',n:'Успіх',s:2}];
 var WG=(function(){try{var j=JSON.parse(localStorage.getItem('vf-wg')||'null');if(Array.isArray(j))return j;}catch(e){}return WG_LIST.map(function(w){return w.id;});})();
+/* ---- папки: власний великий простір для віджетів; відкриваються «провалом» у просторі ---- */
+var FOLDERS=(function(){try{var j=JSON.parse(localStorage.getItem('vf-folders')||'null');if(j&&typeof j==='object')return j;}catch(e){}return{};})();
+function foldSave(){try{localStorage.setItem('vf-folders',JSON.stringify(FOLDERS));}catch(e){}}
+function blocksFolder(){var F=FOLDERS[FLD.id];if(!F)return[hdr('Папку не знайдено','',1)];var o=[hdr(F.n,'Папка · щипок змінює масштаб',1)];o=o.concat(wgBlocks(F.wg));if(!F.wg.length)o.push(B_('tile','<div class="empty">Папка порожня. Затисніть будь-який віджет і натисніть «+» унизу ліворуч, щоб додати віджети.</div>'));return o;}
+function foldFx(k){try{cv.animate(k>0?[{transform:'scale(.7)',opacity:0},{transform:'none',opacity:1}]:[{transform:'scale(1.45)',opacity:0},{transform:'none',opacity:1}],{duration:460,easing:'cubic-bezier(.2,.8,.2,1)'});}catch(e){}}
+function openFolder(id){if(!FOLDERS[id])return;FLD.id=id;FLD.scr=nav.getState().screen;FLD.cols=4;sel=9;ca=9;sy[9]=0;document.documentElement.style.setProperty('--gcn',4);renderPages();foldFx(1);dirty=true;LG('egg','папка: '+FOLDERS[id].n);}
+function closeFolder(){if(!FLD.id)return;FLD.id=null;sel=2;ca=2;renderPages();foldFx(-1);dirty=true;}
+function foldAdd(){var n=Object.keys(FOLDERS).length+1,nm='Папка '+n;try{var r=window.prompt('Назва папки',nm);if(r===null)return;nm=(r||nm).trim().slice(0,24)||nm;}catch(e){}var id='k'+Date.now().toString(36);FOLDERS[id]={n:nm,wg:[]};foldSave();WG.push('f:'+id);wgSave();renderPages();}
+function wgCur(){return FLD.id&&FOLDERS[FLD.id]?FOLDERS[FLD.id].wg:WG;}
+function wgPut(id){var L=wgCur();if(L.indexOf(id)>=0){toast('Цей віджет уже тут');return;}L.push(id);if(FLD.id)foldSave();else wgSave();renderPages();}
+/* кнопка «+»: маленька випливашка «Віджети / Папку», далі список віджетів */
+function wgAddMenu(anchor){
+ var items=[{v:'w',l:'Віджети'}];if(!FLD.id)items.push({v:'f',l:'Папку'});
+ openDropdown(anchor,items,'',function(v){
+  if(v==='f')foldAdd();
+  else setTimeout(function(){openDropdown(anchor,WG_LIST.map(function(w){return{v:w.id,l:w.n};}),'',function(id){wgPut(id);});},260);});
+}
+/* масштаб папки щипком: більше/менше колонок — віджети стискаються й перебудовуються */
+(function(){var P={};function d(){var k=Object.keys(P);if(k.length<2)return 0;var a=P[k[0]],b=P[k[1]];return Math.hypot(a.x-b.x,a.y-b.y);}
+ root.addEventListener('pointerdown',function(e){if(!FLD.id)return;P[e.pointerId]={x:e.clientX,y:e.clientY};if(Object.keys(P).length===2){FLD.d0=d();FLD.c0=FLD.cols;}},true);
+ root.addEventListener('pointermove',function(e){if(!FLD.id||!P[e.pointerId])return;P[e.pointerId].x=e.clientX;P[e.pointerId].y=e.clientY;if(Object.keys(P).length<2||!FLD.d0)return;
+  var c=Math.max(2,Math.min(8,Math.round(FLD.c0*FLD.d0/Math.max(20,d()))));if(c!==FLD.cols){FLD.cols=c;document.documentElement.style.setProperty('--gcn',c);wlApply(9);needSync[9]=1;tlStale[9]=1;dirty=true;}},true);
+ ['pointerup','pointercancel'].forEach(function(n){root.addEventListener(n,function(e){delete P[e.pointerId];if(Object.keys(P).length<2)FLD.d0=0;},true);});})();
 function wgSave(){try{localStorage.setItem('vf-wg',JSON.stringify(WG));}catch(e){}}
-function wgToggle(id){var i=WG.indexOf(id);if(i>=0)WG.splice(i,1);else WG.push(id);wgSave();renderPages();}
+function wgToggle(id){if(id.indexOf('f:')===0)return;var i=WG.indexOf(id);if(i>=0)WG.splice(i,1);else WG.push(id);wgSave();renderPages();}
 function wgLabel(w){return w.n+': '+(WG.indexOf(w.id)>=0?'показано':'сховано');}
 function wgRing(p,col){p=Math.max(0,Math.min(100,p));return'<div class="wpb"><b>'+Math.round(p)+'%</b><div class="bar"><i style="width:'+p.toFixed(1)+'%;background:'+col+'" data-col="'+col+'"></i></div></div>';}   /* частка — скляний прогрес-бар */
 function wgDay(d){return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();}
 function wgNextDay(day){var n=new Date(),d=new Date(n.getFullYear(),n.getMonth(),Math.min(day,28)),t=new Date(n.getFullYear(),n.getMonth(),n.getDate());if(d<t)d=new Date(n.getFullYear(),n.getMonth()+1,Math.min(day,28));return{d:d,left:Math.round((d-t)/864e5)};}
-function wgBlocks(){
+function wgBlocks(list){
  var st=fin.getState(),now=new Date(),o=[],ms=new Date(now.getFullYear(),now.getMonth(),1);
  function mon(type){var s=0;st.transactions.forEach(function(t){if(t.type===type&&t.currency==='PLN'&&new Date(t.date)>=ms)s+=t.amount;});return s;}
- WG.forEach(function(id){var w=WG_LIST.find(function(q){return q.id===id;});if(!w)return;var c='tile wg wg-'+id+(w.s===2?' ws2':''),h='';
+ list.forEach(function(id){
+  if(id.indexOf('f:')===0){var F=FOLDERS[id.slice(2)];if(!F)return;o.push(B_('tile wg wg-folder ws2','<button class="fbx" data-act="fopen" data-id="'+esc(id.slice(2))+'"><div class="f3d"><i></i><i></i><i></i></div><div class="fnm">'+esc(F.n)+'</div><div class="fct">'+F.wg.length+' '+(F.wg.length===1?'віджет':'віджетів')+'</div></button>'));return;}
+  var w=WG_LIST.find(function(q){return q.id===id;});if(!w)return;var c='tile wg wg-'+id+(w.s===2?' ws2':''),h='';
   if(id==='clock'){h='<div class="lbl">Зараз</div><div class="big wclk" data-clk="1">'+now.toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'})+'</div><div class="cap">'+esc(todayStr())+'</div>';}
   else if(id==='today'){var fc=forecastMonth(),left=Math.max(1,fc.left+1),rest=fc.limit-fc.spent,per=rest/left;
    h='<div class="lbl">Можна сьогодні</div><div class="big" style="color:'+(per<0?'var(--ac)':'var(--gr)')+'">'+esc(money(Math.max(0,per)))+'</div><div class="bar"><i style="width:'+Math.min(100,fc.limit?fc.spent/fc.limit*100:0).toFixed(1)+'%"></i></div><div class="cap">Залишок ліміту '+esc(money(rest))+' на '+left+' дн.</div>';}
