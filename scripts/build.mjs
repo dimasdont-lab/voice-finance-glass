@@ -41,6 +41,7 @@ ${body}
 <script>(function(){'use strict';
 ${r('src/core.js')}
 ${r('src/engine.js')}
+${r('src/bootgl.js')}
 ${r('src/tiles.js')}
 ${r('src/market.js')}
 ${r('src/ui.js')}

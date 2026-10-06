@@ -1028,7 +1028,7 @@ if(!fontsOK)document.fonts.ready.then(function(){fontsOK=true;});
    3) скляна сфера тріскається, з тріщин б'ють лазери, вибух, частинки стягуються в точку;
    4) далі — звичайне розширення скла екрана з цієї точки.
    ?nobfx — вимкнути; ?bfxslow=3 — уповільнити в 3 рази (для перегляду). Дотик до екрана завантаження — пропустити. */
-var BFX={k:+((location.search.match(/bfxslow=([\d.]+)/)||[])[1])||1,A:+((location.search.match(/bfxa=([0-9.]+)/)||[])[1])||2.1,C:3.6,E:2.45,NP:10,G:76,SCE:1.15,P:[],BK:[],cr:[],cv:null,x:null,w:0,h:0,dpr:1,on:0,init:0,skip:0,ba:0,ex:0,jx:0,jy:0,zs:1,sc:2.4,
+var BFX={k:+((location.search.match(/bfxslow=([\d.]+)/)||[])[1])||1,A:+((location.search.match(/bfxa=([0-9.]+)/)||[])[1])||2.1,C:3.6,E:2.45,NP:10,G:88,SCE:1.15,P:[],BK:[],cr:[],cv:null,x:null,w:0,h:0,dpr:1,on:0,init:0,skip:0,ba:0,ex:0,jx:0,jy:0,zs:1,sc:2.4,
  red:!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)};
 function bfxR(a,b){return a+Math.random()*(b-a);}
 function bfxS(a,b,x){var t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);}
@@ -1038,7 +1038,7 @@ function bfxInit(){
  if(BFX.init)return;BFX.init=1;
  var off0=false;try{off0=localStorage.getItem('vf-bfx')==='0';}catch(e){}
  if(BFX.red||off0||/[?&]nobfx/.test(location.search))return;
- var img=boot.logo.querySelector('img');if(!img||!img.naturalWidth)return;
+ var img=BFX.icon=bfxIcon();   /* логотип намальований кодом, а не взятий із картинки */
  try{
   var G=BFX.G,oc=document.createElement('canvas');oc.width=oc.height=G;var ox=oc.getContext('2d');ox.drawImage(img,0,0,G,G);var d=ox.getImageData(0,0,G,G).data;
   var rc=.224,P=[],bm={},i,j;
@@ -1046,7 +1046,7 @@ function bfxInit(){
    var u=(i+.5)/G,v=(j+.5)/G,dx=Math.max(0,Math.abs(u-.5)-(.5-rc)),dy=Math.max(0,Math.abs(v-.5)-(.5-rc));if(dx*dx+dy*dy>rc*rc)continue;
    var k=(j*G+i)*4,r=d[k],g=d[k+1],b=d[k+2];if((r*.3+g*.59+b*.11)/255<.07)continue;
    var ang=Math.random()*6.2832,dist=bfxR(.35,1.15),key=(r>>4)<<8|(g>>4)<<4|(b>>4);
-   var p={tx:u-.5,ty:v-.5,dl:Math.random()*.9,sx:Math.cos(ang)*dist,sy:Math.sin(ang)*dist,spin:(Math.random()<.5?-1:1)*bfxR(1.2,3.6),sz:bfxR(.85,1.3),sp:bfxR(.25,1),X:0,Y:0,Z:0};
+   var p={tx:u-.5,ty:v-.5,dl:Math.random()*.9,sx:Math.cos(ang)*dist,sy:Math.sin(ang)*dist,spin:(Math.random()<.5?-1:1)*bfxR(1.2,3.6),sz:bfxR(.85,1.3),sp:bfxR(.25,1),X:0,Y:0,Z:0,cr:Math.min(1,r/255*1.2),cg:Math.min(1,g/255*1.2),cb:Math.min(1,b/255*1.2)};
    P.push(p);(bm[key]||(bm[key]={st:'rgb('+((r>>4)*17)+','+((g>>4)*17)+','+((b>>4)*17)+')',l:[]})).l.push(p);}
   if(P.length<300)return;
   BFX.P=P;BFX.BK=Object.keys(bm).map(function(q){return bm[q];});
@@ -1056,13 +1056,14 @@ function bfxInit(){
   for(var q=0;q<n;q++){
    var a=order[q]/n*6.2832+bfxR(-.2,.2),pts=[[0,0]],rad=0,ax=Math.cos(a),ay=Math.sin(a),px=-ay,py=ax,off=0;
    while(rad<1.04){rad+=bfxR(.07,.16);off+=bfxR(-.07,.07);off*=.8;pts.push([ax*rad+px*off,ay*rad+py*off]);}
-   C.push({a:a,pts:pts,br:0,ev:ev,back:Math.random()<.42});
+   var ir=bfxR(.3,.8);C.push({a:a,pts:pts,br:0,ev:ev,back:Math.random()<.42,ix:Math.cos(a+bfxR(-.3,.3))*ir,iy:Math.sin(a+bfxR(-.3,.3))*ir,seed:Math.random()*10});
    if(Math.random()<.6){var m=(pts.length*(.25+Math.random()*.4))|0,b0=pts[m],ba=a+bfxR(.5,.9)*(Math.random()<.5?-1:1),bp=[b0.slice()],br=0;
     while(br<.4){br+=bfxR(.06,.12);bp.push([b0[0]+Math.cos(ba)*br+bfxR(-.03,.03),b0[1]+Math.sin(ba)*br+bfxR(-.03,.03)]);}
     C.push({a:a,pts:bp,br:1,ev:ev+.06,back:false});}
    ev+=gap;gap*=.8;   /* інтервали між тріщинами скорочуються: тріск, тріск... потім частіше й частіше */
   }
   BFX.cr=C;
+  if(bfxGLInit()){BFX.on=1;BFX.ba=1;boot.el.classList.add('ba');boot.el.classList.add('gx');boot.el.addEventListener('pointerdown',function(){if(!BFX.skip){BFX.skip=1;BFX.A=0;LG('boot','пропуск заставки (дотик)');}});LG('boot','заставка WebGL: '+P.length+' частинок');return;}
   var cv0=document.createElement('canvas');cv0.id='bfx0';cv0.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;display:none';boot.el.insertBefore(cv0,boot.el.firstChild);BFX.cv0=cv0;BFX.x0=cv0.getContext('2d');
   var cv=document.createElement('canvas');cv.id='bfx';cv.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3';boot.el.appendChild(cv);
   BFX.cv=cv;BFX.x=cv.getContext('2d');BFX.on=1;BFX.ba=1;boot.el.classList.add('ba');
@@ -1081,6 +1082,7 @@ function bfxFill(cell){   /* усі частинки одним проходом
  for(i=0;i<B.length;i++){x.fillStyle=B[i].st;l=B[i].l;for(j=0;j<l.length;j++){p=l[j];x.fillRect(p.X,p.Y,p.Z,p.Z);}}
 }
 function bfxDraw(t,el){
+ if(BFX.g){bfxGLDraw(t,el);return;}
  var c=bfxSize(),cx=c[0],cy=c[1],x=BFX.x,k=BFX.k,ph=boot.phase,P=BFX.P,n=P.length,i,p,A=BFX.A*k;
  if(ph===0){
   if(el<A){
@@ -1184,7 +1186,7 @@ function bootStep(t,dt){
   var ws=boot.wrap.style;ws.setProperty('--gs',boot.gs.toFixed(3));ws.setProperty('--rs',(boot.gs*1.1).toFixed(3));ws.setProperty('--ro',Math.min(1,boot.gs*1.6).toFixed(3));ws.setProperty('--rr',(t*.012%360).toFixed(1)+'deg');
   if(el>.25&&!boot.lit){boot.lit=1;boot.el.classList.add('lit');}
   if(boot.phase===0&&boot.p>=1){boot.phase=1;boot.t1=t;LG('boot','фаза 1: логотип зник, '+Math.round(el*1000)+' мс від старту анімації');if(BFX.on){if(BFX.skip)boot.t1=t-(BFX.C*BFX.k-.3)*1000;}else boot.wrap.classList.add('p1');boot.warm=1;dirty=true;}
-  else if(boot.phase===1&&t-boot.t1>(BFX.on?BFX.C*BFX.k*1000:330)){
+  else if(boot.phase===1&&!BFX.frz&&t-boot.t1>(BFX.on?BFX.C*BFX.k*1000:330)){
    boot.phase=2;boot.t2=t;boot.wrap.classList.add('p2');
    var r=frect(boot.logo);boot.cx=r.left+r.width/2;boot.cy=r.top+r.height/2;introStart(t);LG('boot','фаза 2: розширення з '+Math.round(boot.cx)+','+Math.round(boot.cy)+' (SO '+SO+')');
    cv.style.opacity=1;dirty=true;
