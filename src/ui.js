@@ -165,6 +165,8 @@ function sheetHtml(kind,ov){
    SEC('Графіки')+'<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="area">'+areaLabel()+'</button>'+
    SEC('Скло віджетів')+RNG('cg','is','Значки: насиченість',100)+RNG('cg','ib','Значки: яскравість',100)+RNG('cg','bal','Віджет балансу: сила кольору',100)+
    RNG('cg','gt','Бари, цифри й графіки: сила кольору',100)+RNG('cg','gsat','Бари, цифри й графіки: насиченість',100)+RNG('cg','gbr','Бари, цифри й графіки: яскравість',100)+
+   SEC('Скло вікон (налаштування, списки)')+RNG('cg','wh','Колір: відтінок, °',360)+RNG('cg','ws','Колір: інтенсивність',100)+RNG('cg','wv','Яскравість скла',200)+
+   SEC('Скло панелі «Додатково»')+RNG('cg','mh','Колір: відтінок, °',360)+RNG('cg','ms','Колір: інтенсивність',100)+RNG('cg','mv','Яскравість скла',200)+
    SEC('Ободок екрана')+'<button class="btnw" data-s="aura">'+auraLabel()+'</button><button class="btnw" data-s="auramode">'+auraModeLabel()+'</button>'+
    RNG('fg','a','Інтенсивність (прозорість)',200)+RNG('fg','ah','Відтінок (зсув, °)',360)+RNG('fg','as','Насиченість',200)+RNG('fg','av','Яскравість',200)+
    SEC('Слід пальця')+'<button class="btnw" data-s="fgwave">'+fgWaveLabel()+'</button><button class="btnw" data-s="fgglow">'+fgGlowLabel()+'</button>'+RNG('fg','i','Інтенсивність',200)+RNG('fg','w','Ширина',100)+RNG('fg','l','Тривалість',100)+
@@ -324,7 +326,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='syncmerge')syImport('merge');
   else if(s==='syncreplace')syImport('replace');
   else if(s==='logcopy')logCopy();
-  else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);setCG('gt',65);setCG('gsat',50);setCG('gbr',50);setFGS('a',50);setFGS('ah',0);setFGS('as',100);setFGS('av',100);setFGS('i',56);setFGS('w',62);setFGS('l',30);[].forEach.call(curSheet.body.querySelectorAll('[data-fg]'),function(i){i.value=FGS[i.dataset.fg];});[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
+  else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);setCG('gt',65);setCG('gsat',50);setCG('gbr',50);setCG('wh',200);setCG('ws',0);setCG('wv',100);setCG('mh',200);setCG('ms',0);setCG('mv',100);setFGS('a',50);setFGS('ah',0);setFGS('as',100);setFGS('av',100);setFGS('i',56);setFGS('w',62);setFGS('l',30);[].forEach.call(curSheet.body.querySelectorAll('[data-fg]'),function(i){i.value=FGS[i.dataset.fg];});[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
   else if(s==='bfx'){try{localStorage.setItem('vf-bfx',localStorage.getItem('vf-bfx')==='0'?'1':'0');}catch(e){}t.textContent=bfxLabel();}
   else if(s==='fgwave'){setFGS('tw',FGS.tw?0:1);t.textContent=fgWaveLabel();LG('ui',fgWaveLabel());}
   else if(s==='fgglow'){setFGS('tg',FGS.tg?0:1);t.textContent=fgGlowLabel();LG('ui',fgGlowLabel());}
@@ -948,7 +950,7 @@ function lensTap(){if(BH.ph)return false;var now=performance.now();BHtap.n=now-B
   dirty=true;raf=requestAnimationFrame(chStep);}
  document.addEventListener('pointerdown',function(e){
   if(GX.on||(BH.ph&&BH.ph!==3)||!FGS.tw||WF.drag)return;var tg=e.target;
-  if(tg.closest&&tg.closest('input,textarea,select,#dock,#ticker,#sheets,#menu,.eggd,.gxb,#gxmodes,#gal'))return;
+  if(tg.closest&&tg.closest('input,textarea,select,#dock,#ticker,.eggd,.gxb,#gxmodes,#gal,#wfh'))return;
   CH.rel=0;CH.on=1;CH.drag=0;CH.x=CH.tx=e.clientX;CH.y=CH.ty=e.clientY;CH.s=0;t0=performance.now();hapT=0;if(!raf)raf=requestAnimationFrame(chStep);},true);
  document.addEventListener('pointermove',function(e){if(!CH.on)return;
   CH.tx=e.clientX;CH.ty=e.clientY;CH.drag=1;},true);   /* точка стягування завжди йде за пальцем */

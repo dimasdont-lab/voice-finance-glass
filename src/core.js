@@ -88,7 +88,7 @@ function auraLabel(){return'Райдужний ореол екрана: '+(AURA?
 function toggleAura(){AURA=AURA?0:1;try{localStorage.setItem('vf-aura',String(AURA));}catch(e){}LG('ui',auraLabel());}
 var AREA_MODE=(function(){try{var v=localStorage.getItem('vf-area');return v===null?0:+v||0;}catch(e){return 0;}})();
 /* кольорове скло: повзунки в налаштуваннях (насиченість і яскравість значків, сила кольору балансу) */
-var CG=(function(){var d={is:40,ib:45,bal:45,gt:65,gsat:50,gbr:50};try{var j=JSON.parse(localStorage.getItem('vf-cg')||'null');if(j)for(var k in d)if(typeof j[k]==='number')d[k]=j[k];}catch(e){}return d;})();
+var CG=(function(){var d={is:40,ib:45,bal:45,gt:65,gsat:50,gbr:50,wh:200,ws:0,wv:100,mh:200,ms:0,mv:100};try{var j=JSON.parse(localStorage.getItem('vf-cg')||'null');if(j)for(var k in d)if(typeof j[k]==='number')d[k]=j[k];}catch(e){}return d;})();
 function applyCG(){var st=document.documentElement.style;st.setProperty('--cgs',(CG.is/100*2.5).toFixed(2));st.setProperty('--cgb',(.45+CG.ib*.009).toFixed(2));}
 function setCG(k,v){CG[k]=v;try{localStorage.setItem('vf-cg',JSON.stringify(CG));}catch(e){}applyCG();}
 applyCG();

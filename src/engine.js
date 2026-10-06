@@ -30,7 +30,7 @@ var GLSL_BG=['vec3 blob(vec3 c,vec2 n,vec2 ce,vec2 r,vec3 col){float a=clamp(1.-
  ' vec3 g=vec3(gridL(gridWarp(p,1.)+u_go-u_vp*.5),gridL(gridWarp(p,1.22)+u_go-u_vp*.5),gridL(gridWarp(p,1.44)+u_go-u_vp*.5));vec3 gm=min(vec3(1.),.17*g*(1.+gBoost));return mix(c,u_gcol,gm)+u_gcol*g*gBoost*.05+fgAt(p)+auraAt(p);}'].join('\n');
 var VS='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
 var FS_H=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
-'uniform vec3 u_xs;uniform float u_atw;uniform vec4 u_ln[16];uniform vec4 u_lj[16];uniform vec4 u_fb[6];uniform vec4 u_fq[6];uniform sampler2D u_lt;uniform float u_lp;uniform vec4 u_bb[14];uniform vec4 u_bq[14];uniform vec4 u_bc[14];uniform float u_bn;uniform vec4 u_dk;uniform float u_dkv;uniform vec4 u_dki;uniform vec3 u_dkt;uniform vec4 u_tk;uniform sampler2D u_tx;uniform sampler2D u_tt;uniform float u_th;uniform float u_tf;uniform vec4 u_tv;uniform vec4 u_tc;uniform vec4 u_tp;uniform vec2 u_tq;uniform vec4 u_tr;uniform vec2 u_tko;uniform sampler2D u_tb0;uniform sampler2D u_tb1;uniform sampler2D u_tb2;uniform float u_bm;uniform float u_bs;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform float u_gb2;uniform vec2 u_res;uniform vec2 u_org;uniform vec2 u_vp;uniform sampler2D u_t0;uniform sampler2D u_t1;uniform sampler2D u_t2;uniform vec4 u_p0;uniform vec4 u_p1;uniform vec4 u_p2;uniform vec3 u_w;uniform float u_scrim;uniform vec4 u_g;uniform float u_gr;uniform float u_gv;uniform vec4 u_a;uniform vec4 u_b;uniform vec4 u_c;uniform float u_cv;uniform float u_nk;uniform vec4 u_k;uniform float u_kv;uniform float u_bl;uniform float u_s;uniform vec4 u_rp;uniform vec4 u_rs;uniform float u_rb;uniform float u_gm;uniform float u_gd;uniform float u_gbl;uniform vec4 u_g2;uniform float u_gr2;uniform float u_gv2;uniform float u_sho;uniform vec4 u_rt;uniform float u_ord;',
+'uniform vec3 u_xs;uniform float u_atw;uniform vec4 u_ln[16];uniform vec4 u_lj[16];uniform vec4 u_fb[6];uniform vec4 u_fq[6];uniform sampler2D u_lt;uniform float u_lp;uniform vec4 u_bb[14];uniform vec4 u_bq[14];uniform vec4 u_bc[14];uniform float u_bn;uniform vec4 u_dk;uniform float u_dkv;uniform vec4 u_dki;uniform vec3 u_dkt;uniform vec4 u_tk;uniform sampler2D u_tx;uniform sampler2D u_tt;uniform float u_th;uniform vec4 u_tm;uniform vec4 u_tw;uniform float u_gdw;uniform float u_tf;uniform vec4 u_tv;uniform vec4 u_tc;uniform vec4 u_tp;uniform vec2 u_tq;uniform vec4 u_tr;uniform vec2 u_tko;uniform sampler2D u_tb0;uniform sampler2D u_tb1;uniform sampler2D u_tb2;uniform float u_bm;uniform float u_bs;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform float u_gb2;uniform vec2 u_res;uniform vec2 u_org;uniform vec2 u_vp;uniform sampler2D u_t0;uniform sampler2D u_t1;uniform sampler2D u_t2;uniform vec4 u_p0;uniform vec4 u_p1;uniform vec4 u_p2;uniform vec3 u_w;uniform float u_scrim;uniform vec4 u_g;uniform float u_gr;uniform float u_gv;uniform vec4 u_a;uniform vec4 u_b;uniform vec4 u_c;uniform float u_cv;uniform float u_nk;uniform vec4 u_k;uniform float u_kv;uniform float u_bl;uniform float u_s;uniform vec4 u_rp;uniform vec4 u_rs;uniform float u_rb;uniform float u_gm;uniform float u_gd;uniform float u_gbl;uniform vec4 u_g2;uniform float u_gr2;uniform float u_gv2;uniform float u_sho;uniform vec4 u_rt;uniform float u_ord;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
 'float smin(float a,float b,float k){float h=max(k-abs(a-b),0.)/k;return min(a,b)-h*h*k*0.25;}',
 'float sdBar(vec2 x){float a=sdRB(x-u_a.xy,u_a.zw,min(u_a.z,u_a.w));if(u_kv<.01)return a;return smin(a,sdRB(x-u_k.xy,u_k.zw,min(u_k.z,u_k.w)),17.*u_s);}',
@@ -99,7 +99,7 @@ GLSL_BG,
 ' ci+=vec3(rim*((rd?.04:.03)+.12*sp));',
 ' float clip=step(K.x,px.x)*step(px.x,K.z)*smoothstep(K.y,K.y+2.*u_s,px.y)*(1.-smoothstep(K.w-2.*u_s,K.w,px.y));',   /* обрізка видимою областю прокрутки */
 ' return vec4(ci,clamp(-d/(1.5*u_s)+.5,0.,1.)*Q.w*clip*(rd?.86:1.));}',
-'vec4 glassPx(vec2 px,vec4 G,float GR,float GV,float dg,float gd,float gbl,float ring){',
+'vec4 glassPx(vec2 px,vec4 G,float GR,float GV,float dg,float gd,float gbl,float ring,vec4 tn){',
 ' float mm=(ring>.5?130.:36.)*u_s;float t=clamp(-dg/(0.6*mm),0.,1.);float e=1.5;',
 ' vec2 n=normalize(vec2(sdRB(px+vec2(e,0.)-G.xy,G.zw,GR)-sdRB(px-vec2(e,0.)-G.xy,G.zw,GR),sdRB(px+vec2(0.,e)-G.xy,G.zw,GR)-sdRB(px-vec2(0.,e)-G.xy,G.zw,GR))+1e-5);',
 ' vec2 of=n*pow(1.-t,ring>.5?1.7:2.2)*(ring>.5?1.25:0.6)*mm;float ab=(ring>.5?.24:.10)*(0.35+pow(1.-t,1.5));float br=gbl*u_s*GV;',
@@ -108,7 +108,7 @@ GLSL_BG,
 ' else ci=bgG(px-of)*gd;float rim=pow(1.-t,3.);',
 ' float sp=pow(max(dot(n,normalize(vec2(-0.6,-0.8))),0.),3.)+0.5*pow(max(dot(n,normalize(vec2(0.6,0.8))),0.),3.);',
 ' ci+=vec3(rim*(0.0105+0.051*sp));float w=clamp(-dg/(1.5*u_s)+0.5,0.,1.)*clamp(GV*1.4,0.,1.);if(ring>.5)w*=1.-smoothstep(.7,1.,t);',
-' return vec4(ci,w);}',
+' ci=mix(ci,ci*(vec3(.35)+tn.rgb*1.65)+tn.rgb*.05,tn.a);return vec4(ci,w);}',
 'vec3 bgT(vec2 xpx){vec2 p=u_org+xpx/u_s;vec2 q=p+u_tko;vec3 c=texture2D(u_tt,vec2(clamp((q.x-u_tr.x)/u_tr.z,0.,1.),clamp((q.y-u_tr.y)/u_tr.w,0.,1.))).rgb;vec2 pp=rt(p,u_rp,u_rt.xy);',
 ' vec4 a=pageS(u_t0,u_p0,u_w.x,pp);a.rgb*=u_rp.w;c=c*(1.-a.a)+a.rgb;vec4 b=pageS(u_t1,u_p1,u_w.y,pp);b.rgb*=u_rp.w;c=c*(1.-b.a)+b.rgb;return c*(1.-u_scrim);}',
 'float sdBand(vec2 px){return sdRB(px-u_tc.xy,u_tc.zw,min(u_tc.z,u_tc.w));}',
@@ -142,8 +142,8 @@ var FS_M1=['void main(){',
 '  ci+=vec3(rim*(0.0075+0.039*sp));float w=clamp(-di/(1.5*u_s)+0.5,0.,1.);wI=w;rgb=rgb*(1.-w)+ci*w;a=a*(1.-w)+w;}',
 ' {vec4 i0=dkS(px);float k0=i0.a*(1.-wI);rgb=rgb*(1.-k0)+i0.rgb*k0;a=a*(1.-k0)+k0;}',
 ' vec4 g1=vec4(0.),g2=vec4(0.);',
-' if(dg<1.5*u_s){if(u_ord>.5)gNS=1.;g1=glassPx(px,u_g,u_gr,u_gv,dg,u_gd,u_gbl,u_gm);gNS=0.;}',
-' if(dg2<1.5*u_s){gNS=1.;g2=glassPx(px,u_g2,u_gr2,u_gv2,dg2,1.,u_gb2,0.);gNS=0.;',
+' if(dg<1.5*u_s){if(u_ord>.5)gNS=1.;g1=glassPx(px,u_g,u_gr,u_gv,dg,u_gd,u_gbl,u_gm,u_tm);gNS=0.;}',
+' if(dg2<1.5*u_s){gNS=1.;g2=glassPx(px,u_g2,u_gr2,u_gv2,dg2,u_gdw,u_gb2,0.,u_tw);gNS=0.;',
 '  if(u_sho>.5){vec2 pc=u_org+px/u_s;vec2 rq=rt(pc,u_rs,u_rt.zw);vec4 o=mix(pageS(u_t2,u_p2,u_w.z,rq),tbS(u_tb1,rq)*u_p2.w,u_bs);o.rgb*=u_rs.w;g2.rgb=g2.rgb*(1.-o.a)+o.rgb;}}',
 ' if(u_ord>.5){rgb=rgb*(1.-g1.a)+g1.rgb*g1.a;a=a*(1.-g1.a)+g1.a;rgb=rgb*(1.-g2.a)+g2.rgb*g2.a;a=a*(1.-g2.a)+g2.a;}',
 ' else{rgb=rgb*(1.-g2.a)+g2.rgb*g2.a;a=a*(1.-g2.a)+g2.a;rgb=rgb*(1.-g1.a)+g1.rgb*g1.a;a=a*(1.-g1.a)+g1.a;}',
@@ -177,7 +177,7 @@ gl.bindAttribLocation(pr,0,'p');gl.linkProgram(pr);gl.useProgram(pr);
 var buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
 gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
 gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
-var U={};['u_tf','u_tv','u_tc','u_tp','u_tq','u_tr','u_bc','u_bb','u_bq','u_bn','u_tko','u_dki','u_dkt','u_xs','u_atw','u_dk','u_dkv','u_tx','u_tk','u_tt','u_th','u_tb2','u_gcol','u_cell','u_isl','u_tb0','u_tb1','u_bm','u_bs','u_go','u_gb2','u_res','u_org','u_vp','u_t0','u_t1','u_t2','u_p0','u_p1','u_p2','u_scrim','u_rp','u_rs','u_rb','u_gm','u_gd','u_gbl','u_g2','u_gr2','u_gv2','u_sho','u_rt','u_ord','u_g','u_gr','u_gv','u_w','u_a','u_b','u_c','u_cv','u_nk','u_k','u_kv','u_bl','u_s'].forEach(function(n){U[n]=gl.getUniformLocation(pr,n);if(U[n])U[n].__n=n;});
+var U={};['u_tm','u_tw','u_gdw','u_tf','u_tv','u_tc','u_tp','u_tq','u_tr','u_bc','u_bb','u_bq','u_bn','u_tko','u_dki','u_dkt','u_xs','u_atw','u_dk','u_dkv','u_tx','u_tk','u_tt','u_th','u_tb2','u_gcol','u_cell','u_isl','u_tb0','u_tb1','u_bm','u_bs','u_go','u_gb2','u_res','u_org','u_vp','u_t0','u_t1','u_t2','u_p0','u_p1','u_p2','u_scrim','u_rp','u_rs','u_rb','u_gm','u_gd','u_gbl','u_g2','u_gr2','u_gv2','u_sho','u_rt','u_ord','u_g','u_gr','u_gv','u_w','u_a','u_b','u_c','u_cv','u_nk','u_k','u_kv','u_bl','u_s'].forEach(function(n){U[n]=gl.getUniformLocation(pr,n);if(U[n])U[n].__n=n;});
 gl.uniform1i(U.u_t0,0);gl.uniform1i(U.u_t1,1);gl.uniform1i(U.u_t2,2);gl.uniform1i(U.u_tb0,3);gl.uniform1i(U.u_tb1,4);gl.uniform1i(U.u_tb2,5);gl.uniform1i(U.u_tt,6);gl.uniform1i(U.u_tx,7);
 gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
 gl.clearColor(0,0,0,0);
@@ -391,7 +391,8 @@ function lensPass(t){
  gl.bindTexture(gl.TEXTURE_2D,tkTex||dummy);gl.activeTexture(gl.TEXTURE0);   /* повертаємо смугу бігучого рядка на її блок */
 }
 var BTB=new Float32Array(56),BTQ=new Float32Array(56),BTC=new Float32Array(56),BTE=[],BTN=0,BTK='',tkOfs=[0,0],bkLastKey='',texVer=0,tkY0=0,TKH=190,tkCv=document.createElement('canvas'),tkCx=tkCv.getContext('2d'),tkTex=null;
-function chDef(){return(CH.on||CH.rel||RPn>0)?1:0;}   /* затримання пальця або хвилі: фон деформується */
+function hsvRgb(h){var k=function(n){var q=(n+h/60)%6;return 1-Math.max(0,Math.min(q,4-q,1));};return[k(5),k(3),k(1)];}
+function chDef(){return(CH.on||CH.rel||RPn>0||FGL.k>.004||FGact)?1:0;}   /* затримання пальця або хвилі: фон деформується */
 function tkCopy(rx,ry,rw,rh,force){   /* ділянка шару плиток (#glt) під тікером — те, що він заломлює разом зі знімками сторінок */
  var rk=rx.toFixed(0)+','+ry.toFixed(0)+','+rw.toFixed(0)+','+rh.toFixed(0);
  var tnow=performance.now(),dsy=(sy[sel]||0)-tkCopy.sy,dca=(ca-tkCopy.ca)*VW,moved=Math.abs(dsy)+Math.abs(dca)>.5,big=Math.abs(dsy)>140||Math.abs(dca)>VW*.4,quiet=tnow-(tkCopy.chg||0)>160;
@@ -1442,8 +1443,9 @@ function frame(t){
   gl.uniform4f(U.u_p0,(fl-ca)*VW,sy[fl],A?A.ch:1,(A&&BH.ph!==3)?1:0);gl.uniform3f(U.u_w,A?A.cw:1,Bt?Bt.cw:1,SH.cw);
   gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,SH.tex||dummy);gl.activeTexture(gl.TEXTURE0);
   gl.uniform4f(U.u_p2,SH.x,-SH.y,SH.ch,(SH.on&&SH.ready)?1:0);gl.uniform1f(U.u_scrim,scrimV);
-  var G=menu.g,G2=sheetP.g,gm=0,gdk=1,gbl=2*BLS*Math.min(1,rec.pg.v);
-  if(boot.on&&boot.phase===2){G=boot.g;gm=1;gdk=.9;gbl=0;}
+  var G=menu.g,G2=sheetP.g,gm=0,gbl=2*BLS*Math.min(1,rec.pg.v),mo2=menu.kind==='more',tmH=hsvRgb(mo2?CG.mh:CG.wh),twH=hsvRgb(CG.wh),gdk=(mo2?CG.mv:CG.wv)/100,tmA=(mo2?CG.ms:CG.ws)/100;
+  if(boot.on&&boot.phase===2){G=boot.g;gm=1;gdk=.9;gbl=0;tmA=0;}
+  gl.uniform4f(U.u_tm,tmH[0],tmH[1],tmH[2],tmA);gl.uniform4f(U.u_tw,twH[0],twH[1],twH[2],CG.ws/100);gl.uniform1f(U.u_gdw,CG.wv/100);
   gl.uniform1f(U.u_gm,gm);gl.uniform1f(U.u_gd,gdk);gl.uniform1f(U.u_gbl,gbl);gl.uniform1f(U.u_gb2,2*BLS*Math.min(1,rec.pg.v));gl.uniform2f(U.u_go,gOX,gOY);gl.uniform1f(U.u_isl,ISL);gl.uniform1f(U.u_cell,gridCell());gl.uniform3f(U.u_gcol,GCOL[0],GCOL[1],GCOL[2]);
   gl.uniform4f(U.u_rp,rec.pg.ox,rec.pg.oy,kOf(rec.pg.v),1-RD*rec.pg.v);gl.uniform4f(U.u_rs,rec.sh.ox,rec.sh.oy,kOf(rec.sh.v),1-RD*rec.sh.v);
   gl.uniform4f(U.u_g2,(G2.cx-R.x)*S,(G2.cy-R.y)*S,G2.hw*S,G2.hh*S);gl.uniform1f(U.u_gr2,G2.r*S);gl.uniform1f(U.u_gv2,sheetA>0.002?G2.v:0);gl.uniform1f(U.u_sho,ghost);
