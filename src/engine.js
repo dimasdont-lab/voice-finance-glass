@@ -976,6 +976,9 @@ function stepScroll(dt){
  return act;
 }
 /* ---- скляне меню: Додатково / випадаючі списки ---- */
+/* сітка в папці масштабується й рухається разом із полотном */
+function gCellEff(){return gridCell()*((FLD.id&&sel===9)?FLD.zoom:1);}
+function gOffEff(){if(FLD.id&&sel===9){var z=FLD.zoom;return[VW/2*(1-z)-FLD.tx,VH/2*(1-z)-FLD.ty];}return[gOX,gOY];}
 function gridCell(){var k=Math.max(1,Math.round((VW/2-6)/GRID_CELL));return(VW/2-6)/k;}   /* клітинка ≈0,75 см, крайні лінії на 6 pt (~1 мм) від країв */
 var vpLastH=0,vpLastT=0,vpLog=[];
 function vpSample(t){var h=innerHeight;if(h!==vpLastH){vpLastH=h;vpLastT=t;vpLog.push([Math.round(t),h,Math.round(window.visualViewport?window.visualViewport.height:0)]);if(vpLog.length>14)vpLog.shift();}}
@@ -1503,7 +1506,7 @@ function frame(t){
   var G=menu.g,G2=sheetP.g,gm=0,gbl=2*BLS*Math.min(1,rec.pg.v),mo2=menu.kind==='more',tmH=hsvRgb(mo2?CG.mh:CG.wh),twH=hsvRgb(CG.wh),gdk=(mo2?CG.mv:CG.wv)/100,tmA=(mo2?CG.ms:CG.ws)/100;
   if(boot.on&&boot.phase===2){G=boot.g;gm=1;gdk=.9;gbl=0;tmA=0;}
   gl.uniform1f(U.u_mo,(menu.on&&mo2)?1:0);gl.uniform4f(U.u_tm,tmH[0],tmH[1],tmH[2],tmA);gl.uniform4f(U.u_tw,twH[0],twH[1],twH[2],CG.ws/100);gl.uniform1f(U.u_gdw,CG.wv/100);
-  gl.uniform1f(U.u_gm,gm);gl.uniform1f(U.u_gd,gdk);gl.uniform1f(U.u_gbl,gbl);gl.uniform1f(U.u_gb2,2*BLS*Math.min(1,rec.pg.v));gl.uniform2f(U.u_go,gOX,gOY);gl.uniform1f(U.u_isl,ISL);gl.uniform1f(U.u_cell,gridCell());gl.uniform3f(U.u_gcol,GCOL[0],GCOL[1],GCOL[2]);
+  gl.uniform1f(U.u_gm,gm);gl.uniform1f(U.u_gd,gdk);gl.uniform1f(U.u_gbl,gbl);gl.uniform1f(U.u_gb2,2*BLS*Math.min(1,rec.pg.v));gl.uniform2f(U.u_go,gOffEff()[0],gOffEff()[1]);gl.uniform1f(U.u_isl,ISL);gl.uniform1f(U.u_cell,gCellEff());gl.uniform3f(U.u_gcol,GCOL[0],GCOL[1],GCOL[2]);
   gl.uniform4f(U.u_rp,rec.pg.ox,rec.pg.oy,kOf(rec.pg.v),1-RD*rec.pg.v);gl.uniform4f(U.u_rs,rec.sh.ox,rec.sh.oy,kOf(rec.sh.v),1-RD*rec.sh.v);
   gl.uniform4f(U.u_g2,(G2.cx-R.x)*S,(G2.cy-R.y)*S,G2.hw*S,G2.hh*S);gl.uniform1f(U.u_gr2,G2.r*S);gl.uniform1f(U.u_gv2,sheetA>0.002?G2.v:0);gl.uniform1f(U.u_sho,ghost);
   gl.uniform1f(U.u_rb,0);gl.uniform4f(U.u_rt,rec.pg.tx*rec.pg.v,rec.pg.ty*rec.pg.v,rec.sh.tx*rec.sh.v,rec.sh.ty*rec.sh.v);gl.uniform1f(U.u_ord,(menu.on&&menu.kind==='more'&&sheetOn)?1:0);

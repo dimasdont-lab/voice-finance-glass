@@ -259,7 +259,7 @@ function bgPrep(W,H,fxOn){
   tgl.texParameteri(tgl.TEXTURE_2D,tgl.TEXTURE_MIN_FILTER,tgl.LINEAR);tgl.texParameteri(tgl.TEXTURE_2D,tgl.TEXTURE_MAG_FILTER,tgl.LINEAR);tgl.texParameteri(tgl.TEXTURE_2D,tgl.TEXTURE_WRAP_S,tgl.CLAMP_TO_EDGE);tgl.texParameteri(tgl.TEXTURE_2D,tgl.TEXTURE_WRAP_T,tgl.CLAMP_TO_EDGE);
   BG.fb=tgl.createFramebuffer();tgl.bindFramebuffer(tgl.FRAMEBUFFER,BG.fb);tgl.framebufferTexture2D(tgl.FRAMEBUFFER,tgl.COLOR_ATTACHMENT0,tgl.TEXTURE_2D,BG.tex,0);tgl.bindFramebuffer(tgl.FRAMEBUFFER,null);BG.w=W;BG.h=H;}
  tgl.useProgram(BG.p);
- tgl.uniform2f(BG.U.u_vp,VW,VH);tgl.uniform2f(BG.U.u_res,W,H);tgl.uniform2f(BG.U.u_go,gOX,gOY);tgl.uniform1f(BG.U.u_cell,gridCell());tgl.uniform1f(BG.U.u_isl,ISL);tgl.uniform3f(BG.U.u_gcol,GCOL[0],GCOL[1],GCOL[2]);
+ tgl.uniform2f(BG.U.u_vp,VW,VH);tgl.uniform2f(BG.U.u_res,W,H);tgl.uniform2f(BG.U.u_go,gOffEff()[0],gOffEff()[1]);tgl.uniform1f(BG.U.u_cell,gCellEff());tgl.uniform1f(BG.U.u_isl,ISL);tgl.uniform3f(BG.U.u_gcol,GCOL[0],GCOL[1],GCOL[2]);
  tgl.uniform1i(BG.U.u_fx,2);tgl.uniform1f(BG.U.u_fxk,fxOn&&!TCLEAN?1:0);tgl.uniform1f(BG.U.u_clean,TCLEAN);tgl.uniform4f(BG.U.u_bh,BH.x,BH.y,BH.r,TCLEAN?0:BH.k);tgl.uniform1f(BG.U.u_rn,TCLEAN?0:RPn);if(RPn)tgl.uniform4fv(BG.U.u_rp,RPU);tgl.uniform3f(BG.U.u_ch,CH.x,CH.y,TCLEAN?0:CH.s);tgl.uniform1f(BG.U.u_bt,(performance.now()/1000)%1000);tgl.uniform3f(BG.U.u_fg,FGL.x,FGL.y,TCLEAN?0:FGL.k*(1+2.4*(FGL.p||0)));
  tgl.useProgram(FX.main);tgl.activeTexture(tgl.TEXTURE3);tgl.bindTexture(tgl.TEXTURE_2D,BG.tex);tgl.activeTexture(tgl.TEXTURE0);
 }
@@ -291,7 +291,7 @@ function drawTilesS(S){
  {var qr=rec.pg,qs=0,qi,qst=false;for(qi=0;qi<NP;qi++){qs+=(sy[qi]||0)*(1.1+qi*.37);if(Math.abs(qi-ca)<1&&(tlStale[qi]||!TL[qi]))qst=true;}
   var qn=ca*7.3+VW*3.1+VH*1.7+S*5+gOX*1.3+gOY*2.1+GCOL[0]*11+GCOL[1]*13+GCOL[2]*17+qr.v*19+qr.ox*.3+qr.oy*.5+qr.tx*.7+qr.ty*.9+qs+CG.is+CG.ib*3+CG.bal*5+CG.gt*7+CG.gsat*9+CG.gbr*11+AREA_MODE*101+(AURA?Math.floor(performance.now()/66):0)*.37+FGgen*.71+GA.gen*13+tickerEl.offsetTop*.11;
   if(!TCLEAN&&qn===drawTilesS.q&&tgW&&!qst&&!GA.dirty&&!intro.on&&!(typeof PRS!=='undefined'&&PRS.size)&&!(BH.ph===1||BH.ph===2)&&!RPn&&!CH.on&&!CH.rel&&!WF.n&&!(FGL.k>.004))return;drawTilesS.q=qn;}
- var rp=rec.pg,v=rp.v>.003?rp.v:0,k=v?kOf(v):1,n=0,ns=0,nl=0,sig=[ca.toFixed(3),VW,VH,S,gOX.toFixed(1),gOY.toFixed(1),GCOL.map(function(x){return x.toFixed(3);}).join(':'),v.toFixed(3),rp.ox.toFixed(1),rp.oy.toFixed(1),rp.tx.toFixed(1),rp.ty.toFixed(1),'am'+AREA_MODE,'tk'+tickerEl.offsetTop+'/'+tickerEl.offsetHeight,CG.is,CG.ib,CG.bal,CG.gt,CG.gsat,CG.gbr,PRSIG],i,j;
+ var rp=rec.pg,v=rp.v>.003?rp.v:0,k=v?kOf(v):1,n=0,ns=0,nl=0,sig=[ca.toFixed(3),VW,VH,S,gOX.toFixed(1),gOY.toFixed(1),(FLD.id?FLD.zoom.toFixed(3):0),GCOL.map(function(x){return x.toFixed(3);}).join(':'),v.toFixed(3),rp.ox.toFixed(1),rp.oy.toFixed(1),rp.tx.toFixed(1),rp.ty.toFixed(1),'am'+AREA_MODE,'tk'+tickerEl.offsetTop+'/'+tickerEl.offsetHeight,CG.is,CG.ib,CG.bal,CG.gt,CG.gsat,CG.gbr,PRSIG],i,j;
  var NEAR=BH.ph?1.01:1;   /* під час чорної діри скло малюється й для сусідніх вкладок */
  TGF++;for(i=0;i<NP;i++){if((Math.abs(i-ca)<NEAR||(BH.ph&&BH.pg.indexOf(i)>=0))&&(tlStale[i]||!TL[i]))tlMeasure(i);}
  if(GA.dirty)gaBuild();var mna='ga'+GA.gen+'fg'+FGgen,minor=mna+(AURA?Math.floor(performance.now()/66):0);
@@ -339,7 +339,7 @@ function drawTilesS(S){
  tgSig=key;var onlyLite=(major===tgMajor&&('ga'+GA.gen)===tgMNA.split('fg')[0]&&!!tgW);var onlyAura=onlyLite&&mna===tgMNA;tgMNA=mna;if(major!==tgMajor){tgMajor=major;tgMajorN++;}
  var W=Math.round(VW*S),H=Math.round(VH*S);
  if(W!==tgW||H!==tgH||S!==tgS){tgW=W;tgH=H;tgS=S;TGC.width=W;TGC.height=H;tgl.viewport(0,0,W,H);onlyAura=false;onlyLite=false;}
- tgl.uniform2f(TGU.u_res,W,H);tgl.uniform2f(TGU.u_vp,VW,VH);tgl.uniform1f(TGU.u_s,S);tgl.uniform2f(TGU.u_go,gOX,gOY);tgl.uniform1f(TGU.u_isl,ISL);tgl.uniform1f(TGU.u_cell,gridCell());tgl.uniform3f(TGU.u_gcol,GCOL[0],GCOL[1],GCOL[2]);tgl.uniform1f(TGU.u_n,n);tgl.uniform1f(TGU.u_br,1-RD*v);tgl.uniform1f(TGU.u_gt,CG.gt/100);
+ tgl.uniform2f(TGU.u_res,W,H);tgl.uniform2f(TGU.u_vp,VW,VH);tgl.uniform1f(TGU.u_s,S);tgl.uniform2f(TGU.u_go,gOffEff()[0],gOffEff()[1]);tgl.uniform1f(TGU.u_isl,ISL);tgl.uniform1f(TGU.u_cell,gCellEff());tgl.uniform3f(TGU.u_gcol,GCOL[0],GCOL[1],GCOL[2]);tgl.uniform1f(TGU.u_n,n);tgl.uniform1f(TGU.u_br,1-RD*v);tgl.uniform1f(TGU.u_gt,CG.gt/100);
  var tkT=tickerEl.offsetTop,tkH=tickerEl.offsetHeight;tgl.uniform4f(TGU.u_tk,tkT*S,tkH*S,28*S,0); var fxOn=FX.p&&(AURA||FGact)&&!TCLEAN?1:0;if(fxOn)fxRender(W,H);bgPrep(W,H,fxOn);tgl.uniform1i(TGU.u_bgt,3);tgl.uniform1f(TGU.u_clean,TCLEAN);
 
  tgl.uniform4fv(TGU.u_r,tgR);tgl.uniform4fv(TGU.u_m,tgM);tgl.uniform4fv(TGU.u_c,tgC);tgl.uniform4fv(TGU.u_gu,tgGU);tgl.uniform1i(TGU.u_ga,1);tgl.uniform2f(TGU.u_gas,GA.W,GA.H);if(GA.tex){tgl.activeTexture(tgl.TEXTURE1);tgl.bindTexture(tgl.TEXTURE_2D,GA.tex);tgl.activeTexture(tgl.TEXTURE0);}
