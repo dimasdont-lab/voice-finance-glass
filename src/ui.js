@@ -975,7 +975,7 @@ function wlKey(el){var hh=el.querySelector('h2,.lbl,.mh,.big'),tx=((hh&&hh.textC
 function wlApply(i){var host=inn[i];if(!host||i>2||!WL)return;var ch=host.children,chg=false,k;
  for(k=0;k<ch.length;k++){var el=ch[k],tile=el.classList.contains('tile'),dd=tile?WL[wlKey(el)]:null;
   var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws1')?1:el.classList.contains('ws2')?2:4),gc=ds<4?'span '+ds:'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
-  if(el._gc!==gc||el._mh!==mh||el._od!==od){el._gc=gc;el._mh=mh;el._od=od;el.style.gridColumn=gc;el.style.minHeight=mh;el.style.order=od;chg=true;}}
+  if(el._gc!==gc||el._mh!==mh||el._od!==od){el._gc=gc;el._mh=mh;el._od=od;el.style.gridColumn=gc;if(el.classList.contains('acw'))el.style.aspectRatio=ds===1?'1':'auto';el.style.minHeight=mh;el.style.order=od;chg=true;}}
  if(chg){needSync[i]=1;tlStale[i]=1;dirty=true;}try{wgFill();}catch(e){}}
 for(var wli=0;wli<3;wli++)wlApply(wli);
 /* м'яке опускання віджета в сітку: стає на місце найближчого, решта розсуваються */

@@ -4,7 +4,7 @@
 var BH={ph:0,x:0,y:0,r:0,k:0,au:1,pg:[],po:1},WF={n:0,rects:[]},CH={on:0,x:0,y:0,s:0,tx:0,ty:0,drag:0},FGL={down:0,x:0,y:0,tx:0,ty:0,k:0},RPL=[],RPU=new Float32Array(64),RPn=0,RPsig='',FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
 var GLASS_LINE_OK=false;
 var tgR=new Float32Array(TMAX*4),tgM=new Float32Array(TMAX*4),tgC=new Float32Array(TMAX*4);
-var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2],['.aic',18,1],['.bar',8,2],['.cat .b',6,2]];
+var TILE_R={acw:22,tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2],['.bar',8,2],['.cat .b',6,2]];
 var FXFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
 'uniform vec2 u_vp;uniform vec2 u_res;uniform vec4 u_fp[24];uniform vec3 u_fc[24];uniform float u_fn;uniform float u_t;uniform float u_aura;uniform float u_amode;uniform vec3 u_abc;uniform vec3 u_ahsv;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
