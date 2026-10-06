@@ -38,7 +38,7 @@ function openMore(){
  var w=Math.round(VW*.7),el=menu.el;   /* бокова скляна сторінка: 70% ширини, на всю висоту, радіус екрана iPhone */
  el.className='more';el.innerHTML=moreHtml();el.style.display='block';
  el.style.paddingTop=(Math.max(SAFE.t,14)+14)+'px';el.style.paddingBottom=(SAFE.b+28)+'px';
- showMenu('more',el.innerHTML,{x:VW-w,y:0,w:w,h:VH},VW,VH/2,62);
+ var lf=(DKP.side==='r');showMenu('more',el.innerHTML,{x:lf?0:VW-w,y:0,w:w,h:VH},lf?0:VW,VH/2,62);menu.left=lf;if(lf)menu.slide=-(w+10);   /* док справа — панель виїжджає зліва направо */
  menu.shade.style.bottom='0';menu.shade.style.height='auto';
 }
 function openDropdown(anchor,items,cur,cb){
@@ -447,7 +447,7 @@ function gEnd(){
  var dy=TG.ty-TG.y0,atTop=!TG.sc||TG.top0<=0;
  var scr=!!TG.sc&&TG.sc.scrollHeight>TG.sc.clientHeight+2;   /* у вікні є що прокручувати — вимагаємо виразнішого жесту */
  var close=TG.drag&&P.pull&&atTop&&(dy>(scr?150:110)||(dy>(scr?100:60)&&TG.vy>1));
- var dxe=TG.lx-TG.x0,closeX=P===menu&&menu.kind==='more'&&TG.drag&&dxe>70&&Math.abs(dxe)>Math.abs(dy)*1.4;   /* свайп зліва направо закриває «Додатково» */
+ var dxe=TG.lx-TG.x0,closeX=P===menu&&menu.kind==='more'&&TG.drag&&(menu.left?-dxe:dxe)>70&&Math.abs(dxe)>Math.abs(dy)*1.4;   /* свайп зліва направо закриває «Додатково» */
  var openSet=P===menu&&menu.kind==='more'&&TG.atBot&&TG.drag&&dy<-70&&!P.pull;   /* ще раз гортаємо вниз, коли список уже в упор — налаштування */
  P.dragging=0;P.pull=false;P.tgt.x=P.tgt.y=P.tgt.sx=P.tgt.sy=0;TG.P=null;dirty=true;
  if(closeX){TG.moved=true;try{app.closePanel('more');}catch(e){}return;}
@@ -544,7 +544,7 @@ function tkEnd(cancel,ts){
 }
 /* строка закріплена поза сторінками: горизонтальне перетягування не скролить сторінку (touch-action:none) */
 tickerEl.addEventListener('pointerdown',function(e){
- var it=e.target.closest('[data-mk]');
+ var it=tkHit(e);
  tkG.start({x:tkAx(e),marketId:it?it.dataset.mk:'',offset:tkOff});tkPress={id:e.pointerId};tkVel=0;tkPX=tkAx(e);tkPT=e.timeStamp;tkPA={x:e.clientX,y:e.clientY};
  try{tickerEl.setPointerCapture(e.pointerId);}catch(_){}
 });
@@ -947,7 +947,7 @@ function lensTap(){if(BH.ph)return false;var now=performance.now();BHtap.n=now-B
   else if(Math.hypot(e.clientX-CH.x,e.clientY-CH.y)>10){CH.on=0;CH.s=0;dirty=true;}},true);
  document.addEventListener('touchmove',function(e){if(CH.on&&CH.s>.12&&e.cancelable)e.preventDefault();},{capture:true,passive:false});   /* поки тягнемо заряд — сторінка не гортається */
  ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(e){if(!CH.on)return;var s=CH.s,x=n==='pointerup'?e.clientX:CH.x,y=n==='pointerup'?e.clientY:CH.y;CH.on=0;CH.s=0;CH.drag=0;dirty=true;
-  if(n==='pointerup'&&s>.05){rippleAdd(x,y,1+4.2*s);try{if(navigator.vibrate)navigator.vibrate(30);}catch(e2){}LG('egg','накопичена хвиля '+Math.round(s*100)+'%'+(CH.tx!==x?' (перетягнута)':''));}},true);});
+  if(n==='pointerup'&&s>.05){rippleAdd(x,y,1+8*s);try{if(navigator.vibrate)navigator.vibrate(30);}catch(e2){}LG('egg','накопичена хвиля '+Math.round(s*100)+'%'+(CH.tx!==x?' (перетягнута)':''));}},true);});
 })();
 
 /* ---------- віджет, що від'єднується: довгий тап по віджету — його можна тягнути й кидати (невагомість, відскок від країв, желе);
