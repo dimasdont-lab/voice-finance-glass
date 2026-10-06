@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-06 20:45 UTC';
+<script>window.__VF_BUILD='2026-10-06 20:59 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -555,6 +555,22 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 .page[data-p=home] .inner.g4,.page[data-p=insights] .inner.g4,.page[data-p=debts] .inner.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 @container (max-width:150px){.f3d{transform:scale(.7);transform-origin:0 0;height:32px;margin-bottom:2px}.fct{display:none}.fnm{font-size:13px}}
 .inner.g4>.tile.cmp .f3d,.inner.g4>.tile.cmp .fct{display:none}
+
+.inner.g4{align-items:start}
+
+/* «Найбільше на / Заощаджено»: підпис і значення в рядок, під ними тонкий бар, під баром — маленькі цифри */
+.wg .fl1{display:flex;align-items:baseline;gap:6px;white-space:nowrap;overflow:hidden;min-width:0}
+.wg .fl1 .lbl{flex:none}.wg .fv{font-size:18px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.wg .fp{font-size:12px;margin-top:4px;color:var(--mu)}
+.wg .bar{margin-top:7px}
+.inner.g4>.tile.cmp.wg-focus .bar,.inner.g4>.tile.cmp.wg-save .bar{display:block}
+.inner.g4>.tile.cmp .fl1{order:1;flex-basis:100%}.inner.g4>.tile.cmp .fl1 .lbl{flex-basis:auto;font-size:12px}.inner.g4>.tile.cmp .fv{font-size:16px}
+.inner.g4>.tile.cmp .bar{order:2;flex-basis:100%;margin-top:4px}.inner.g4>.tile.cmp .fp{display:block;order:3;font-size:11.5px;margin-top:3px;flex-basis:100%}
+/* загальний баланс у високому режимі показує операції доходів і витрат */
+.balx{display:none}.tile.tall .balx{display:block;margin-top:12px}
+.balx .row{padding:8px 0}.balx .dot{width:26px;height:26px;font-size:13px}
+
+.inner.g4>.tile .cap.fp{display:block}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -3076,6 +3092,7 @@ function nlQuery(q){
   var hay=VF.foldText([t.note,t.client,catName(t.category)].join(' '));if(stems.length&&!stems.every(function(st){return hay.indexOf(st)>=0;}))return;sum+=t.amount;list.push(t);});
  return{sum:sum,list:list,label:label,what:words.join(' '),inc:inc};
 }
+function balRows(){var all=fin.getState().transactions.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);}),inc=all.filter(function(x){return x.type==='income';}).slice(0,2),ex=all.filter(function(x){return x.type==='expense';}).slice(0,2);return inc.concat(ex).map(function(x,i){var up=x.type==='income';return'<div class="row'+(i?'':' first')+'"><i class="dot '+(up?'up':'dn')+'">'+(up?'↑':'↓')+'</i><div class="rc"><b>'+esc(x.client||(x.note&&x.note.length<28?x.note:catName(x.category)))+'</b><span>'+esc(catName(x.category))+'</span></div><em class="'+(up?'in':'')+'">'+(up?'+':'−')+esc(money(x.amount,x.currency))+'</em></div>';}).join('');}
 function blocksHome(){
  var ix=app.getState().interaction,t=fin.totals(),g=fin.goals(),pts=fin.financialSeries('balance','1M');
  var first=pts.length?pts[0].value:t.balance,last=pts.length?pts[pts.length-1].value:first,ch=last-first,pc=first?ch/Math.abs(first)*100:0;
@@ -3090,7 +3107,7 @@ function blocksHome(){
  var tpls=fin.getState().templates||[];
  if(tpls.length)o.push(B_('tools tpl','<div class="lbl" style="width:100%;margin-bottom:2px">Швидкі операції</div>'+tpls.map(function(p){return'<button class="pillb'+(p.type==='income'?'':' ac')+'" data-act="tpl" data-id="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(money(p.amount,p.currency))+'</button>';}).join('')));
  o.push(B_('tile bal '+(BAL_TREND>0?'up':BAL_TREND<0?'dn':''),'<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="brow"><div class="bl"><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>('+esc(pctTxt(pc))+') за 30 днів</span></div></div><div class="chw">'+spark(pts,'h')+'</div><i class="chev">›</i></div></div>'+
-  '<div class="split"><button data-act="flow" data-v="income"><i class="dot up">↑</i><div><span class="lbl">Доходи</span><b>'+esc(money(t.income))+'</b></div></button><span class="vd"></span><button data-act="flow" data-v="expense"><i class="dot dn">↓</i><div><span class="lbl">Витрати</span><b>'+esc(money(t.expense))+'</b></div></button></div>'));
+  '<div class="split"><button data-act="flow" data-v="income"><i class="dot up">↑</i><div><span class="lbl">Доходи</span><b>'+esc(money(t.income))+'</b></div></button><span class="vd"></span><button data-act="flow" data-v="expense"><i class="dot dn">↓</i><div><span class="lbl">Витрати</span><b>'+esc(money(t.expense))+'</b></div></button></div><div class="balx">'+balRows()+'</div>'));
  /* кожен рахунок — окремий віджет: квадратик-іконка, ширше — як баланс, на всю ширину — ще й останні операції рахунку */
  accs.forEach(function(a){var cash=a.accountType==='cash'||a.type==='cash',nm=a.displayName||a.bankName||'Рахунок',neg=a.currentBalance<0,rt=fin.getState().transactions.filter(function(x){return x.accountId===a.id;}).slice(-3).reverse();
   o.push(B_('tile acw ws1','<button class="acb" data-act="acc" data-id="'+esc(a.id)+'"><div class="ach"><i class="aic"'+(cash?'':' style="color:'+hashCol(a.id)+'"')+'>'+(cash?COIN_SVG:esc(String(nm).trim().charAt(0).toUpperCase()))+'</i><span class="lbl acn">'+esc(nm)+'</span></div><div class="big aca'+(neg?' neg':'')+'">'+esc(money(a.currentBalance,a.currency))+'</div><div class="acx">'+(rt.length?rt.map(function(x,k){return txRow(x,k===0).replace(/<button /,'<div ').replace(/<\/button>$/,'</div>');}).join(''):'<div class="cap">Операцій по рахунку ще немає.</div>')+'</div></button>'));});
@@ -3225,11 +3242,11 @@ function wgBlocks(list){
   if(id==='clock'){h='<div class="lbl">Зараз</div><div class="big wclk" data-clk="1">'+now.toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'})+'</div><div class="cap">'+esc(todayStr())+'</div>';}
   else if(id==='today'){var fc=forecastMonth(),left=Math.max(1,fc.left+1),rest=fc.limit-fc.spent,per=rest/left;
    h='<div class="lbl">Можна сьогодні</div><div class="big" style="color:'+(per<0?'var(--ac)':'var(--gr)')+'">'+esc(money(Math.max(0,per)))+'</div><div class="bar"><i style="width:'+Math.min(100,fc.limit?fc.spent/fc.limit*100:0).toFixed(1)+'%"></i></div><div class="cap">Залишок ліміту '+esc(money(rest))+' на '+left+' дн.</div>';}
-  else if(id==='save'){var inc=mon('income'),exp=mon('expense'),sv=inc-exp,p=inc>0?sv/inc*100:0;
-   h='<div class="lbl">Заощаджено цього місяця</div><div class="wrow">'+wgRing(p,p>=0?'#66d896':'#ff7d83')+'<div class="wtx"><div class="mid" style="color:'+(sv<0?'var(--ac)':'var(--gr)')+'">'+esc(mv(sv))+'</div><div class="cap">від доходу '+esc(money(inc))+'</div></div></div>';}
+  else if(id==='save'){var inc=mon('income'),exp=mon('expense'),sv=inc-exp,p=inc>0?sv/inc*100:0,sc=sv<0?'#ff7d83':'#66d896';
+   h='<div class="fl1"><span class="lbl">Заощаджено</span><b class="fv" style="color:'+(sv<0?'var(--ac)':'var(--gr)')+'">'+esc(mv(sv))+'</b></div><div class="bar"><i style="width:'+Math.max(0,Math.min(100,p)).toFixed(1)+'%;background:'+sc+'" data-col="'+sc+'"></i></div><div class="cap fp">'+Math.round(p)+'% від доходу '+esc(money(inc))+'</div>';}
   else if(id==='focus'){var by={},tot=0,top=null;st.transactions.forEach(function(t){if(t.type==='expense'&&t.currency==='PLN'&&new Date(t.date)>=ms){by[t.category]=(by[t.category]||0)+t.amount;tot+=t.amount;}});
    for(var k in by)if(!top||by[k]>by[top])top=k;
-   h=top?'<div class="lbl">Найбільше на</div><div class="wrow">'+wgRing(by[top]/tot*100,hashCol(top))+'<div class="wtx"><div class="mid">'+esc(catName(top))+'</div><div class="cap">'+esc(money(by[top]))+' цього місяця</div></div></div>':'<div class="lbl">Найбільше на</div><div class="empty">Витрат ще немає</div>';}
+   h=top?'<div class="fl1"><span class="lbl">Найбільше на</span><b class="fv">'+esc(catName(top))+'</b></div><div class="bar"><i style="width:'+(by[top]/tot*100).toFixed(1)+'%;background:'+hashCol(top)+'" data-col="'+hashCol(top)+'"></i></div><div class="cap fp">'+Math.round(by[top]/tot*100)+'% · '+esc(money(by[top]))+'</div>':'<div class="fl1"><span class="lbl">Найбільше на</span></div><div class="empty">Витрат ще немає</div>';}
   else if(id==='week'){var days=[],mx=1,i;for(i=6;i>=0;i--){var d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i);days.push({d:d,k:wgDay(d),s:0});}
    st.transactions.forEach(function(t){if(t.type!=='expense'||t.currency!=='PLN')return;var k=wgDay(new Date(t.date));days.forEach(function(q){if(q.k===k)q.s+=t.amount;});});
    days.forEach(function(q){mx=Math.max(mx,q.s);});var sum=days.reduce(function(a,q){return a+q.s;},0);
@@ -3379,7 +3396,7 @@ GLSL_BG,
 ' return vec4(col,a);}',
 'vec3 bgTb(vec2 x,float r){vec3 s=bgT(x)*.25;for(int i=0;i<6;i++){float a=float(i)*1.0471976;s+=bgT(x+vec2(cos(a),sin(a))*r)*.125;}return s;}',
 'vec4 tickGlass(vec2 px,float d){float m=mix(22.,12.,u_tp.z)*u_s;float t=clamp(-d/(.6*m),0.,1.);vec2 n=tickN(px);',
-' vec2 of=n*pow(1.-t,2.2)*.4*m;float ab=.05*(.35+pow(1.-t,1.5));float br=5.*u_s;vec3 ci=bgTb(px-of,br)*.42;vec4 xa=txS(px-of*(1.+ab)),xb=txS(px-of),xc=txS(px-of*(1.-ab));ci=vec3(mix(ci.r,xa.r,xa.a),mix(ci.g,xb.g,xb.a),mix(ci.b,xc.b,xc.a));',
+' vec2 of=n*pow(1.-t,2.2)*.4*m;float ab=.05*(.35+pow(1.-t,1.5));vec3 ci=bgT(px-of)*.42;vec4 xa=txS(px-of*(1.+ab)),xb=txS(px-of),xc=txS(px-of*(1.-ab));ci=vec3(mix(ci.r,xa.r,xa.a),mix(ci.g,xb.g,xb.a),mix(ci.b,xc.b,xc.a));',
 ' float rim=pow(1.-t,3.);float sp=pow(max(dot(n,normalize(vec2(-.6,-.8))),0.),3.)+.5*pow(max(dot(n,normalize(vec2(.6,.8))),0.),3.);ci+=vec3(rim*(.01+.042*sp));',
 ' return vec4(ci,clamp(-d/(1.5*u_s)+.5,0.,1.));}',
 'vec4 tickOut(vec2 px,float d){float sg=12.*u_s;float g=exp(-d*d/(sg*sg));float e=1.5;vec2 bn=normalize(vec2(sdBand(px+vec2(e,0.))-sdBand(px-vec2(e,0.)),sdBand(px+vec2(0.,e))-sdBand(px-vec2(0.,e)))+1e-5);vec2 q=px-bn*(10.*u_s*g*(d/sg));return vec4(bgT(q)+vec3(.035*g),smoothstep(.02,.3,g));}',
@@ -5635,6 +5652,7 @@ function accItems(){return[{v:'',l:'Без прив’язки'}].concat(fin.act
 var CURITEMS=CURS.map(function(c){return{v:c,l:c};});
 
 /* налаштування: заголовок розділу і повзунок (підпис зверху, повзунок на всю ширину під ним) */
+var SETV=null;
 function SEC(t){return'<div class="sec2">'+esc(t)+'</div>';}
 function RNG(kind,k,label,max){var o=kind==='cg'?CG:FGS;return'<div class="fr rng"><label>'+esc(label)+'</label><input type="range" min="0" max="'+max+'" data-'+kind+'="'+k+'" value="'+o[k]+'"></div>';}
 function sheetHtml(kind,ov){
@@ -5678,7 +5696,7 @@ function sheetHtml(kind,ov){
  }
  if(kind==='settings'){
   var g=fin.getState().goal;
-  return'<div class="sh"><span style="min-width:70px"></span><h3>Налаштування</h3><button class="ok" data-s="cancel">Закрити</button></div>'+
+  var setFull='<div class="sh"><span style="min-width:70px"></span><h3>Налаштування</h3><button class="ok" data-s="cancel">Закрити</button></div>'+
    SEC('Бюджет і рахунки')+'<div class="fr"><label>Місячний ліміт, zł</label><input data-g="goal" inputmode="decimal" value="'+esc(g)+'" autocomplete="off"></div>'+
    '<button class="btnw" data-s="goal">Зберегти ліміт</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button><button class="btnw" data-s="markets">Валюти в бігучій строці</button>'+
    SEC('Графіки')+'<button class="btnw" data-s="glines">'+glinesLabel()+'</button><button class="btnw" data-s="area">'+areaLabel()+'</button>'+
@@ -5706,6 +5724,17 @@ function sheetHtml(kind,ov){
    SEC('Діагностика')+'<button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
    '<div class="mkinfo" style="padding-top:10px">Збірка: '+esc(window.__VF_BUILD||'?')+(navigator.standalone&&window.__vfFirstH&&screen.height-window.__vfFirstH>=40?'<br><span style="color:var(--ac)">Цей запуск почався з вікном '+window.__vfFirstH+' замість '+screen.height+': iOS відкрив застосунок з геометрією старої іконки. Видаліть іконку з робочого столу, оновіть сторінку в Safari й додайте іконку знову.</span>':'')+'</div>'+
    '';
+  /* групи: розбираємо готовий список за заголовками розділів */
+  var sp=setFull.split('<div class="sec2">'),shHead=sp.shift(),SG={};sp.forEach(function(c){var tt=c.slice(0,c.indexOf('</div>'));SG[tt]='<div class="sec2">'+c;});
+  function gj(names){return names.map(function(n){return SG[n]||'';}).join('');}
+  var gmap={
+   ops:['Операції',function(){return'<div class="fr"><label>Місячний ліміт, zł</label><input data-g="goal" inputmode="decimal" value="'+esc(g)+'" autocomplete="off"></div><button class="btnw" data-s="goal">Зберегти ліміт</button><button class="btnw" data-s="acc">Додати рахунок</button><button class="btnw" data-s="cash">Додати готівку</button>';}],
+   gfx:['Графіка',function(){return gj(['Графіки','Скло віджетів','Скло вікон (налаштування, списки)','Скло панелі «Додатково»','Ободок екрана','Слід пальця','Завантаження'])+'<button class="btnw" data-s="cgreset">Скинути кольори скла, ободка й сліду</button>';}],
+   wdg:['Віджети',function(){return gj(['Віджети на головній']);}],
+   syn:['Синхронізація',function(){return gj(['Синхронізація між пристроями (шифрована)','Автосинхронізація в реальному часі (приватний GitHub Gist)']);}],
+   dev:['Дані й розробник',function(){return gj(['Дані','Діагностика']);}]};
+  if(SETV&&gmap[SETV]){return'<div class="sh"><button class="ok" data-s="setback">‹ Назад</button><h3>'+gmap[SETV][0]+'</h3><button class="ok" data-s="cancel">Закрити</button></div>'+gmap[SETV][1]()+'<div class="err" data-err></div>';}
+  return shHead+'<button class="btnw" data-s="setv" data-v="ops">Операції</button><button class="btnw" data-s="cats">Категорії</button><button class="btnw" data-s="markets">Валюти в бігучій строці</button><button class="btnw" data-s="setv" data-v="gfx">Графіка</button><button class="btnw" data-s="setv" data-v="wdg">Віджети</button><button class="btnw" data-s="setv" data-v="syn">Синхронізація</button><button class="btnw" data-s="setv" data-v="dev">Дані й розробник</button>';
  }
  if(kind==='markets'){
   var msel=MK.selection,mcat=VF.marketCatalog(),mby={};mcat.forEach(function(m){mby[m.id]=m;});
@@ -5821,7 +5850,7 @@ sheetsEl.addEventListener('click',function(e){
    var f=t.dataset.dd,items=f==='currency'||f==='macur'?CURITEMS:f==='accountId'?accItems():catItems();
    var cv=f==='macur'?macur:ix.form.values[f];
    openDropdown(t,items,cv,function(v){if(f==='macur'){macur=v;}else{var q={};q[f]=v;app.updateForm(q);}setDDLabel(f,v);});return;}
-  if(s==='cancel')app.back();
+  if(s==='cancel'){if(curSheet&&curSheet.kind==='settings')SETV=null;app.back();}
   else if(s==='save'){app.saveForm();toast('Збережено');}
   else if(s==='del'){if(!delArm){delArm=1;t.textContent='Натисніть ще раз для видалення';sheetStale();setTimeout(function(){delArm=0;},3000);}else{delArm=0;app.deleteFormRecord();toast('Видалено');}}
   else if(s==='confirm'){var r=app.confirmInput();if(r&&r.id&&!r.person&&!r.paid&&r.type)toast('Збережено');else if(r&&r.id)toast('Збережено');}
@@ -5849,6 +5878,8 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);setCG('gt',65);setCG('gsat',50);setCG('gbr',50);setCG('wh',200);setCG('ws',0);setCG('wv',100);setCG('mh',200);setCG('ms',0);setCG('mv',100);setFGS('a',50);setFGS('ah',0);setFGS('as',100);setFGS('av',100);setFGS('i',56);setFGS('w',62);setFGS('l',30);[].forEach.call(curSheet.body.querySelectorAll('[data-fg]'),function(i){i.value=FGS[i.dataset.fg];});[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
   else if(s==='bfx'){try{localStorage.setItem('vf-bfx',localStorage.getItem('vf-bfx')==='0'?'1':'0');}catch(e){}t.textContent=bfxLabel();}
   else if(s==='wg'){var wq=WG_LIST.find(function(q){return q.id===t.dataset.v;});wgToggle(t.dataset.v);t.textContent=wgLabel(wq);sheetStale();}
+  else if(s==='setv'){SETV=t.dataset.v;if(curSheet)curSheet.body.scrollTop=0;syncUI();sheetStale();}
+  else if(s==='setback'){SETV=null;syncUI();sheetStale();}
   else if(s==='fgwave'){setFGS('tw',FGS.tw?0:1);t.textContent=fgWaveLabel();LG('ui',fgWaveLabel());}
   else if(s==='fgglow'){setFGS('tg',FGS.tg?0:1);t.textContent=fgGlowLabel();LG('ui',fgGlowLabel());}
   else if(s==='auramode'){setFGS('am',FGS.am?0:1);t.textContent=auraModeLabel();LG('ui',auraModeLabel());}
@@ -6492,11 +6523,11 @@ function wuUnit(n){n=n||4;return Math.max(24,(VW-32-(n-1)*12)/n);}   /* висо
 function wlApply(i){var host=inn[i];if(!host||(i>2&&i!==9)||!WL)return;var NC=i===9?FLD.cols:4,WU=wuUnit(NC);host._wu=WU;host.style.setProperty('--wu',WU.toFixed(1)+'px');var ch=host.children,chg=false,k;
  for(k=0;k<ch.length;k++){var el=ch[k],tile=el.classList.contains('tile'),dd=tile?WL[wlKey(el)]:null;
   var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws1')?1:el.classList.contains('ws2')?2:4),gc=ds<4||NC!==4?'span '+Math.max(1,Math.min(NC,Math.round(ds*NC/4))):'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
-  if(el._gc!==gc||el._mh!==mh||el._od!==od||el._nc!==NC){el._nc=NC;el._gc=gc;el._mh=mh;el._od=od;el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=WU*1.35)||(NC>5&&!el.classList.contains('acw')));el.style.gridColumn=gc;if(el.classList.contains('acw'))el.style.aspectRatio=ds===1?'1':'auto';el.style.minHeight=mh;el.style.order=od;chg=true;}}
+  if(el._gc!==gc||el._mh!==mh||el._od!==od||el._nc!==NC){el._nc=NC;el._gc=gc;el._mh=mh;el._od=od;el.classList.toggle('tall',!!(dd&&dd.h&&dd.h>=WU*2.6));el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=WU*1.35)||(NC>5&&!el.classList.contains('acw')));el.style.gridColumn=gc;if(el.classList.contains('acw'))el.style.aspectRatio=ds===1?'1':'auto';el.style.minHeight=mh;el.style.order=od;chg=true;}}
  if(chg){needSync[i]=1;tlStale[i]=1;dirty=true;}try{wgFill();}catch(e){}}
 for(var wli=0;wli<3;wli++)wlApply(wli);
 /* м'яке опускання віджета в сітку: стає на місце найближчого, решта розсуваються */
-function wfSlot(w){
+function wfSlot(w,live){
  var el=w.el,host=el.parentNode,pi=[].indexOf.call(inn,host);if(pi<0||(pi>2&&pi!==9))return false;
  var tiles=[].filter.call(host.children,function(x){return x.classList.contains('tile');}),r0=el.getBoundingClientRect(),cx=r0.left+r0.width/2,cy=r0.top+r0.height/2;
  var best=null,bd=1e9;tiles.forEach(function(x){if(x===el)return;var r=x.getBoundingClientRect(),dd=Math.hypot(r.left+r.width/2-cx,r.top+r.height/2-cy);if(dd<bd){bd=dd;best=x;}});
@@ -6505,8 +6536,8 @@ function wfSlot(w){
  ord.splice(ord.indexOf(el),1);var bi=ord.indexOf(best),rb=best.getBoundingClientRect(),after=cy>rb.top+rb.height/2||(Math.abs(cy-(rb.top+rb.height/2))<rb.height/3&&cx>rb.left+rb.width/2);
  ord.splice(bi+(after?1:0),0,el);
  ord.forEach(function(x,k){x.style.order=String(slots[k]);x._od=String(slots[k]);var key=wlKey(x);WL[key]=Object.assign(WL[key]||{},{o:slots[k]});});
- wlSave();needSync[pi]=1;tlStale[pi]=1;
- var r1=el.getBoundingClientRect();w.dx+=(r0.left+r0.width/2)-(r1.left+r1.width/2);w.dy+=(r0.top+r0.height/2)-(r1.top+r1.height/2);   /* візуально лишається там, де відпустили, й пружиною їде в нове місце */
+ if(!live)wlSave();needSync[pi]=1;tlStale[pi]=1;
+ var r1=el.getBoundingClientRect();var ddx=(r0.left+r0.width/2)-(r1.left+r1.width/2),ddy=(r0.top+r0.height/2)-(r1.top+r1.height/2);w.dx+=ddx;w.dy+=ddy;if(live&&WF.drag&&WF.drag.w===w){WF.drag.dx0+=ddx;WF.drag.dy0+=ddy;}   /* візуально лишається там, де відпустили, й пружиною їде в нове місце */
  return true;
 }
 /* ручка зміни розміру: скляна кнопка шейдера на куті віджета, що літає */
@@ -6518,7 +6549,7 @@ function wrhEnsure(){
   var host=w.el.parentNode,cs=getComputedStyle(host);WRZ={w:w,id:e.pointerId,x0:e.clientX,y0:e.clientY,w0:w.el.offsetWidth,h0:w.el.offsetHeight,iw:host.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),pi:[].indexOf.call(inn,host)};});
  d.addEventListener('pointermove',function(e){var Z=WRZ;if(!Z||e.pointerId!==Z.id)return;e.preventDefault();
   var NC=Z.pi===9?FLD.cols:4,cell=(Z.iw-(NC-1)*12)/NC,span=Math.max(1,Math.min(NC,Math.round((Z.w0+e.clientX-Z.x0+12)/(cell+12)))),h=Math.max(wuUnit(NC),Math.round(Z.h0+e.clientY-Z.y0)),key=wlKey(Z.w.el);
-  WL[key]=Object.assign(WL[key]||{},{s:Math.max(1,Math.min(4,Math.round(span*4/NC))),h:h});wlApply(Z.pi);wfKick();});
+  WL[key]=Object.assign(WL[key]||{},{s:Math.max(1,Math.min(4,Math.round(span*4/NC))),h:h});if(!Z.lg||performance.now()-Z.lg>400){Z.lg=performance.now();LG('egg','розмір «'+key+'»: колонок '+span+' з '+NC+', висота '+h+', одиниця '+Math.round(wuUnit(NC))+', фактично '+Z.w.el.offsetHeight+'x'+Z.w.el.offsetWidth);}wlApply(Z.pi);wfKick();});
  ['pointerup','pointercancel'].forEach(function(n){d.addEventListener(n,function(e){if(!WRZ||e.pointerId!==WRZ.id)return;WRZ=null;wlSave();LG('egg','розмір віджета збережено');});});
  return d;
 }
@@ -6591,7 +6622,9 @@ function wfStep(t){
  window.addEventListener('pointermove',function(e){var D=WF.drag;if(!D)return;e.stopPropagation();if(e.cancelable)e.preventDefault();
   var now=performance.now(),w=D.w,dtm=Math.max(1,now-D.lt)/1000,k=Math.min(1,dtm*18);
   w.vx+=((e.clientX-D.lx)/dtm-w.vx)*k;w.vy+=((e.clientY-D.ly)/dtm-w.vy)*k;D.mv+=Math.abs(e.clientX-D.lx)+Math.abs(e.clientY-D.ly);D.lx=e.clientX;D.ly=e.clientY;D.lt=now;
-  w.dx=D.dx0+e.clientX-D.x0;w.dy=D.dy0+e.clientY-D.y0;wfKick();},true);
+  w.dx=D.dx0+e.clientX-D.x0;w.dy=D.dy0+e.clientY-D.y0;
+  if(now-(D.pv||0)>140&&Math.hypot(w.vx,w.vy)<700){D.pv=now;try{wfSlot(w,true);w.dx=D.dx0+e.clientX-D.x0;w.dy=D.dy0+e.clientY-D.y0;}catch(er){}}
+  wfKick();},true);
  ['pointerup','pointercancel'].forEach(function(n){window.addEventListener(n,function(e){var D=WF.drag;if(!D)return;e.stopPropagation();WF.drag=null;var w=D.w;
   if(performance.now()-D.lt>90){w.vx*=.2;w.vy*=.2;}var sp=Math.hypot(w.vx,w.vy);if(sp>3000){w.vx*=3000/sp;w.vy*=3000/sp;}
   if(D.mv<6){w.evx-=1.2;w.evy+=1.2;}

@@ -481,3 +481,19 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 .page[data-p=home] .inner.g4,.page[data-p=insights] .inner.g4,.page[data-p=debts] .inner.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 @container (max-width:150px){.f3d{transform:scale(.7);transform-origin:0 0;height:32px;margin-bottom:2px}.fct{display:none}.fnm{font-size:13px}}
 .inner.g4>.tile.cmp .f3d,.inner.g4>.tile.cmp .fct{display:none}
+
+.inner.g4{align-items:start}
+
+/* «Найбільше на / Заощаджено»: підпис і значення в рядок, під ними тонкий бар, під баром — маленькі цифри */
+.wg .fl1{display:flex;align-items:baseline;gap:6px;white-space:nowrap;overflow:hidden;min-width:0}
+.wg .fl1 .lbl{flex:none}.wg .fv{font-size:18px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.wg .fp{font-size:12px;margin-top:4px;color:var(--mu)}
+.wg .bar{margin-top:7px}
+.inner.g4>.tile.cmp.wg-focus .bar,.inner.g4>.tile.cmp.wg-save .bar{display:block}
+.inner.g4>.tile.cmp .fl1{order:1;flex-basis:100%}.inner.g4>.tile.cmp .fl1 .lbl{flex-basis:auto;font-size:12px}.inner.g4>.tile.cmp .fv{font-size:16px}
+.inner.g4>.tile.cmp .bar{order:2;flex-basis:100%;margin-top:4px}.inner.g4>.tile.cmp .fp{display:block;order:3;font-size:11.5px;margin-top:3px;flex-basis:100%}
+/* загальний баланс у високому режимі показує операції доходів і витрат */
+.balx{display:none}.tile.tall .balx{display:block;margin-top:12px}
+.balx .row{padding:8px 0}.balx .dot{width:26px;height:26px;font-size:13px}
+
+.inner.g4>.tile .cap.fp{display:block}
