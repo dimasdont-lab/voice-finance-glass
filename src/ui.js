@@ -203,7 +203,7 @@ function sheetHtml(kind,ov){
    '<button class="btnw" data-s="synon">'+(SYN.on?'Вимкнути автосинхронізацію':'Увімкнути автосинхронізацію')+'</button><div class="mkinfo" data-sy-st style="padding:4px 0 8px">'+esc(synSt||(SYN.on?'Увімкнено':'Вимкнено'))+'</div>'+
    '<div class="mkinfo" style="padding:4px 0 8px">Дані шифруються на пристрої (AES-256-GCM, ключ із вашого ключа); код можна безпечно надіслати собі в Нотатки чи месенджер. Видалення при об’єднанні не переноситься.</div>'+
    SEC('Дані')+'<button class="btnw" data-s="csv">Експорт операцій у CSV</button><button class="btnw" data-s="export">Експорт JSON</button><button class="btnw" data-s="seed">Додати тестові дані для перегляду</button><button class="btnw dng" data-s="clear">Очистити операції та борги</button><div class="err" data-err></div>'+
-   SEC('Діагностика')+'<button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
+   SEC('Діагностика')+'<button class="btnw" data-s="logshare">Поділитися журналом запуску</button><button class="btnw" data-s="logclear">Стерти старі журнали</button><button class="btnw" data-s="trace">'+(window.__trOn&&window.__trOn()?'Докладний журнал: увімкнено':'Докладний журнал: вимкнено')+'</button><button class="btnw" data-s="logcopy">Скопіювати журнал запуску</button>'+
    '<div class="mkinfo" style="padding-top:10px">Збірка: '+esc(window.__VF_BUILD||'?')+(navigator.standalone&&window.__vfFirstH&&screen.height-window.__vfFirstH>=40?'<br><span style="color:var(--ac)">Цей запуск почався з вікном '+window.__vfFirstH+' замість '+screen.height+': iOS відкрив застосунок з геометрією старої іконки. Видаліть іконку з робочого столу, оновіть сторінку в Safari й додайте іконку знову.</span>':'')+'</div>'+
    '';
   /* групи: розбираємо готовий список за заголовками розділів */
@@ -358,6 +358,8 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='syncmerge')syImport('merge');
   else if(s==='syncreplace')syImport('replace');
   else if(s==='logcopy')logCopy();
+  else if(s==='logclear'){var nrm=window.__vfClearOld?window.__vfClearOld():0;toast(nrm<0?'Не вдалося':'Стерто старих журналів: '+nrm);LG('log','стерто старих журналів '+nrm);}
+  else if(s==='trace'){window.__trToggle(!window.__trOn());t.textContent=window.__trOn()?'Докладний журнал: увімкнено':'Докладний журнал: вимкнено';}
   else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);setCG('gt',65);setCG('gsat',50);setCG('gbr',50);setCG('wh',200);setCG('ws',0);setCG('wv',100);setCG('mh',200);setCG('ms',0);setCG('mv',100);setFGS('a',50);setFGS('ah',0);setFGS('as',100);setFGS('av',100);setFGS('i',56);setFGS('w',62);setFGS('l',30);[].forEach.call(curSheet.body.querySelectorAll('[data-fg]'),function(i){i.value=FGS[i.dataset.fg];});[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
   else if(s==='bfx'){try{localStorage.setItem('vf-bfx',localStorage.getItem('vf-bfx')==='0'?'1':'0');}catch(e){}t.textContent=bfxLabel();}
   else if(s==='wg'){var wq=WG_LIST.find(function(q){return q.id===t.dataset.v;});wgToggle(t.dataset.v);t.textContent=wgLabel(wq);sheetStale();}
@@ -1130,7 +1132,7 @@ function wfStep(t){
   if(now-(D.pv||0)>140&&Math.hypot(w.vx,w.vy)<700){D.pv=now;try{wfSlot(w,true);w.dx=D.dx0+e.clientX-D.x0;w.dy=D.dy0+e.clientY-D.y0;}catch(er){}}
   wfKick();},true);
  ['pointerup','pointercancel'].forEach(function(n){window.addEventListener(n,function(e){var D=WF.drag;if(!D)return;e.stopPropagation();WF.drag=null;var w=D.w;
-  if(w.el.parentNode===inn[9]&&FLD.id){var Fz=FOLDERS[FLD.id],wid=wgIdOf(w.el),zz=FLD.zoom||1;if(Fz&&Fz.pos[wid]){Fz.pos[wid].x=Math.max(0,Math.round(Fz.pos[wid].x+w.dx/zz));Fz.pos[wid].y=Math.max(60,Math.round(Fz.pos[wid].y+w.dy/zz));foldSave();}w.dx=w.dy=0;w.vx=w.vy=0;w.home=0;wlApply(9);needSync[9]=1;tlStale[9]=1;wfKick();return;}
+  if(w.el.parentNode===inn[9]&&FLD.id){var Fz=FOLDERS[FLD.id],wid=wgIdOf(w.el),zz=FLD.zoom||1;if(Fz&&Fz.pos[wid]){Fz.pos[wid].x=Math.max(0,Math.round(Fz.pos[wid].x+w.dx/zz));Fz.pos[wid].y=Math.max(60,Math.round(Fz.pos[wid].y+w.dy/zz));foldSave();}LG('egg','віджет «'+wid+'» покладено: полотно '+Math.round(Fz.pos[wid].x)+','+Math.round(Fz.pos[wid].y)+' (зсув екран '+Math.round(w.dx)+','+Math.round(w.dy)+', масштаб '+zz.toFixed(2)+')');w.dx=w.dy=0;w.vx=w.vy=0;w.home=0;wlApply(9);needSync[9]=1;tlStale[9]=1;wfKick();setTimeout(function(){if(window.__trDump)window.__trDump('віджет покладено',9);},300);return;}
   if(performance.now()-D.lt>90){w.vx*=.2;w.vy*=.2;}var sp=Math.hypot(w.vx,w.vy);if(sp>3000){w.vx*=3000/sp;w.vy*=3000/sp;}
   if(D.mv<6){w.evx-=1.2;w.evy+=1.2;}
   else if(sp<160){try{if(wfSlot(w)){w.home=1;w.vx=w.vy=0;LG('egg','віджет опущено в сітку');}}catch(err){console.error(err);}}   /* повільне відпускання — стає в сітку; кидок — летить */

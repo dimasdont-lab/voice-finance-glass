@@ -27,9 +27,9 @@ function foldTween(to,dur,done){var f={s:FLD.zoom,x:FLD.tx,y:FLD.ty},t0=performa
 function openFolder(id,srcEl){if(!FOLDERS[id])return;var F=FOLDERS[id],m=F._m||{ms:.3,x:0,y:230},mini=srcEl&&srcEl.querySelector('.fmini'),r=mini?mini.getBoundingClientRect():{left:VW*.3,top:VH*.4},
   s0=m.ms,x0=r.left+4-m.x*s0,y0=r.top+4-m.y*s0;
  FLD.id=id;FLD.scr=nav.getState().screen;FLD.src={s:s0,x:x0,y:y0};FLD.zoom=s0;FLD.tx=x0;FLD.ty=y0;FLD.addAt=null;sel=9;ca=9;sy[9]=0;foldLayout(F);renderPages();fhdr(true);fbUpdate();dirty=true;
- foldTween({s:1,x:0,y:0},680);LG('egg','папка: '+F.n);}
+ foldTween({s:1,x:0,y:0},680,function(){if(window.__trDump)window.__trDump('папку відкрито',9);});LG('egg','папка: '+F.n+' зсув '+Math.round(x0)+','+Math.round(y0)+' масштаб '+s0.toFixed(3));}
 function closeFolder(){if(!FLD.id||FLD.anim)return;WFL.slice().forEach(function(w){w.home=1;});var S0=FLD.src||{s:.3,x:VW*.3,y:VH*.4};FLD.addAt=null;fhdr(false);
- foldTween(S0,420,function(){FLD.id=null;sel=2;ca=2;rec.pg.v=0;rec.pg.tx=rec.pg.ty=0;renderPages();fbUpdate();dirty=true;});}
+ foldTween(S0,420,function(){FLD.id=null;sel=2;ca=2;rec.pg.v=0;rec.pg.tx=rec.pg.ty=0;renderPages();fbUpdate();dirty=true;setTimeout(function(){if(window.__trDump)window.__trDump('після закриття папки',2);},700);});}
 function foldAdd(){var n=Object.keys(FOLDERS).length+1,nm='Папка '+n;try{var r=window.prompt('Назва папки',nm);if(r===null)return;nm=(r||nm).trim().slice(0,24)||nm;}catch(e){}var id='k'+Date.now().toString(36);FOLDERS[id]={n:nm,wg:[]};foldSave();WG.push('f:'+id);wgSave();renderPages();}
 function wgCur(){return FLD.id&&FOLDERS[FLD.id]?FOLDERS[FLD.id].wg:WG;}
 function wgPut(id){var L=wgCur();if(L.indexOf(id)>=0){toast('Цей віджет уже тут');return;}L.push(id);if(FLD.id){var F=FOLDERS[FLD.id];F.pos=F.pos||{};var ax=FLD.addAt?FLD.addAt.x:VW*.22,ay=FLD.addAt?FLD.addAt.y:VH*.42;F.pos[id]={x:Math.max(0,Math.round((ax-FLD.tx)/FLD.zoom)),y:Math.max(60,Math.round((ay-FLD.ty)/FLD.zoom))};FLD.addAt=null;foldSave();}else wgSave();renderPages();fbUpdate();}
@@ -104,3 +104,13 @@ function wgBlocks(list){
 function wgFill(){[].forEach.call(document.querySelectorAll('textarea[data-notes]'),function(t){if(document.activeElement===t)return;var v='';try{v=localStorage.getItem('vf-notes')||'';}catch(e){}if(t.value!==v)t.value=v;});}
 document.addEventListener('input',function(e){var t=e.target;if(t&&t.dataset&&t.dataset.notes){try{localStorage.setItem('vf-notes',t.value);}catch(er){}}},true);
 setInterval(function(){var s=new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});[].forEach.call(document.querySelectorAll('[data-clk]'),function(e){if(e.textContent!==s)e.textContent=s;});},15000);
+
+/* ---- дані для докладного журналу (src/trace.js) ---- */
+window.__inn=inn;
+window.__trState=function(){var o={page:sel,ca:+(+ca).toFixed(3),sy:Math.round(sy[sel]||0),fps:Math.round(window.__fps||0),dirty:dirty?1:0,busy:busy?1:0,boot:boot.on?boot.phase:0,bh:BH.ph,dock:DKP.side+(DKP.sq>.01?' sq'+DKP.sq.toFixed(2):'')+(DKP.drag?' тягнуть':''),tick:TKP.side,menu:menu.on?menu.kind:'',sheet:(typeof curSheet!=='undefined'&&curSheet)?curSheet.kind:'',lens:LNS.length,edit:WFL.length,wfd:WF.mv?1:0,ch:CH.on?+CH.s.toFixed(2):0,rec:+rec.pg.v.toFixed(2),rpx:+rec.pg.tx.toFixed(1),rpy:+rec.pg.ty.toFixed(1),tiles:(TL[sel]||[]).length,lines:(TLL[sel]||[]).length,fgl:+(FGL.k||0).toFixed(2),press:+((FGL.p||0)).toFixed(2),anim:FLD.anim?1:0};
+ if(FLD.id){o.fld=FLD.id;o.zoom=+FLD.zoom.toFixed(3);o.tx=Math.round(FLD.tx);o.ty=Math.round(FLD.ty);o.cw=Math.round(FLD.cw||0);o.ch2=Math.round(FLD.ch||0);o.addAt=FLD.addAt?1:0;}return o;};
+window.__trCtx=function(){var s=window.__trState();return'стор.'+s.page+(s.fld?' папка':'')+(s.edit?' редагування':'')+(s.menu?' меню:'+s.menu:'')+(s.sheet?' вікно:'+s.sheet:'')+(s.anim?' анімація':'');};
+window.__trExpect=function(){if(!FLD.id)return[];var F=FOLDERS[FLD.id],out=[],host=inn[9],k;if(!F||!F.pos)return[];
+ for(k=0;k<host.children.length;k++){var el=host.children[k];if(!el.classList.contains('tile'))continue;var id=wgIdOf(el),P=F.pos[id];if(!P)continue;var r=el.getBoundingClientRect(),w=wfFind(el),det=el.classList.contains('wfd');
+  out.push({id:id,ex:P.x*FLD.zoom+FLD.tx+(w&&det?w.dx:0),ey:P.y*FLD.zoom+FLD.ty+(w&&det?w.dy:0),ax:r.left,ay:r.top,det:det});}
+ return out;};

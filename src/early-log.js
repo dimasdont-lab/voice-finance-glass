@@ -1,16 +1,17 @@
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
- var KEY='vf-log',MAXL=6000,sid=Date.now().toString(36),lines=[],ov=null,dbg=false;
+ var KEY='vf-log',MAXL=14000,sid=Date.now().toString(36),lines=[],ov=null,dbg=false;
  try{dbg=!!localStorage.getItem('vf-debug')||/[?&]debug/.test(location.search);}catch(e){}
  function ms(){return Math.round(performance.now());}
  function vvs(){var v=window.visualViewport;return v?Math.round(v.width)+'x'+Math.round(v.height)+'@'+Math.round(v.offsetTop):'-';}
  function snap(){var d=document.documentElement;return 'in '+innerWidth+'x'+innerHeight+' out '+outerWidth+'x'+outerHeight+' vv '+vvs()+' sy '+Math.round(window.scrollY||0)+' ch '+(d?d.clientHeight:'-');}
  function log(tag,msg){var s=ms()+' '+tag+(msg!==undefined&&msg!==''?' '+msg:'');lines.push(s);if(lines.length>MAXL)lines.splice(0,lines.length-MAXL);if(ov)ov.textContent=s+'\n'+snap();}
- function save(){try{var all=JSON.parse(localStorage.getItem(KEY)||'[]');all=all.filter(function(x){return x.id!==sid;});all.push({id:sid,at:new Date(Date.now()-performance.now()).toISOString(),lines:lines});while(all.length>4)all.shift();localStorage.setItem(KEY,JSON.stringify(all));}catch(e){}}
+ function save(){try{var all=JSON.parse(localStorage.getItem(KEY)||'[]');all=all.filter(function(x){return x.id!==sid;});all.push({id:sid,at:new Date(Date.now()-performance.now()).toISOString(),lines:lines});while(all.length>4)all.shift();var js=JSON.stringify(all);while(js.length>3800000&&all.length>1){all.shift();js=JSON.stringify(all);}if(js.length>3800000){all[0].lines=all[0].lines.slice(-9000);js=JSON.stringify(all);}localStorage.setItem(KEY,js);}catch(e){}}
+ function clearOld(){try{var all=JSON.parse(localStorage.getItem(KEY)||'[]'),n=all.length;all=all.filter(function(x){return x.id===sid;});localStorage.setItem(KEY,JSON.stringify(all));return n-all.length;}catch(e){return -1;}}
  function exportText(){save();var all=[];try{all=JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){}
   return 'Voice Finance Glass — журнал запуску (нові запуски зверху)\n\n'+all.slice().reverse().map(function(x){return '===== запуск '+x.at+' ('+x.id+') =====\n'+x.lines.join('\n');}).join('\n\n');}
- window.__vfLog=log;window.__vfSnap=snap;window.__vfSave=save;window.__vfExport=exportText;window.__vfLines=lines;
+ window.__vfClearOld=clearOld;window.__vfLog=log;window.__vfSnap=snap;window.__vfSave=save;window.__vfExport=exportText;window.__vfLines=lines;
  window.__vfFirstH=innerHeight;
  var nav=(performance.getEntriesByType&&performance.getEntriesByType('navigation')[0])||{};
  var mv=document.querySelector('meta[name=viewport]'),ms2=document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]');
