@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-06 12:52 UTC';
+<script>window.__VF_BUILD='2026-10-06 13:42 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -351,6 +351,7 @@ html.glines.gt .bar,html.glines.gt .cat .b{background:rgba(255,255,255,.05);box-
 .split .vd{display:none}
 /* рахунки: підпис і ряд скляних іконок-застосунків */
 .accs{position:relative;padding:2px 2px 0}
+.tile.accs{padding:16px 14px 14px}
 .accs .th{margin-bottom:2px}
 .accs .th h2{font-size:17px;font-weight:600;color:var(--mu);letter-spacing:0}
 .arow{display:flex;flex-wrap:wrap;gap:14px 10px;margin-top:8px}
@@ -491,6 +492,17 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 .wclk{font-variant-numeric:tabular-nums}
 @container (max-width:180px){.wring{width:48px;height:48px}.wring b{font-size:11px}.wrow{gap:8px}.wbars{height:70px;gap:3px}}
 @container (max-width:110px){.wrow{flex-direction:column;align-items:flex-start}.wtx{display:none}}
+/* віджети рахунків: кожен рахунок — окрема плитка */
+.inner.g4>.tile.acw{padding:10px}
+.acb{display:block;width:100%;text-align:left;color:inherit;background:none;border:0;padding:0}
+.acw .ach{display:flex;flex-direction:column;align-items:center;gap:6px}
+.acw .aic{width:100%;max-width:56px}
+.acw .acn{text-align:center;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.acw .aca{display:none;font-size:clamp(17px,12cqi,34px);margin-top:6px}.acw .aca.neg{color:var(--ac)}
+.acw .acx{display:none;margin-top:6px}.acw .acx .row{padding:8px 0}
+@container (min-width:111px){.acw .ach{flex-direction:row;gap:10px}.acw .aic{width:40px;flex:none}.acw .acn{text-align:left;font-size:13px}.acw .aca{display:block}}
+@container (min-width:261px){.inner.g4>.tile.acw{padding:16px}.acw .acx{display:block}.acw .aic{width:44px}}
+.acadd .aic{opacity:.8}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -3026,7 +3038,10 @@ function blocksHome(){
  if(tpls.length)o.push(B_('tools tpl','<div class="lbl" style="width:100%;margin-bottom:2px">Швидкі операції</div>'+tpls.map(function(p){return'<button class="pillb'+(p.type==='income'?'':' ac')+'" data-act="tpl" data-id="'+esc(p.id)+'">'+esc(p.name)+' · '+esc(money(p.amount,p.currency))+'</button>';}).join('')));
  o.push(B_('tile bal '+(BAL_TREND>0?'up':BAL_TREND<0?'dn':''),'<div data-act="balance"><div class="lbl">Загальний баланс</div><div class="brow"><div class="bl"><div class="big">'+esc(money(t.balance))+'</div><div class="chg '+(ch<0?'neg':'')+'">'+esc(mv(ch))+'<span>('+esc(pctTxt(pc))+') за 30 днів</span></div></div><div class="chw">'+spark(pts,'h')+'</div><i class="chev">›</i></div></div>'+
   '<div class="split"><button data-act="flow" data-v="income"><i class="dot up">↑</i><div><span class="lbl">Доходи</span><b>'+esc(money(t.income))+'</b></div></button><span class="vd"></span><button data-act="flow" data-v="expense"><i class="dot dn">↓</i><div><span class="lbl">Витрати</span><b>'+esc(money(t.expense))+'</b></div></button></div>'));
- o.push(B_('accs','<div class="th"><h2>Рахунки</h2>'+(accs.length>4?'<button data-act="accs">'+(ix.accountsExpanded?'Згорнути':'Усі ›')+'</button>':'')+'</div><div class="arow">'+shown.map(function(a){var cash=a.accountType==='cash'||a.type==='cash',nm=a.displayName||a.bankName||'Рахунок',neg=a.currentBalance<0;return'<button class="ab" data-act="acc" data-id="'+esc(a.id)+'"><i class="aic"'+(cash?'':' style="color:'+hashCol(a.id)+'"')+'>'+(cash?COIN_SVG:esc(String(nm).trim().charAt(0).toUpperCase()))+'</i><span class="an">'+esc(nm)+'</span><span class="aa'+(neg?' neg':'')+'">'+esc(money(a.currentBalance,a.currency))+'</span></button>';}).join('')+'<button class="ab" data-act="addacc"><i class="aic plus">'+PLUS_SVG+'</i><span class="an mu">Додати</span></button></div>'));
+ /* кожен рахунок — окремий віджет: квадратик-іконка, ширше — як баланс, на всю ширину — ще й останні операції рахунку */
+ accs.forEach(function(a){var cash=a.accountType==='cash'||a.type==='cash',nm=a.displayName||a.bankName||'Рахунок',neg=a.currentBalance<0,rt=fin.getState().transactions.filter(function(x){return x.accountId===a.id;}).slice(-3).reverse();
+  o.push(B_('tile acw ws1','<button class="acb" data-act="acc" data-id="'+esc(a.id)+'"><div class="ach"><i class="aic"'+(cash?'':' style="color:'+hashCol(a.id)+'"')+'>'+(cash?COIN_SVG:esc(String(nm).trim().charAt(0).toUpperCase()))+'</i><span class="lbl acn">'+esc(nm)+'</span></div><div class="big aca'+(neg?' neg':'')+'">'+esc(money(a.currentBalance,a.currency))+'</div><div class="acx">'+(rt.length?rt.map(function(x,k){return txRow(x,k===0).replace(/<button /,'<div ').replace(/<\/button>$/,'</div>');}).join(''):'<div class="cap">Операцій по рахунку ще немає.</div>')+'</div></button>'));});
+ o.push(B_('tile acw ws1 acadd','<button class="acb" data-act="addacc"><div class="ach"><i class="aic plus">'+PLUS_SVG+'</i><span class="lbl acn">Додати рахунок</span></div></button>'));
  o.push(B_('tile','<div class="th"><h2>'+(ix.homeQuery?'Результати':'Останні операції')+'</h2><button data-act="alltx">Усі</button></div>'+
   (tx.length?tx.map(function(x,i){return txRow(x,i===0);}).join(''):'<div class="empty">'+(ix.homeQuery?'Нічого не знайдено.':'Операцій поки немає. Натисніть «Ввід» і напишіть, наприклад: <b>кава 25 зл</b>.')+'</div>')));
  o.push(B_('tile','<div class="lbl">Місячний ліміт витрат</div><div class="mid">'+esc(money(g.limit))+'</div><div class="bar"><i style="width:'+g.percent.toFixed(1)+'%"></i></div><div class="cap">Витрачено '+esc(money(g.expense))+' · '+esc(pctTxt(g.percent))+' ліміту</div>'));
@@ -3315,7 +3330,7 @@ var FS_M1=['void main(){',
 ' if(u_bn>.5){float bd=1e5;vec4 BB=vec4(0.),BQ=vec4(0.),BK=vec4(0.);for(int i=0;i<14;i++){if(float(i)>=u_bn)break;vec4 B=u_bb[i];vec4 Q=u_bq[i];',
 '  if(Q.y<.5&&(dg>0.||dg2<0.))continue;if(Q.y>.5&&dg2>0.)continue;',
 '  float db=sdRB(px-B.xy,B.zw,Q.x);if(db<bd){bd=db;BB=B;BQ=Q;BK=u_bc[i];}}',
-'  if(bd<1.5*u_s){vec4 bg2=btnGlass(px,BB,BQ,BK,bd);rgb=rgb*(1.-bg2.a)+bg2.rgb*bg2.a;a=a*(1.-bg2.a)+bg2.a;}}',
+'  if(bd<1.5*u_s){gNS=BQ.y>.5?1.:0.;gNP=BQ.y>.5?1.:u_mo;vec4 bg2=btnGlass(px,BB,BQ,BK,bd);gNS=0.;gNP=0.;rgb=rgb*(1.-bg2.a)+bg2.rgb*bg2.a;a=a*(1.-bg2.a)+bg2.a;}}',
 ' if(dtk<1.5*u_s){vec4 tg=tickGlass(px,dtk);rgb=rgb*(1.-tg.a)+tg.rgb*tg.a;a=a*(1.-tg.a)+tg.a;}',
 ' gl_FragColor=vec4(rgb,a);}'].join('\n');
 var FS=FS_H+'\n'+FS_M1;
@@ -3896,6 +3911,7 @@ function dkStep(dt,hh){
   if(!DKP.drag&&Math.abs(DKP.tx-DKP.x)+Math.abs(DKP.ty-DKP.y)<.35&&Math.abs(DKP.tm-DKP.m)<.004&&Math.abs(DKP.vx)+Math.abs(DKP.vy)<6&&Math.abs(DKP.vm)<.05){DKP.x=DKP.tx;DKP.y=DKP.ty;DKP.m=DKP.tm;DKP.vx=DKP.vy=DKP.vm=0;DKP.trans=0;mv=false;}
  }
  var d=hh*dkHideDist(side);DKP.ex=DKP.x+a[0]*d;DKP.ey=DKP.y+a[1]*d;
+ if(rec.shPush&&side==='b'){var kk=kOf(rec.pg.v);DKP.ex=rec.pg.ox+(DKP.ex-rec.pg.ox)*kk+rec.pg.tx*rec.pg.v;DKP.ey=rec.pg.oy+(DKP.ey-rec.pg.oy)*kk+rec.pg.ty*rec.pg.v;mv=mv||recMoving;}   /* док їде разом зі сторінкою, яку виштовхує вікно */
  /* DOM-кнопки: той самий перенос, щоб натискання потрапляли в скло */
  var Wd=DR.width,Hd=DR.height,mt=DKP.tm>.5?'matrix(0,1,'+(DKV/Hd).toFixed(4)+',0,'+(DKP.ex-DKV/2-DR.left).toFixed(2)+','+(DKP.ey-Wd/2-DR.top).toFixed(2)+')':'translate3d('+(DKP.ex-Wd/2-DR.left).toFixed(2)+'px,'+(DKP.ey-Hd/2-DR.top).toFixed(2)+'px,0)';
  if(DKP.mk!==mt){DKP.mk=mt;btnsBox.style.transform=mt;}
@@ -4170,7 +4186,8 @@ function recStep(dt){
  var tg={pg:Math.min(2,dd+mo+sh),mn:sh,sh:dd&&sh?1:0};
  var top={ox:VW/2,oy:0,tx:0,ty:-.05*VH},ul={ox:0,oy:0,tx:-.045*VW,ty:-.04*VH},mv=false;
  /* налаштування над «Додатково»: шари розходяться — екран тягнеться до лівого краю, панель до правого кута */
- var ulS={ox:VW/2,oy:VH,tx:0,ty:1.08*VH},trc={ox:VW,oy:VH/2,tx:(menu.left?-1:1)*.8*VW,ty:0};
+ var tgv=Math.max(1,Math.min(2,dd+mo+sh)),shTop=(sheetP.ty>0?sheetP.ty:VH*.15)-10,ulS={ox:VW/2,oy:0,tx:0,ty:(shTop-VH*kOf(tgv))/tgv},trc={ox:VW/2,oy:0,tx:0,ty:shTop-VH*kOf(1)};
+ if(sh)rec.shPush=1;else if(rec.pg.v<.003)rec.shPush=0;
  var drw=menu.left?{ox:VW,oy:VH/2,tx:.5*VW+10,ty:0}:{ox:0,oy:VH/2,tx:-(.5*VW+10),ty:0};   /* бокова панель: сторінка зсувається вліво (разом зі стисненням −20%) */
  var L={pg:sh?ulS:dd?top:mo?drw:ul,mn:dd?top:trc,sh:top};   /* меню-випадайка (dd) ділить шар mn і мусить рухатись разом із аркушем */
  ['pg','mn','sh'].forEach(function(k){
@@ -4184,7 +4201,7 @@ function recStep(dt){
  applyRec(pagesEl,rec.pg);
  var bsx=Math.min(1,rec.pg.v),bsv=bsx>.003?'blur('+(bsx*BLS).toFixed(1)+'px)':'';
  if(TGC._f!==bsv){TGC._f=bsv;TGC.style.filter=bsv;}
- if(menu.kind==='more'&&(menu.on||rec.pg.v>.003)&&TKP.side==='t'){applyRec(tickerEl,rec.pg);tickerEl._dr=1;tickerEl._f=null;}   /* бігучий рядок їде разом зі сторінкою */
+ if(((menu.kind==='more'&&menu.on)||rec.shPush||rec.pg.v>.003)&&TKP.side==='t'){applyRec(tickerEl,rec.pg);tickerEl._dr=1;tickerEl._f=null;}   /* бігучий рядок їде разом зі сторінкою */
  else{if(tickerEl._dr){tickerEl._dr=0;tickerEl.style.transform='';tickerEl._rk=null;tickerEl._f=null;}
   if(tickerEl._f!==bsv){tickerEl._f=bsv;tickerEl.style.filter=bsv;}}
  var ev=Math.min(1,rec.pg.v).toFixed(3);if(edgeEl._ev!==ev){edgeEl._ev=ev;edgeEl.style.opacity=ev;edgeEl.style.visibility=ev>0?'visible':'hidden';}
@@ -4563,11 +4580,11 @@ function frame(t){
  var settled=!drag&&Math.abs(target-x)<0.05&&Math.abs(v)<0.5&&Math.abs(j)<0.002&&Math.abs(jv)<0.05;
  if(settled){x=target;v=0;j=0;jv=0;}
  /* панель ховається під клавіатуру / повертається */
- var hT=((mode===1&&op.age>.14)||(mode===2&&cl.age<A1-.06)||sheetOn||boot.hold||BH.ph===3||(menu.on&&menu.kind==='more'&&DKP.side==='b'))?1:0;
+ var hT=((mode===1&&op.age>.14)||(mode===2&&cl.age<A1-.06)||(sheetOn&&DKP.side!=='b')||boot.hold||BH.ph===3||(menu.on&&menu.kind==='more'&&DKP.side==='b'))?1:0;
  if(hide!==hT){hide+=(hT-hide)*(1-Math.exp(-dt*9));if(Math.abs(hT-hide)<.002)hide=hT;dirty=true;}
  var off=hide*hideOff();lastOff=off;
  var dkMov=dkStep(dt,hide);if(dkMov)dirty=true;
- var hTk=(sheetOn||boot.hold||BH.ph===3)?1:0;
+ var hTk=(boot.hold||BH.ph===3)?1:0;
  if(tkHide!==hTk){tkHide+=(hTk-tkHide)*(1-Math.exp(-dt*9));if(Math.abs(hTk-tkHide)<.002)tkHide=hTk;dirty=true;}
  var tkMov=tkStep(dt,tkHide);if(tkMov)dirty=true;
  /* крапля-поле */
@@ -4900,7 +4917,7 @@ function bfxGLDraw(t,el){
 var BH={ph:0,x:0,y:0,r:0,k:0,au:1,pg:[],po:1},WF={n:0,rects:[]},CH={on:0,x:0,y:0,s:0,tx:0,ty:0,drag:0},FGL={down:0,x:0,y:0,tx:0,ty:0,k:0},RPL=[],RPU=new Float32Array(64),RPn=0,RPsig='',FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
 var GLASS_LINE_OK=false;
 var tgR=new Float32Array(TMAX*4),tgM=new Float32Array(TMAX*4),tgC=new Float32Array(TMAX*4);
-var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2]];
+var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2],['.aic',18,1]];
 var FXFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
 'uniform vec2 u_vp;uniform vec2 u_res;uniform vec4 u_fp[24];uniform vec3 u_fc[24];uniform float u_fn;uniform float u_t;uniform float u_aura;uniform float u_amode;uniform vec3 u_abc;uniform vec3 u_ahsv;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
@@ -5861,7 +5878,7 @@ function gMove(x,y,t){
  if(!TG.drag){if(Math.hypot(dx,dy)<7)return;TG.drag=1;TG.moved=true;P.dragging=1;}
  var dt=Math.max(1,t-TG.tt);TG.vy=.6*TG.vy+.4*(y-TG.ty)/dt;TG.ty=y;TG.tt=t;
  var atTop=!TG.sc||TG.sc.scrollTop<=0&&TG.top0<=0,tg=P.tgt,pull=dy>14&&atTop&&dy>=Math.abs(dx)*1.6;   /* намір закрити: явно вниз, не по діагоналі, після невеликої «мертвої зони» */
- var sh=P===sheetP,mre=P===menu&&menu.kind==='more',sk=sh?.22:mre?.33:1,X=rb(dx)*sk,Y=pull?dy*(sh?.42:mre?.27:.8):rb(dy)*sk;   /* вікно налаштувань іде за пальцем ледь-ледь */
+ var sh=P===sheetP,mre=P===menu&&menu.kind==='more',sk=sh?.22:mre?.33:1;if(mre){var scB=TG.sc&&TG.sc.scrollTop+TG.sc.clientHeight>=TG.sc.scrollHeight-2,scT=!TG.sc||TG.sc.scrollTop<=0;pull=false;if(!((scT&&dy>0)||(scB&&dy<0)))dy=0;sk=.12;}var X=rb(dx)*sk,Y=pull?dy*(sh?.42:.8):rb(dy)*sk;   /* вікно налаштувань іде за пальцем ледь-ледь */
  tg.x=pull?dx*(sh?.06:mre?.05:.15):X;tg.y=Y;
  var ek=sh?.4:mre?.33:1,ex=Math.min(14*ek,Math.abs(tg.x)*.5*ek),ey=Math.min(16*ek,Math.abs(tg.y)*(pull?.18:.5)*ek);
  tg.sx=(ex-.5*ey)/Math.max(60,P.tw);tg.sy=(ey-.5*ex)/Math.max(60,P.th);
@@ -5871,9 +5888,9 @@ function gEnd(){
  var P=TG.P;if(!P)return;
  var dy=TG.ty-TG.y0,atTop=!TG.sc||TG.top0<=0;
  var scr=!!TG.sc&&TG.sc.scrollHeight>TG.sc.clientHeight+2;   /* у вікні є що прокручувати — вимагаємо виразнішого жесту */
- var close=TG.drag&&P.pull&&atTop&&(dy>(scr?150:110)||(dy>(scr?100:60)&&TG.vy>1));
+ var close=TG.drag&&P.pull&&!(P===menu&&menu.kind==='more')&&atTop&&(dy>(scr?150:110)||(dy>(scr?100:60)&&TG.vy>1));
  var dxe=TG.lx-TG.x0,closeX=P===menu&&menu.kind==='more'&&TG.drag&&(menu.left?-dxe:dxe)>70&&Math.abs(dxe)>Math.abs(dy)*1.4;   /* свайп зліва направо закриває «Додатково» */
- var openSet=P===menu&&menu.kind==='more'&&TG.atBot&&TG.drag&&dy<-70&&!P.pull;   /* ще раз гортаємо вниз, коли список уже в упор — налаштування */
+ var openSet=P===menu&&menu.kind==='more'&&TG.atBot&&TG.drag&&dy<-190&&!P.pull&&Math.abs(TG.lx-TG.x0)<60;   /* ще раз гортаємо вниз, коли список уже в упор — налаштування */
  P.dragging=0;P.pull=false;P.tgt.x=P.tgt.y=P.tgt.sx=P.tgt.sy=0;TG.P=null;dirty=true;
  if(closeX){TG.moved=true;try{app.closePanel('more');}catch(e){}return;}
  if(openSet){TG.moved=true;try{nav.openOverlay('settings');}catch(e){}return;}
@@ -6127,7 +6144,7 @@ function syImport(mode){var k=syNeedKey();if(!k)return;var code=syField('code');
 var MW={acc:0,t:0,bot:false};
 menu.el.addEventListener('wheel',function(e){if(menu.kind!=='more'||!menu.on)return;var s=menu.el,atB=s.scrollTop+s.clientHeight>=s.scrollHeight-2;
  if(e.timeStamp-MW.t>450){MW.acc=0;MW.bot=atB;}MW.t=e.timeStamp;
- if(MW.bot&&atB&&e.deltaY>0){MW.acc+=e.deltaY;if(MW.acc>140){MW.acc=0;MW.bot=false;try{nav.openOverlay('settings');}catch(er){}}}else if(!atB)MW.bot=false;},{passive:true});
+ if(MW.bot&&atB&&e.deltaY>0){MW.acc+=e.deltaY;if(MW.acc>420){MW.acc=0;MW.bot=false;try{nav.openOverlay('settings');}catch(er){}}}else if(!atB)MW.bot=false;},{passive:true});
 
 /* ---------- м’яке натискання на будь-який віджет чи кнопку: пружина масштабу + легка віддача сусідів ---------- */
 var PRS=new Map(),PRraf=0,PRlast=0,PRd=null;
@@ -6388,7 +6405,7 @@ function wlSave(){try{localStorage.setItem('vf-widgets',JSON.stringify(WL));}cat
 function wlKey(el){var hh=el.querySelector('h2,.lbl,.mh,.big'),tx=((hh&&hh.textContent)||'').trim().slice(0,28)||el.className;return[].indexOf.call(inn,el.parentNode)+':'+tx;}
 function wlApply(i){var host=inn[i];if(!host||i>2||!WL)return;var ch=host.children,chg=false,k;
  for(k=0;k<ch.length;k++){var el=ch[k],tile=el.classList.contains('tile'),dd=tile?WL[wlKey(el)]:null;
-  var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws2')?2:4),gc=ds<4?'span '+ds:'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
+  var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws1')?1:el.classList.contains('ws2')?2:4),gc=ds<4?'span '+ds:'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
   if(el._gc!==gc||el._mh!==mh||el._od!==od){el._gc=gc;el._mh=mh;el._od=od;el.style.gridColumn=gc;el.style.minHeight=mh;el.style.order=od;chg=true;}}
  if(chg){needSync[i]=1;tlStale[i]=1;dirty=true;}try{wgFill();}catch(e){}}
 for(var wli=0;wli<3;wli++)wlApply(wli);

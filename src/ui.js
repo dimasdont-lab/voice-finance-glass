@@ -447,7 +447,7 @@ function gMove(x,y,t){
  if(!TG.drag){if(Math.hypot(dx,dy)<7)return;TG.drag=1;TG.moved=true;P.dragging=1;}
  var dt=Math.max(1,t-TG.tt);TG.vy=.6*TG.vy+.4*(y-TG.ty)/dt;TG.ty=y;TG.tt=t;
  var atTop=!TG.sc||TG.sc.scrollTop<=0&&TG.top0<=0,tg=P.tgt,pull=dy>14&&atTop&&dy>=Math.abs(dx)*1.6;   /* намір закрити: явно вниз, не по діагоналі, після невеликої «мертвої зони» */
- var sh=P===sheetP,mre=P===menu&&menu.kind==='more',sk=sh?.22:mre?.33:1,X=rb(dx)*sk,Y=pull?dy*(sh?.42:mre?.27:.8):rb(dy)*sk;   /* вікно налаштувань іде за пальцем ледь-ледь */
+ var sh=P===sheetP,mre=P===menu&&menu.kind==='more',sk=sh?.22:mre?.33:1;if(mre){var scB=TG.sc&&TG.sc.scrollTop+TG.sc.clientHeight>=TG.sc.scrollHeight-2,scT=!TG.sc||TG.sc.scrollTop<=0;pull=false;if(!((scT&&dy>0)||(scB&&dy<0)))dy=0;sk=.12;}var X=rb(dx)*sk,Y=pull?dy*(sh?.42:.8):rb(dy)*sk;   /* вікно налаштувань іде за пальцем ледь-ледь */
  tg.x=pull?dx*(sh?.06:mre?.05:.15):X;tg.y=Y;
  var ek=sh?.4:mre?.33:1,ex=Math.min(14*ek,Math.abs(tg.x)*.5*ek),ey=Math.min(16*ek,Math.abs(tg.y)*(pull?.18:.5)*ek);
  tg.sx=(ex-.5*ey)/Math.max(60,P.tw);tg.sy=(ey-.5*ex)/Math.max(60,P.th);
@@ -457,9 +457,9 @@ function gEnd(){
  var P=TG.P;if(!P)return;
  var dy=TG.ty-TG.y0,atTop=!TG.sc||TG.top0<=0;
  var scr=!!TG.sc&&TG.sc.scrollHeight>TG.sc.clientHeight+2;   /* у вікні є що прокручувати — вимагаємо виразнішого жесту */
- var close=TG.drag&&P.pull&&atTop&&(dy>(scr?150:110)||(dy>(scr?100:60)&&TG.vy>1));
+ var close=TG.drag&&P.pull&&!(P===menu&&menu.kind==='more')&&atTop&&(dy>(scr?150:110)||(dy>(scr?100:60)&&TG.vy>1));
  var dxe=TG.lx-TG.x0,closeX=P===menu&&menu.kind==='more'&&TG.drag&&(menu.left?-dxe:dxe)>70&&Math.abs(dxe)>Math.abs(dy)*1.4;   /* свайп зліва направо закриває «Додатково» */
- var openSet=P===menu&&menu.kind==='more'&&TG.atBot&&TG.drag&&dy<-70&&!P.pull;   /* ще раз гортаємо вниз, коли список уже в упор — налаштування */
+ var openSet=P===menu&&menu.kind==='more'&&TG.atBot&&TG.drag&&dy<-190&&!P.pull&&Math.abs(TG.lx-TG.x0)<60;   /* ще раз гортаємо вниз, коли список уже в упор — налаштування */
  P.dragging=0;P.pull=false;P.tgt.x=P.tgt.y=P.tgt.sx=P.tgt.sy=0;TG.P=null;dirty=true;
  if(closeX){TG.moved=true;try{app.closePanel('more');}catch(e){}return;}
  if(openSet){TG.moved=true;try{nav.openOverlay('settings');}catch(e){}return;}
@@ -713,7 +713,7 @@ function syImport(mode){var k=syNeedKey();if(!k)return;var code=syField('code');
 var MW={acc:0,t:0,bot:false};
 menu.el.addEventListener('wheel',function(e){if(menu.kind!=='more'||!menu.on)return;var s=menu.el,atB=s.scrollTop+s.clientHeight>=s.scrollHeight-2;
  if(e.timeStamp-MW.t>450){MW.acc=0;MW.bot=atB;}MW.t=e.timeStamp;
- if(MW.bot&&atB&&e.deltaY>0){MW.acc+=e.deltaY;if(MW.acc>140){MW.acc=0;MW.bot=false;try{nav.openOverlay('settings');}catch(er){}}}else if(!atB)MW.bot=false;},{passive:true});
+ if(MW.bot&&atB&&e.deltaY>0){MW.acc+=e.deltaY;if(MW.acc>420){MW.acc=0;MW.bot=false;try{nav.openOverlay('settings');}catch(er){}}}else if(!atB)MW.bot=false;},{passive:true});
 
 /* ---------- м’яке натискання на будь-який віджет чи кнопку: пружина масштабу + легка віддача сусідів ---------- */
 var PRS=new Map(),PRraf=0,PRlast=0,PRd=null;
@@ -974,7 +974,7 @@ function wlSave(){try{localStorage.setItem('vf-widgets',JSON.stringify(WL));}cat
 function wlKey(el){var hh=el.querySelector('h2,.lbl,.mh,.big'),tx=((hh&&hh.textContent)||'').trim().slice(0,28)||el.className;return[].indexOf.call(inn,el.parentNode)+':'+tx;}
 function wlApply(i){var host=inn[i];if(!host||i>2||!WL)return;var ch=host.children,chg=false,k;
  for(k=0;k<ch.length;k++){var el=ch[k],tile=el.classList.contains('tile'),dd=tile?WL[wlKey(el)]:null;
-  var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws2')?2:4),gc=ds<4?'span '+ds:'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
+  var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws1')?1:el.classList.contains('ws2')?2:4),gc=ds<4?'span '+ds:'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
   if(el._gc!==gc||el._mh!==mh||el._od!==od){el._gc=gc;el._mh=mh;el._od=od;el.style.gridColumn=gc;el.style.minHeight=mh;el.style.order=od;chg=true;}}
  if(chg){needSync[i]=1;tlStale[i]=1;dirty=true;}try{wgFill();}catch(e){}}
 for(var wli=0;wli<3;wli++)wlApply(wli);

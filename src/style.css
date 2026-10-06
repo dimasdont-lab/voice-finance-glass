@@ -277,6 +277,7 @@ html.glines.gt .bar,html.glines.gt .cat .b{background:rgba(255,255,255,.05);box-
 .split .vd{display:none}
 /* рахунки: підпис і ряд скляних іконок-застосунків */
 .accs{position:relative;padding:2px 2px 0}
+.tile.accs{padding:16px 14px 14px}
 .accs .th{margin-bottom:2px}
 .accs .th h2{font-size:17px;font-weight:600;color:var(--mu);letter-spacing:0}
 .arow{display:flex;flex-wrap:wrap;gap:14px 10px;margin-top:8px}
@@ -417,3 +418,14 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 .wclk{font-variant-numeric:tabular-nums}
 @container (max-width:180px){.wring{width:48px;height:48px}.wring b{font-size:11px}.wrow{gap:8px}.wbars{height:70px;gap:3px}}
 @container (max-width:110px){.wrow{flex-direction:column;align-items:flex-start}.wtx{display:none}}
+/* віджети рахунків: кожен рахунок — окрема плитка */
+.inner.g4>.tile.acw{padding:10px}
+.acb{display:block;width:100%;text-align:left;color:inherit;background:none;border:0;padding:0}
+.acw .ach{display:flex;flex-direction:column;align-items:center;gap:6px}
+.acw .aic{width:100%;max-width:56px}
+.acw .acn{text-align:center;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.acw .aca{display:none;font-size:clamp(17px,12cqi,34px);margin-top:6px}.acw .aca.neg{color:var(--ac)}
+.acw .acx{display:none;margin-top:6px}.acw .acx .row{padding:8px 0}
+@container (min-width:111px){.acw .ach{flex-direction:row;gap:10px}.acw .aic{width:40px;flex:none}.acw .acn{text-align:left;font-size:13px}.acw .aca{display:block}}
+@container (min-width:261px){.inner.g4>.tile.acw{padding:16px}.acw .acx{display:block}.acw .aic{width:44px}}
+.acadd .aic{opacity:.8}

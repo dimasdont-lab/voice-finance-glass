@@ -153,7 +153,7 @@ var FS_M1=['void main(){',
 ' if(u_bn>.5){float bd=1e5;vec4 BB=vec4(0.),BQ=vec4(0.),BK=vec4(0.);for(int i=0;i<14;i++){if(float(i)>=u_bn)break;vec4 B=u_bb[i];vec4 Q=u_bq[i];',
 '  if(Q.y<.5&&(dg>0.||dg2<0.))continue;if(Q.y>.5&&dg2>0.)continue;',
 '  float db=sdRB(px-B.xy,B.zw,Q.x);if(db<bd){bd=db;BB=B;BQ=Q;BK=u_bc[i];}}',
-'  if(bd<1.5*u_s){vec4 bg2=btnGlass(px,BB,BQ,BK,bd);rgb=rgb*(1.-bg2.a)+bg2.rgb*bg2.a;a=a*(1.-bg2.a)+bg2.a;}}',
+'  if(bd<1.5*u_s){gNS=BQ.y>.5?1.:0.;gNP=BQ.y>.5?1.:u_mo;vec4 bg2=btnGlass(px,BB,BQ,BK,bd);gNS=0.;gNP=0.;rgb=rgb*(1.-bg2.a)+bg2.rgb*bg2.a;a=a*(1.-bg2.a)+bg2.a;}}',
 ' if(dtk<1.5*u_s){vec4 tg=tickGlass(px,dtk);rgb=rgb*(1.-tg.a)+tg.rgb*tg.a;a=a*(1.-tg.a)+tg.a;}',
 ' gl_FragColor=vec4(rgb,a);}'].join('\n');
 var FS=FS_H+'\n'+FS_M1;
@@ -734,6 +734,7 @@ function dkStep(dt,hh){
   if(!DKP.drag&&Math.abs(DKP.tx-DKP.x)+Math.abs(DKP.ty-DKP.y)<.35&&Math.abs(DKP.tm-DKP.m)<.004&&Math.abs(DKP.vx)+Math.abs(DKP.vy)<6&&Math.abs(DKP.vm)<.05){DKP.x=DKP.tx;DKP.y=DKP.ty;DKP.m=DKP.tm;DKP.vx=DKP.vy=DKP.vm=0;DKP.trans=0;mv=false;}
  }
  var d=hh*dkHideDist(side);DKP.ex=DKP.x+a[0]*d;DKP.ey=DKP.y+a[1]*d;
+ if(rec.shPush&&side==='b'){var kk=kOf(rec.pg.v);DKP.ex=rec.pg.ox+(DKP.ex-rec.pg.ox)*kk+rec.pg.tx*rec.pg.v;DKP.ey=rec.pg.oy+(DKP.ey-rec.pg.oy)*kk+rec.pg.ty*rec.pg.v;mv=mv||recMoving;}   /* док їде разом зі сторінкою, яку виштовхує вікно */
  /* DOM-кнопки: той самий перенос, щоб натискання потрапляли в скло */
  var Wd=DR.width,Hd=DR.height,mt=DKP.tm>.5?'matrix(0,1,'+(DKV/Hd).toFixed(4)+',0,'+(DKP.ex-DKV/2-DR.left).toFixed(2)+','+(DKP.ey-Wd/2-DR.top).toFixed(2)+')':'translate3d('+(DKP.ex-Wd/2-DR.left).toFixed(2)+'px,'+(DKP.ey-Hd/2-DR.top).toFixed(2)+'px,0)';
  if(DKP.mk!==mt){DKP.mk=mt;btnsBox.style.transform=mt;}
@@ -1008,7 +1009,8 @@ function recStep(dt){
  var tg={pg:Math.min(2,dd+mo+sh),mn:sh,sh:dd&&sh?1:0};
  var top={ox:VW/2,oy:0,tx:0,ty:-.05*VH},ul={ox:0,oy:0,tx:-.045*VW,ty:-.04*VH},mv=false;
  /* налаштування над «Додатково»: шари розходяться — екран тягнеться до лівого краю, панель до правого кута */
- var ulS={ox:VW/2,oy:VH,tx:0,ty:1.08*VH},trc={ox:VW,oy:VH/2,tx:(menu.left?-1:1)*.8*VW,ty:0};
+ var tgv=Math.max(1,Math.min(2,dd+mo+sh)),shTop=(sheetP.ty>0?sheetP.ty:VH*.15)-10,ulS={ox:VW/2,oy:0,tx:0,ty:(shTop-VH*kOf(tgv))/tgv},trc={ox:VW/2,oy:0,tx:0,ty:shTop-VH*kOf(1)};
+ if(sh)rec.shPush=1;else if(rec.pg.v<.003)rec.shPush=0;
  var drw=menu.left?{ox:VW,oy:VH/2,tx:.5*VW+10,ty:0}:{ox:0,oy:VH/2,tx:-(.5*VW+10),ty:0};   /* бокова панель: сторінка зсувається вліво (разом зі стисненням −20%) */
  var L={pg:sh?ulS:dd?top:mo?drw:ul,mn:dd?top:trc,sh:top};   /* меню-випадайка (dd) ділить шар mn і мусить рухатись разом із аркушем */
  ['pg','mn','sh'].forEach(function(k){
@@ -1022,7 +1024,7 @@ function recStep(dt){
  applyRec(pagesEl,rec.pg);
  var bsx=Math.min(1,rec.pg.v),bsv=bsx>.003?'blur('+(bsx*BLS).toFixed(1)+'px)':'';
  if(TGC._f!==bsv){TGC._f=bsv;TGC.style.filter=bsv;}
- if(menu.kind==='more'&&(menu.on||rec.pg.v>.003)&&TKP.side==='t'){applyRec(tickerEl,rec.pg);tickerEl._dr=1;tickerEl._f=null;}   /* бігучий рядок їде разом зі сторінкою */
+ if(((menu.kind==='more'&&menu.on)||rec.shPush||rec.pg.v>.003)&&TKP.side==='t'){applyRec(tickerEl,rec.pg);tickerEl._dr=1;tickerEl._f=null;}   /* бігучий рядок їде разом зі сторінкою */
  else{if(tickerEl._dr){tickerEl._dr=0;tickerEl.style.transform='';tickerEl._rk=null;tickerEl._f=null;}
   if(tickerEl._f!==bsv){tickerEl._f=bsv;tickerEl.style.filter=bsv;}}
  var ev=Math.min(1,rec.pg.v).toFixed(3);if(edgeEl._ev!==ev){edgeEl._ev=ev;edgeEl.style.opacity=ev;edgeEl.style.visibility=ev>0?'visible':'hidden';}
@@ -1401,11 +1403,11 @@ function frame(t){
  var settled=!drag&&Math.abs(target-x)<0.05&&Math.abs(v)<0.5&&Math.abs(j)<0.002&&Math.abs(jv)<0.05;
  if(settled){x=target;v=0;j=0;jv=0;}
  /* панель ховається під клавіатуру / повертається */
- var hT=((mode===1&&op.age>.14)||(mode===2&&cl.age<A1-.06)||sheetOn||boot.hold||BH.ph===3||(menu.on&&menu.kind==='more'&&DKP.side==='b'))?1:0;
+ var hT=((mode===1&&op.age>.14)||(mode===2&&cl.age<A1-.06)||(sheetOn&&DKP.side!=='b')||boot.hold||BH.ph===3||(menu.on&&menu.kind==='more'&&DKP.side==='b'))?1:0;
  if(hide!==hT){hide+=(hT-hide)*(1-Math.exp(-dt*9));if(Math.abs(hT-hide)<.002)hide=hT;dirty=true;}
  var off=hide*hideOff();lastOff=off;
  var dkMov=dkStep(dt,hide);if(dkMov)dirty=true;
- var hTk=(sheetOn||boot.hold||BH.ph===3)?1:0;
+ var hTk=(boot.hold||BH.ph===3)?1:0;
  if(tkHide!==hTk){tkHide+=(hTk-tkHide)*(1-Math.exp(-dt*9));if(Math.abs(hTk-tkHide)<.002)tkHide=hTk;dirty=true;}
  var tkMov=tkStep(dt,tkHide);if(tkMov)dirty=true;
  /* крапля-поле */
