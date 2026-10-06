@@ -515,7 +515,7 @@ function shot(el,w,h,ts,full){
  FC.innerHTML='';var n=FD.importNode(el,true);
  var src=el.querySelectorAll('input,textarea'),dst=n.querySelectorAll('input,textarea');
  for(var q=0;q<src.length;q++){if(src[q].tagName==='TEXTAREA')dst[q].textContent=src[q].value;else dst[q].setAttribute('value',src[q].value);}
- n.style.margin='0';if(full){n.style.left='0';n.style.top='0';n.style.height='auto';n.style.maxHeight='none';n.style.overflow='visible';}n.style.filter='';n.style.opacity='';n.style.scale='';n.style.translate='';n.style.rotate='';n.style.width=w+'px';n.style.transform='none';n.style.willChange='auto';FC.appendChild(n);
+ n.style.margin='0';if(n.style.position==='absolute'){n.style.position='relative';n.style.left='0';n.style.top='0';n.style.minHeight='';}if(full){n.style.left='0';n.style.top='0';n.style.height='auto';n.style.maxHeight='none';n.style.overflow='visible';}n.style.filter='';n.style.opacity='';n.style.scale='';n.style.translate='';n.style.rotate='';n.style.width=w+'px';n.style.transform='none';n.style.willChange='auto';FC.appendChild(n);
  FR.style.width=Math.ceil(w)+'px';FR.style.height=Math.ceil(h)+'px';
  var s0=performance.now();return html2canvas(n,{backgroundColor:null,scale:ts,logging:false,windowWidth:Math.ceil(w),windowHeight:Math.ceil(h),imageTimeout:0}).then(function(c){var d=performance.now()-s0;pfS('знімок',d);texVer++;if(d>25)LG('знімок','html2canvas '+Math.round(d)+' мс, блок '+Math.round(w)+'x'+Math.round(h));return c;});
 }
@@ -556,7 +556,7 @@ function grabPage(i){
  a.q.forEach(function(k,qi){var b=bl[k],d2=Math.abs(b.t+b.h/2-cy);if(d2<bs){bs=d2;bi=qi;}});
  var k=a.q[bi],b=bl[k];
  busy=true;
- shot(b.el,b.w,b.h,tgt.ts).then(function(c){busy=false;
+ var zk=(i===9&&FLD.zoom)||1;shot(b.el,b.w/zk,b.h/zk,tgt.ts*zk).then(function(c){busy=false;
   if(asm[i]!==a)return;
   a.x.drawImage(c,Math.round(b.l*tgt.ts),Math.round(b.t*tgt.ts));
   a.q.splice(a.q.indexOf(k),1);
@@ -568,7 +568,7 @@ function grabPage(i){
 function grab(i,b){
  var t=T[i];if(!t)return;
  busy=true;b.stale=0;
- shot(b.el,b.w,b.h,t.ts).then(function(c){busy=false;if(T[i]!==t)return;
+ var zk=(i===9&&FLD.zoom)||1;shot(b.el,b.w/zk,b.h/zk,t.ts*zk).then(function(c){busy=false;if(T[i]!==t)return;
   gl.bindTexture(gl.TEXTURE_2D,t.tex);
   gl.texSubImage2D(gl.TEXTURE_2D,0,Math.round(b.l*t.ts),Math.round(b.t*t.ts),gl.RGBA,gl.UNSIGNED_BYTE,c);
   b.done=1;dirty=true;})
@@ -1362,8 +1362,9 @@ function frame(t){
  var da=sel-ca,moving=false,i;
  if(HS.on){ca=HS.ca;moving=true;}
  else if(Math.abs(da)>0.0005){ca+=da*(1-Math.exp(-dt*9));moving=true;}else if(da!==0){ca=sel;moving=true;}
+ if(FLD.id&&sel===9){ca=9+FLD.px/VW;}
  for(i=0;i<NP;i++){if(BH.ph&&BH.pg.indexOf(i)>=0)continue;   /* чорна діра тримає сусідні вкладки видимими */
-  var o=i-ca,vis=Math.abs(o)<1,st=vis?'translate3d('+(o*100)+'%,0,0)':'none';
+  var o=i-ca,vis=Math.abs(o)<1,st=vis?'translate3d('+(o*100)+'%,0,0)':'none';if(i===9&&FLD.id){vis=true;st='translate3d('+(-FLD.px).toFixed(1)+'px,0,0)';}
   if(pstyle[i]!==st){pstyle[i]=st;pg[i].style.visibility=vis?'visible':'hidden';inn[i].style.willChange=vis?'transform':'auto';if(vis)pg[i].style.transform=st;}}
  var fl=Math.max(0,Math.min(NP-1,Math.floor(ca))),f2=fl+1;
  var scrolling=stepScroll(dt);

@@ -77,7 +77,7 @@ root.addEventListener('click',function(e){
  var a=t.dataset.act,id=t.dataset.id,v=t.dataset.v;
  try{
   if(a==='back'){if(FLD.id)closeFolder();else app.back();}
-  else if(a==='fopen')openFolder(id);
+  else if(a==='fopen')openFolder(id,t);
   else if(a==='tx')app.editTransaction(id);
   else if(a==='balance')nav.navigate('balanceAnalysis');
   else if(a==='wnew')app.openTransaction();
@@ -988,7 +988,14 @@ var WL=(function(){try{return JSON.parse(localStorage.getItem('vf-widgets')||'{}
 function wlSave(){try{localStorage.setItem('vf-widgets',JSON.stringify(WL));}catch(e){}}
 function wlKey(el){var hh=el.querySelector('h2,.lbl,.mh,.big'),tx=((hh&&hh.textContent)||'').trim().slice(0,28)||el.className;return[].indexOf.call(inn,el.parentNode)+':'+tx;}
 function wuUnit(n){n=n||4;return Math.max(24,(VW-32-(n-1)*12)/n);}   /* висота й ширина одноколонкового віджета: мінімальна висота всіх віджетів */
-function wlApply(i){var host=inn[i];if(!host||(i>2&&i!==9)||!WL)return;var NC=4,WU=wuUnit(4);host._wu=WU;host.style.setProperty('--wu',WU.toFixed(1)+'px');var ch=host.children,chg=false,k;
+function wlApplyFolder(){var host=inn[9],F=FOLDERS[FLD.id];if(!F)return;var u=wuUnit(4),ch=host.children,k,mx=0,my=0;foldLayout(F);host.style.setProperty('--wu',u.toFixed(1)+'px');
+ for(k=0;k<ch.length;k++){var el=ch[k];if(!el.classList.contains('tile')){el.style.display='none';continue;}
+  var id=wgIdOf(el),P=F.pos[id]||{x:16,y:230},dd=WL[wlKey(el)],ds=(dd&&dd.s)?dd.s:wgSizeOf(id),wd=ds*u+(ds-1)*12,mh=(dd&&dd.h)?dd.h+'px':'';
+  el.style.cssText+=';position:absolute;left:'+P.x+'px;top:'+P.y+'px;width:'+wd+'px;margin:0;grid-column:auto;min-height:'+(mh||'var(--wu)');
+  el.classList.toggle('tall',!!(dd&&dd.h&&dd.h>=u*2.6));el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=u*1.35));
+  mx=Math.max(mx,P.x+wd);my=Math.max(my,P.y+Math.max(el.offsetHeight||110,110));}
+ FLD.cw=Math.max(VW*3,mx+80);host.style.width=FLD.cw+'px';host.style.height=Math.max(my+420,VH*2.4)+'px';host.style.position='relative';host.style.padding='0';}
+function wlApply(i){if(i===9){if(FLD.id)wlApplyFolder();return;}var host=inn[i];if(!host||i>2||!WL)return;var NC=4,WU=wuUnit(4);host._wu=WU;host.style.setProperty('--wu',WU.toFixed(1)+'px');var ch=host.children,chg=false,k;
  for(k=0;k<ch.length;k++){var el=ch[k],tile=el.classList.contains('tile'),dd=tile?WL[wlKey(el)]:null;
   var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws1')?1:el.classList.contains('ws2')?2:4),gc=ds<4||NC!==4?'span '+Math.max(1,Math.min(NC,Math.round(ds*NC/4))):'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
   if(el._gc!==gc||el._mh!==mh||el._od!==od||el._nc!==NC){el._nc=NC;el._gc=gc;el._mh=mh;el._od=od;el.classList.toggle('tall',!!(dd&&dd.h&&dd.h>=WU*2.6));el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=WU*1.35)||0);el.style.gridColumn=gc;if(el.classList.contains('acw'))el.style.aspectRatio=ds===1?'1':'auto';el.style.minHeight=mh;el.style.order=od;chg=true;}}
@@ -996,7 +1003,7 @@ function wlApply(i){var host=inn[i];if(!host||(i>2&&i!==9)||!WL)return;var NC=4,
 for(var wli=0;wli<3;wli++)wlApply(wli);
 /* м'яке опускання віджета в сітку: стає на місце найближчого, решта розсуваються */
 function wfSlot(w,live){
- var el=w.el,host=el.parentNode,pi=[].indexOf.call(inn,host);if(pi<0||(pi>2&&pi!==9))return false;
+ var el=w.el,host=el.parentNode,pi=[].indexOf.call(inn,host);if(pi<0||pi>2)return false;
  var tiles=[].filter.call(host.children,function(x){return x.classList.contains('tile');}),r0=el.getBoundingClientRect(),cx=r0.left+r0.width/2,cy=r0.top+r0.height/2;
  var best=null,bd=1e9;tiles.forEach(function(x){if(x===el)return;var r=x.getBoundingClientRect(),dd=Math.hypot(r.left+r.width/2-cx,r.top+r.height/2-cy);if(dd<bd){bd=dd;best=x;}});
  if(!best)return false;
@@ -1094,6 +1101,7 @@ function wfStep(t){
   if(now-(D.pv||0)>140&&Math.hypot(w.vx,w.vy)<700){D.pv=now;try{wfSlot(w,true);w.dx=D.dx0+e.clientX-D.x0;w.dy=D.dy0+e.clientY-D.y0;}catch(er){}}
   wfKick();},true);
  ['pointerup','pointercancel'].forEach(function(n){window.addEventListener(n,function(e){var D=WF.drag;if(!D)return;e.stopPropagation();WF.drag=null;var w=D.w;
+  if(w.el.parentNode===inn[9]&&FLD.id){var Fz=FOLDERS[FLD.id],wid=wgIdOf(w.el),zz=FLD.zoom||1;if(Fz&&Fz.pos[wid]){Fz.pos[wid].x=Math.max(0,Math.round(Fz.pos[wid].x+w.dx/zz));Fz.pos[wid].y=Math.max(60,Math.round(Fz.pos[wid].y+w.dy/zz));foldSave();}w.dx=w.dy=0;w.vx=w.vy=0;w.home=1;wlApply(9);needSync[9]=1;tlStale[9]=1;wfKick();return;}
   if(performance.now()-D.lt>90){w.vx*=.2;w.vy*=.2;}var sp=Math.hypot(w.vx,w.vy);if(sp>3000){w.vx*=3000/sp;w.vy*=3000/sp;}
   if(D.mv<6){w.evx-=1.2;w.evy+=1.2;}
   else if(sp<160){try{if(wfSlot(w)){w.home=1;w.vx=w.vy=0;LG('egg','віджет опущено в сітку');}}catch(err){console.error(err);}}   /* повільне відпускання — стає в сітку; кидок — летить */
