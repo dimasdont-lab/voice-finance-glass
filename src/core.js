@@ -187,6 +187,7 @@ function blocksHome(){
   (tx.length?tx.map(function(x,i){return txRow(x,i===0);}).join(''):'<div class="empty">'+(ix.homeQuery?'Нічого не знайдено.':'Операцій поки немає. Натисніть «Ввід» і напишіть, наприклад: <b>кава 25 зл</b>.')+'</div>')));
  o.push(B_('tile','<div class="lbl">Місячний ліміт витрат</div><div class="mid">'+esc(money(g.limit))+'</div><div class="bar"><i style="width:'+g.percent.toFixed(1)+'%"></i></div><div class="cap">Витрачено '+esc(money(g.expense))+' · '+esc(pctTxt(g.percent))+' ліміту</div>'));
  o.push(B_('tile','<div class="lbl">Накопичення</div><div class="mid">'+esc(money(g.savings))+'</div><div class="cap">Доходи мінус витрати за весь період.</div>'));
+ o=o.concat(wgBlocks());
  return o;
 }
 /* ---- Аналітика: цілі → аналітика ---- */

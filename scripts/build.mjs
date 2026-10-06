@@ -40,6 +40,7 @@ ${body}
 <script>${logic}</script>
 <script>(function(){'use strict';
 ${r('src/core.js')}
+${r('src/widgets.js')}
 ${r('src/engine.js')}
 ${r('src/bootimg.js')}
 ${r('src/bootgl.js')}

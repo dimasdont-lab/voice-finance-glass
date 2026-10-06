@@ -83,6 +83,7 @@ input{font:inherit;color:inherit}
 #menu .qa{margin:10px 0 2px}
 #menu .mh{font-size:12px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.62);padding:10px 6px 4px}
 #menu .mh:first-child{padding-top:2px}
+#menu .mhl{display:flex;justify-content:space-between;align-items:center}#menu .mhl button{font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--ac);font-weight:650;padding:0 2px}
 #menu .qa{display:flex;gap:8px;margin:6px 0 2px}
 #menu .qa button{flex:1;height:44px;border-radius:22px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);font-size:14px;font-weight:600;text-align:center}
 #menu .mr{display:flex;align-items:center;gap:10px;width:100%;padding:9px 6px;border-radius:14px;font-size:15px;font-weight:550}
@@ -149,6 +150,8 @@ input{font:inherit;color:inherit}
 #boot.lit .blogo{box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 36px rgba(255,70,80,.4);transition:box-shadow .7s ease-out}
 #boot .blogo img{display:block;width:100%;height:100%}
 #boot .bbar{display:none}
+/* смуга біля краю скла: вміст там малює шейдер із заломленням, тому живий DOM біля краю прозорий */
+.rim{-webkit-mask-image:linear-gradient(to right,transparent 14px,#000 30px,#000 calc(100% - 30px),transparent calc(100% - 14px)),linear-gradient(to bottom,transparent 14px,#000 30px,#000 calc(100% - 30px),transparent calc(100% - 14px));-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent 14px,#000 30px,#000 calc(100% - 30px),transparent calc(100% - 14px)),linear-gradient(to bottom,transparent 14px,#000 30px,#000 calc(100% - 30px),transparent calc(100% - 14px));mask-composite:intersect}
 #boot.gx .brays,#boot.gx .bglow{display:none!important}
 #boot .bwrap.p2 .bglow{opacity:0;transition:opacity .12s}
 #boot.ba .bglow,#boot.ba .brays{opacity:0!important}
@@ -376,3 +379,41 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 #menu .mr{gap:8px;padding:8px 4px;font-size:14.5px}
 #menu .mr .ic{width:28px;height:28px;border-radius:14px;font-size:12px}
 #menu .mr .v{font-size:12.5px}
+/* ---------- адаптивні віджети: кожна плитка сітки — контейнер; шрифти тягнуться плавно, а коли тісно — другорядне ховається ---------- */
+.inner.g4>.tile{container-type:inline-size;min-width:0}
+.inner.g4>.tile .big{font-size:clamp(17px,12.5cqi,40px)}
+.inner.g4>.tile .mid{font-size:clamp(15px,8.8cqi,26px)}
+.inner.g4>.tile .th h2{font-size:clamp(14px,6.2cqi,19px)}
+@container (max-width:260px){
+ .split{flex-direction:column;gap:8px}.split>button{padding:9px}
+ .chg span,.rc span,.row .ic,.cat .b{display:none}
+ .brow{flex-direction:column;align-items:stretch;gap:6px}.brow .chw{width:100%;flex-basis:auto}
+ .cat .n{width:auto;flex:1}.cat .a{width:auto;font-size:12.5px}
+ .grid2{grid-template-columns:1fr}
+ .row{gap:8px;padding:9px 0}.rc b,.row em{font-size:14px}
+}
+@container (max-width:180px){
+ .cap,.chev,.chw,.th button,.th>.lbl,.split .lbl,.split .dot,.mini .lbl,.wtx .cap{display:none}
+ .lbl{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+ .rc b,.row em{font-size:12.5px}.row:nth-of-type(n+4){display:none}
+ .split b,.mini b{font-size:14px}
+ .bar{margin-top:8px;height:7px}
+}
+@container (max-width:110px){
+ .chg,.split,.bar,.row,.cat,.grid2,.wbars em{display:none}
+ .lbl{font-size:10.5px}
+}
+/* віджети зі списку */
+.wrow{display:flex;align-items:center;gap:12px;margin-top:8px}.wtx{min-width:0;flex:1}.wtx .mid{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wring{flex:none;width:64px;height:64px;position:relative;display:grid;place-items:center}.wring svg{position:absolute;inset:0;width:100%;height:100%}
+.wring b{position:relative;display:grid;place-items:center;font-size:13px;font-weight:700}
+.wbars{display:flex;align-items:flex-end;gap:6px;height:96px;margin-top:8px}
+.wb{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;min-width:0}
+.wb .bar.wv{flex:1;width:100%;max-width:22px;margin:0;display:flex;align-items:flex-end;border-radius:6px}
+.wb .bar.wv i{border-radius:6px;background:linear-gradient(0deg,#ff9a9e,var(--ac2))}
+.wb em{font-style:normal;font-size:11px;color:var(--mu)}
+.wq{display:block;width:100%;margin-top:8px;text-align:left}.wq b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wnotes{display:block;width:100%;box-sizing:border-box;margin-top:4px;min-height:84px;resize:none;border:0;border-radius:16px;padding:10px 12px;background:rgba(255,255,255,.05);color:#fff;font:500 15px/1.4 var(--f);-webkit-user-select:text;user-select:text}
+.wclk{font-variant-numeric:tabular-nums}
+@container (max-width:180px){.wring{width:48px;height:48px}.wring b{font-size:11px}.wrow{gap:8px}.wbars{height:70px;gap:3px}}
+@container (max-width:110px){.wrow{flex-direction:column;align-items:flex-start}.wtx{display:none}}
