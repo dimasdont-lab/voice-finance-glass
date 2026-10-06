@@ -7,7 +7,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;te
 input{font:inherit;color:inherit}
 #bg{position:fixed;inset:0;z-index:-2;background:#050507}
 .page{position:absolute;inset:0;overflow:hidden;touch-action:none;will-change:transform}
-.inner{position:relative;padding:calc(env(safe-area-inset-top,0px) + 80px + var(--dkT,0px)) calc(16px + var(--dkR,0px)) calc(var(--dkB,150px) + env(safe-area-inset-bottom,0px)) calc(16px + var(--dkL,0px))}
+.inner{position:relative;padding:calc(env(safe-area-inset-top,0px) + var(--pdT,80px)) calc(16px + var(--pdR,0px)) calc(var(--pdB,150px) + env(safe-area-inset-bottom,0px)) calc(16px + var(--pdL,0px))}
 .inner>div{margin:0 0 14px}
 /* ---------- блоки ---------- */
 .hdr{display:flex;align-items:center;gap:10px;padding:6px 4px 2px}

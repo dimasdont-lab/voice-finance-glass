@@ -519,7 +519,7 @@ function mkToggle(btn){
  clearTimeout(mkT);mkT=setTimeout(mkRefresh,700);
 }
 function mkTapInfo(id){var m=MK.data[id];if(!m)return;toast(m.label+' · '+mkSource(m)+(m.updated?' · '+mkWhen(m.updated):''));}
-var tkG=VF.createTickerGesture(),tkOff=0,tkPress=null,tkPause=0,tkLast=0,tkReady=false,tkVel=0,tkPX=0,tkPT=0,
+var tkPA={x:0,y:0},tkG=VF.createTickerGesture(),tkOff=0,tkPress=null,tkPause=0,tkLast=0,tkReady=false,tkVel=0,tkPX=0,tkPT=0,
     tkRM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 function tkLoop(t){
  requestAnimationFrame(tkLoop);
@@ -540,19 +540,19 @@ function tkEnd(cancel,ts){
  if(!tkPress)return;var r=tkG.end({cancelled:cancel});tkPress=null;
  if(ts-tkPT>90)tkVel=0;                                   /* палець зупинився перед відпусканням — без інерції */
  tkVel=Math.max(-3000,Math.min(3000,tkVel));
- if(r){tkPause=r.resumeAt;if(r.openMarketId){tkVel=0;try{var tkr=tickerEl.getBoundingClientRect();growAnchor={x:tkPX,y:tkr.top+tkr.height/2};mkpEnter(r.openMarketId);nav.openOverlay('marketSheet',{marketId:r.openMarketId});}catch(err){console.error(err);}}}
+ if(r){tkPause=r.resumeAt;if(r.openMarketId){tkVel=0;try{growAnchor={x:tkPA.x,y:tkPA.y};mkpEnter(r.openMarketId);nav.openOverlay('marketSheet',{marketId:r.openMarketId});}catch(err){console.error(err);}}}
 }
 /* строка закріплена поза сторінками: горизонтальне перетягування не скролить сторінку (touch-action:none) */
 tickerEl.addEventListener('pointerdown',function(e){
  var it=e.target.closest('[data-mk]');
- tkG.start({x:e.clientX,marketId:it?it.dataset.mk:'',offset:tkOff});tkPress={id:e.pointerId};tkVel=0;tkPX=e.clientX;tkPT=e.timeStamp;
+ tkG.start({x:tkAx(e),marketId:it?it.dataset.mk:'',offset:tkOff});tkPress={id:e.pointerId};tkVel=0;tkPX=tkAx(e);tkPT=e.timeStamp;tkPA={x:e.clientX,y:e.clientY};
  try{tickerEl.setPointerCapture(e.pointerId);}catch(_){}
 });
 tickerEl.addEventListener('pointermove',function(e){
  if(!tkPress||e.pointerId!==tkPress.id)return;
- var r=tkG.move({x:e.clientX});if(r)tkOff=r.offset;
- var dtm=e.timeStamp-tkPT;if(dtm>0){tkVel=.6*tkVel+.4*(-(e.clientX-tkPX)/dtm*1000);}
- tkPX=e.clientX;tkPT=e.timeStamp;
+ var r=tkG.move({x:tkAx(e)});if(r)tkOff=r.offset;
+ var dtm=e.timeStamp-tkPT;if(dtm>0){tkVel=.6*tkVel+.4*(-(tkAx(e)-tkPX)/dtm*1000);}
+ tkPX=tkAx(e);tkPT=e.timeStamp;
 });
 tickerEl.addEventListener('pointerup',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(false,e.timeStamp);});
 tickerEl.addEventListener('pointercancel',function(e){if(tkPress&&e.pointerId===tkPress.id)tkEnd(true,e.timeStamp);});
