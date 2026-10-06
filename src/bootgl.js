@@ -2,6 +2,10 @@
    (полярна діаграма Вороного + дрібні тріщини), світло з тріщин і промені-годреї з пилинками, частинки з шлейфом.
    Працює поверх старого 2D-варіанта: якщо WebGL недоступний, лишається 2D-заставка. ===== */
 function bfxIcon(){
+ if(!BFX_IM.complete||!BFX_IM.naturalWidth)return null;
+ var cv0=document.createElement('canvas');cv0.width=cv0.height=512;var x0=cv0.getContext('2d'),rc0=512*.224;x0.beginPath();x0.moveTo(rc0,0);x0.arcTo(512,0,512,512,rc0);x0.arcTo(512,512,0,512,rc0);x0.arcTo(0,512,0,0,rc0);x0.arcTo(0,0,512,0,rc0);x0.closePath();x0.clip();x0.drawImage(BFX_IM,0,0,512,512);return cv0;
+}
+function bfxIconCode(){
  var s=512,cv=document.createElement('canvas');cv.width=cv.height=s;var x=cv.getContext('2d'),rc=s*.224,i;
  x.beginPath();x.moveTo(rc,0);x.arcTo(s,0,s,s,rc);x.arcTo(s,s,0,s,rc);x.arcTo(0,s,0,0,rc);x.arcTo(0,0,s,0,rc);x.closePath();x.clip();
  var g=x.createLinearGradient(0,0,0,s);g.addColorStop(0,'#2b060b');g.addColorStop(.47,'#0d0508');g.addColorStop(.53,'#04100a');g.addColorStop(1,'#042412');x.fillStyle=g;x.fillRect(0,0,s,s);
@@ -127,14 +131,14 @@ function bfxGLDraw(t,el){
  var wr=boot.wrap.getBoundingClientRect(),cx=wr.left-br.left,cy=wr.top-br.top,diag=Math.hypot(w,h);
  boot.logo.style.opacity='0';
  gl.viewport(0,0,G.cv.width,G.cv.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
- var S=116*BFX.sc,ia=0,sa=0,E=-1,fl=0,cn=0,hot=0,blink=0,dot=[0,0],drawQuad=false,pMode=-1,pAlpha=0,pu=0,i,CR=BFX.cr,C=BFX.C,Et=BFX.E,tau=0;
+ var rgrow=1,S=116*BFX.sc,ia=0,sa=0,E=-1,fl=0,cn=0,hot=0,blink=0,dot=[0,0],drawQuad=false,pMode=-1,pAlpha=0,pu=0,i,CR=BFX.cr,C=BFX.C,Et=BFX.E,tau=0;
  var crA=G.crA,rayA=G.rayA;for(i=0;i<24;i++)crA[i]=0;for(i=0;i<6;i++)crA[i*4+2]=-1;for(i=0;i<10;i++){rayA[i*4]=0;rayA[i*4+1]=-1;rayA[i*4+2]=0;rayA[i*4+3]=0;}
  if(ph===0){
   if(el<A){
    var D=Math.max(.35,A-1.0*k),fo=bfxS(A-.45*k,A-.05*k,el);S=116*2.4;
    if(el>A-.45*k&&BFX.ba){boot.el.classList.remove('ba');BFX.ba=0;}
-   ia=fo;sa=fo;drawQuad=fo>.002;pMode=0;pAlpha=Math.min(1,el/.1)*(1-fo);G.D=D;
-  }else{if(BFX.ba){boot.el.classList.remove('ba');BFX.ba=0;}ia=1;sa=1;drawQuad=true;}
+   ia=fo;sa=0;drawQuad=fo>.002;pMode=0;pAlpha=Math.min(1,el/.1)*(1-fo);G.D=D;
+  }else{if(BFX.ba){boot.el.classList.remove('ba');BFX.ba=0;}ia=1;rgrow=BFX.skip?1:Math.max(.002,bfxEO((el-A)/(.9*k)));sa=1;drawQuad=true;}
  }else if(ph===1){
   tau=(t-boot.t1)/1000/k;
   if(/[?&]bfxfz=/.test(location.search)){tau=+location.search.match(/bfxfz=([0-9.]+)/)[1];boot.t1=t-tau*k*1000;BFX.frz=1;}   /* налагодження: заморозити момент заставки */
@@ -162,7 +166,7 @@ function bfxGLDraw(t,el){
   if(up>.6){BFX.on=0;G.cv.style.display='none';return;}
   dot=[30*(1-f2),1-f2];drawQuad=true;
  }
- var R=S*.41;
+ var R=S*.41*rgrow;
  if(drawQuad){
   gl.useProgram(G.pq);gl.disable(gl.BLEND);gl.bindBuffer(gl.ARRAY_BUFFER,G.qb);gl.enableVertexAttribArray(0);gl.disableVertexAttribArray(1);gl.disableVertexAttribArray(2);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
   var q=G.uq;gl.uniform2f(q.u_res,G.cv.width,G.cv.height);gl.uniform1f(q.u_dpr,dpr);gl.uniform2f(q.u_c,cx,cy);gl.uniform1f(q.u_S,S);gl.uniform1f(q.u_R,R);gl.uniform1f(q.u_t,(t/1000)%1000);

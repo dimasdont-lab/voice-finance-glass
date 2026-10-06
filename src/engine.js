@@ -1041,15 +1041,16 @@ function bfxInit(){
  if(BFX.init)return;BFX.init=1;
  var off0=false;try{off0=localStorage.getItem('vf-bfx')==='0';}catch(e){}
  if(BFX.red||off0||/[?&]nobfx/.test(location.search))return;
- var img=BFX.icon=bfxIcon();   /* логотип намальований кодом, а не взятий із картинки */
+ var img=BFX.icon=bfxIcon();   /* логотип — намальована користувачем картинка, вбудована в збірку */
+ if(!img){BFX.init=0;return;}
  try{
   var G=BFX.G,oc=document.createElement('canvas');oc.width=oc.height=G;var ox=oc.getContext('2d');ox.drawImage(img,0,0,G,G);var d=ox.getImageData(0,0,G,G).data;
   var rc=.224,P=[],bm={},i,j;
   for(j=0;j<G;j++)for(i=0;i<G;i++){
    var u=(i+.5)/G,v=(j+.5)/G,dx=Math.max(0,Math.abs(u-.5)-(.5-rc)),dy=Math.max(0,Math.abs(v-.5)-(.5-rc));if(dx*dx+dy*dy>rc*rc)continue;
    var k=(j*G+i)*4,r=d[k],g=d[k+1],b=d[k+2];if((r*.3+g*.59+b*.11)/255<.07)continue;
-   var ang=Math.random()*6.2832,dist=bfxR(.35,1.15),key=(r>>4)<<8|(g>>4)<<4|(b>>4);
-   var p={tx:u-.5,ty:v-.5,dl:Math.random()*.9,sx:Math.cos(ang)*dist,sy:Math.sin(ang)*dist,spin:(Math.random()<.5?-1:1)*bfxR(1.2,3.6),sz:bfxR(.85,1.3),sp:bfxR(.25,1),X:0,Y:0,Z:0,cr:Math.min(1,r/255*1.2),cg:Math.min(1,g/255*1.2),cb:Math.min(1,b/255*1.2)};
+   var ang=Math.random()*6.2832,dist=bfxR(1.0,3.4),key=(r>>4)<<8|(g>>4)<<4|(b>>4);
+   var p={tx:u-.5,ty:v-.5,dl:Math.random()*.9,sx:Math.cos(ang)*dist,sy:Math.sin(ang)*dist,spin:(Math.random()<.5?-1:1)*bfxR(2.2,7),sz:bfxR(.85,1.3),sp:bfxR(.25,1),X:0,Y:0,Z:0,cr:Math.min(1,r/255*1.2),cg:Math.min(1,g/255*1.2),cb:Math.min(1,b/255*1.2)};
    P.push(p);(bm[key]||(bm[key]={st:'rgb('+((r>>4)*17)+','+((g>>4)*17)+','+((b>>4)*17)+')',l:[]})).l.push(p);}
   if(P.length<300)return;
   BFX.P=P;BFX.BK=Object.keys(bm).map(function(q){return bm[q];});
