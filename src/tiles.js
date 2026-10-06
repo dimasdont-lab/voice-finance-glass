@@ -4,7 +4,7 @@
 var BH={ph:0,x:0,y:0,r:0,k:0,au:1,pg:[],po:1},WF={n:0,rects:[]},CH={on:0,x:0,y:0,s:0,tx:0,ty:0,drag:0},FGL={down:0,x:0,y:0,tx:0,ty:0,k:0},RPL=[],RPU=new Float32Array(64),RPn=0,RPsig='',FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
 var GLASS_LINE_OK=false;
 var tgR=new Float32Array(TMAX*4),tgM=new Float32Array(TMAX*4),tgC=new Float32Array(TMAX*4);
-var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2],['.aic',18,1]];
+var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2],['.aic',18,1],['.bar',8,2],['.cat .b',6,2]];
 var FXFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
 'uniform vec2 u_vp;uniform vec2 u_res;uniform vec4 u_fp[24];uniform vec3 u_fc[24];uniform float u_fn;uniform float u_t;uniform float u_aura;uniform float u_amode;uniform vec3 u_abc;uniform vec3 u_ahsv;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
@@ -93,8 +93,8 @@ nseg?'uniform vec4 u_sg['+nseg+'];uniform vec4 u_lb[4];uniform vec4 u_li[4];unif
 ' float sp=pow(max(dot(n,normalize(vec2(-.5,-.85))),0.),2.);ci+=vec3(min(1.,gl)*(.1+.55*sp));',
 ' return vec4(ci*u_br,smoothstep(.1,.5,H)*M.z);}',
 'vec4 glassAt(vec2 px,vec4 R,vec4 M,vec4 C,float dm,vec4 G){',
-' if(M.w>3.5)return textGlass(px,R,M,C,G);if(M.w>2.5)return barGlass(px,R,M,C,dm);',
-' float Q=M.x;float gk=abs(G.z)>1.?1.:0.;float m=(M.w>.5?(gk>0.?22.:18.):36.)*u_s;float t=clamp(-dm/(.6*m),0.,1.);float e=1.5;',
+' if(M.w>3.5)return textGlass(px,R,M,C,G);',
+' float Q=M.x;float gk=abs(G.z)>1.?1.:0.;float m=(M.w>.5?(gk>0.?22.:18.):36.)*u_s;m=min(m,max(2.*u_s,min(R.z,R.w)*1.8));float t=clamp(-dm/(.6*m),0.,1.);float e=1.5;',
 ' vec2 n=normalize(vec2(sdRB(px+vec2(e,0.)-R.xy,R.zw,Q)-sdRB(px-vec2(e,0.)-R.xy,R.zw,Q),sdRB(px+vec2(0.,e)-R.xy,R.zw,Q)-sdRB(px-vec2(0.,e)-R.xy,R.zw,Q))+1e-5);',
 ' vec2 of=n*pow(1.-t,2.2)*(gk>0.?.5:.6)*m;float ab=.07*(.35+pow(1.-t,1.5));float zm=C.a>0.?.55:(M.w>.5?.96:.93);',
 ' vec2 za=R.xy+((px-of*(1.+ab))-R.xy)*zm,zb=R.xy+((px-of)-R.xy)*zm,zc=R.xy+((px-of*(1.-ab))-R.xy)*zm;',

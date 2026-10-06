@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-06 13:42 UTC';
+<script>window.__VF_BUILD='2026-10-06 13:44 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -307,7 +307,7 @@ html.lv #bg,html.lv #glt,html.lv #pages,html.lv #boot,html.lv #scrim,html.lv #ed
 
 /* ---------- скляні лінії графіків і прогрес-бари: малює WebGL-шар плиток (html.glines.gt). Вимкнення — у Налаштуваннях ---------- */
 html.glines.gt .bar i,html.glines.gt .cat .b i{background:transparent!important}
-html.glines.gt .bar,html.glines.gt .cat .b{background:rgba(255,255,255,.05);box-shadow:inset 0 1px 2px rgba(0,0,0,.45)}
+html.glines.gt .bar,html.glines.gt .cat .b{background:transparent!important;box-shadow:none!important}
 
 /* скляні значки з літерою і кнопки сортування / «+ Борг»: скло малює шар плиток */
 .gt .page .ic{background:none!important}
@@ -503,6 +503,9 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 @container (min-width:111px){.acw .ach{flex-direction:row;gap:10px}.acw .aic{width:40px;flex:none}.acw .acn{text-align:left;font-size:13px}.acw .aca{display:block}}
 @container (min-width:261px){.inner.g4>.tile.acw{padding:16px}.acw .acx{display:block}.acw .aic{width:44px}}
 .acadd .aic{opacity:.8}
+.wpb{flex:none;width:34%;min-width:56px}.wpb b{display:block;font-size:15px;font-weight:700}.wpb .bar{margin-top:6px;height:12px;border-radius:6px}.wpb .bar i{border-radius:6px}
+.wrow:has(.wpb){align-items:flex-end}
+@container (max-width:180px){.wrow:has(.wpb){flex-direction:column;align-items:stretch}.wpb{width:100%}}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -3136,7 +3139,7 @@ var WG=(function(){try{var j=JSON.parse(localStorage.getItem('vf-wg')||'null');i
 function wgSave(){try{localStorage.setItem('vf-wg',JSON.stringify(WG));}catch(e){}}
 function wgToggle(id){var i=WG.indexOf(id);if(i>=0)WG.splice(i,1);else WG.push(id);wgSave();renderPages();}
 function wgLabel(w){return w.n+': '+(WG.indexOf(w.id)>=0?'показано':'сховано');}
-function wgRing(p,col){p=Math.max(0,Math.min(100,p));var L=2*Math.PI*26;return'<div class="wring"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="8"/><circle cx="32" cy="32" r="26" fill="none" stroke="'+col+'" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+(L*p/100).toFixed(1)+' '+L.toFixed(1)+'" transform="rotate(-90 32 32)"/></svg><b>'+Math.round(p)+'%</b></div>';}
+function wgRing(p,col){p=Math.max(0,Math.min(100,p));return'<div class="wpb"><b>'+Math.round(p)+'%</b><div class="bar"><i style="width:'+p.toFixed(1)+'%;background:'+col+'" data-col="'+col+'"></i></div></div>';}   /* частка — скляний прогрес-бар */
 function wgDay(d){return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();}
 function wgNextDay(day){var n=new Date(),d=new Date(n.getFullYear(),n.getMonth(),Math.min(day,28)),t=new Date(n.getFullYear(),n.getMonth(),n.getDate());if(d<t)d=new Date(n.getFullYear(),n.getMonth()+1,Math.min(day,28));return{d:d,left:Math.round((d-t)/864e5)};}
 function wgBlocks(){
@@ -4917,7 +4920,7 @@ function bfxGLDraw(t,el){
 var BH={ph:0,x:0,y:0,r:0,k:0,au:1,pg:[],po:1},WF={n:0,rects:[]},CH={on:0,x:0,y:0,s:0,tx:0,ty:0,drag:0},FGL={down:0,x:0,y:0,tx:0,ty:0,k:0},RPL=[],RPU=new Float32Array(64),RPn=0,RPsig='',FGn=0,FGu=new Float32Array(96),FGcu=new Float32Array(72),FGbb=null,FGbbPrev=null,tgMNA='',tgMajor='',tgMajorN=0,FGact=0,FGgen=0,FGtex=null,PRSIG='0',tgDraws=0,TGC=document.getElementById('glt'),tgl=null,TGU={},TL=[],TLL=[],tlStale=[],tgSig='',tgW=0,tgH=0,tgS=0,tgOK=false,tgShown=false,TMAX=40,NSEG=0,NLN=4;
 var GLASS_LINE_OK=false;
 var tgR=new Float32Array(TMAX*4),tgM=new Float32Array(TMAX*4),tgC=new Float32Array(TMAX*4);
-var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2],['.aic',18,1]];
+var TILE_R={tile:28,srch:24},NEST=[['.split>button',20,1],['.chw',20,1],['.mini',20,1],['.dot',15,2],['.ic',20,2],['.aic',18,1],['.bar',8,2],['.cat .b',6,2]];
 var FXFS=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
 'uniform vec2 u_vp;uniform vec2 u_res;uniform vec4 u_fp[24];uniform vec3 u_fc[24];uniform float u_fn;uniform float u_t;uniform float u_aura;uniform float u_amode;uniform vec3 u_abc;uniform vec3 u_ahsv;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
@@ -5006,8 +5009,8 @@ nseg?'uniform vec4 u_sg['+nseg+'];uniform vec4 u_lb[4];uniform vec4 u_li[4];unif
 ' float sp=pow(max(dot(n,normalize(vec2(-.5,-.85))),0.),2.);ci+=vec3(min(1.,gl)*(.1+.55*sp));',
 ' return vec4(ci*u_br,smoothstep(.1,.5,H)*M.z);}',
 'vec4 glassAt(vec2 px,vec4 R,vec4 M,vec4 C,float dm,vec4 G){',
-' if(M.w>3.5)return textGlass(px,R,M,C,G);if(M.w>2.5)return barGlass(px,R,M,C,dm);',
-' float Q=M.x;float gk=abs(G.z)>1.?1.:0.;float m=(M.w>.5?(gk>0.?22.:18.):36.)*u_s;float t=clamp(-dm/(.6*m),0.,1.);float e=1.5;',
+' if(M.w>3.5)return textGlass(px,R,M,C,G);',
+' float Q=M.x;float gk=abs(G.z)>1.?1.:0.;float m=(M.w>.5?(gk>0.?22.:18.):36.)*u_s;m=min(m,max(2.*u_s,min(R.z,R.w)*1.8));float t=clamp(-dm/(.6*m),0.,1.);float e=1.5;',
 ' vec2 n=normalize(vec2(sdRB(px+vec2(e,0.)-R.xy,R.zw,Q)-sdRB(px-vec2(e,0.)-R.xy,R.zw,Q),sdRB(px+vec2(0.,e)-R.xy,R.zw,Q)-sdRB(px-vec2(0.,e)-R.xy,R.zw,Q))+1e-5);',
 ' vec2 of=n*pow(1.-t,2.2)*(gk>0.?.5:.6)*m;float ab=.07*(.35+pow(1.-t,1.5));float zm=C.a>0.?.55:(M.w>.5?.96:.93);',
 ' vec2 za=R.xy+((px-of*(1.+ab))-R.xy)*zm,zb=R.xy+((px-of)-R.xy)*zm,zc=R.xy+((px-of*(1.-ab))-R.xy)*zm;',

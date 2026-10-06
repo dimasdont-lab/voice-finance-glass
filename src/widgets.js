@@ -9,7 +9,7 @@ var WG=(function(){try{var j=JSON.parse(localStorage.getItem('vf-wg')||'null');i
 function wgSave(){try{localStorage.setItem('vf-wg',JSON.stringify(WG));}catch(e){}}
 function wgToggle(id){var i=WG.indexOf(id);if(i>=0)WG.splice(i,1);else WG.push(id);wgSave();renderPages();}
 function wgLabel(w){return w.n+': '+(WG.indexOf(w.id)>=0?'показано':'сховано');}
-function wgRing(p,col){p=Math.max(0,Math.min(100,p));var L=2*Math.PI*26;return'<div class="wring"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="8"/><circle cx="32" cy="32" r="26" fill="none" stroke="'+col+'" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+(L*p/100).toFixed(1)+' '+L.toFixed(1)+'" transform="rotate(-90 32 32)"/></svg><b>'+Math.round(p)+'%</b></div>';}
+function wgRing(p,col){p=Math.max(0,Math.min(100,p));return'<div class="wpb"><b>'+Math.round(p)+'%</b><div class="bar"><i style="width:'+p.toFixed(1)+'%;background:'+col+'" data-col="'+col+'"></i></div></div>';}   /* частка — скляний прогрес-бар */
 function wgDay(d){return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();}
 function wgNextDay(day){var n=new Date(),d=new Date(n.getFullYear(),n.getMonth(),Math.min(day,28)),t=new Date(n.getFullYear(),n.getMonth(),n.getDate());if(d<t)d=new Date(n.getFullYear(),n.getMonth()+1,Math.min(day,28));return{d:d,left:Math.round((d-t)/864e5)};}
 function wgBlocks(){

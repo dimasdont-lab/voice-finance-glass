@@ -233,7 +233,7 @@ html.lv #bg,html.lv #glt,html.lv #pages,html.lv #boot,html.lv #scrim,html.lv #ed
 
 /* ---------- скляні лінії графіків і прогрес-бари: малює WebGL-шар плиток (html.glines.gt). Вимкнення — у Налаштуваннях ---------- */
 html.glines.gt .bar i,html.glines.gt .cat .b i{background:transparent!important}
-html.glines.gt .bar,html.glines.gt .cat .b{background:rgba(255,255,255,.05);box-shadow:inset 0 1px 2px rgba(0,0,0,.45)}
+html.glines.gt .bar,html.glines.gt .cat .b{background:transparent!important;box-shadow:none!important}
 
 /* скляні значки з літерою і кнопки сортування / «+ Борг»: скло малює шар плиток */
 .gt .page .ic{background:none!important}
@@ -429,3 +429,6 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 @container (min-width:111px){.acw .ach{flex-direction:row;gap:10px}.acw .aic{width:40px;flex:none}.acw .acn{text-align:left;font-size:13px}.acw .aca{display:block}}
 @container (min-width:261px){.inner.g4>.tile.acw{padding:16px}.acw .acx{display:block}.acw .aic{width:44px}}
 .acadd .aic{opacity:.8}
+.wpb{flex:none;width:34%;min-width:56px}.wpb b{display:block;font-size:15px;font-weight:700}.wpb .bar{margin-top:6px;height:12px;border-radius:6px}.wpb .bar i{border-radius:6px}
+.wrow:has(.wpb){align-items:flex-end}
+@container (max-width:180px){.wrow:has(.wpb){flex-direction:column;align-items:stretch}.wpb{width:100%}}
