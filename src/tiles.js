@@ -260,7 +260,7 @@ function bgPrep(W,H,fxOn){
   BG.fb=tgl.createFramebuffer();tgl.bindFramebuffer(tgl.FRAMEBUFFER,BG.fb);tgl.framebufferTexture2D(tgl.FRAMEBUFFER,tgl.COLOR_ATTACHMENT0,tgl.TEXTURE_2D,BG.tex,0);tgl.bindFramebuffer(tgl.FRAMEBUFFER,null);BG.w=W;BG.h=H;}
  tgl.useProgram(BG.p);
  tgl.uniform2f(BG.U.u_vp,VW,VH);tgl.uniform2f(BG.U.u_res,W,H);tgl.uniform2f(BG.U.u_go,gOX,gOY);tgl.uniform1f(BG.U.u_cell,gridCell());tgl.uniform1f(BG.U.u_isl,ISL);tgl.uniform3f(BG.U.u_gcol,GCOL[0],GCOL[1],GCOL[2]);
- tgl.uniform1i(BG.U.u_fx,2);tgl.uniform1f(BG.U.u_fxk,fxOn&&!TCLEAN?1:0);tgl.uniform1f(BG.U.u_clean,TCLEAN);tgl.uniform4f(BG.U.u_bh,BH.x,BH.y,BH.r,TCLEAN?0:BH.k);tgl.uniform1f(BG.U.u_rn,TCLEAN?0:RPn);if(RPn)tgl.uniform4fv(BG.U.u_rp,RPU);tgl.uniform3f(BG.U.u_ch,CH.x,CH.y,TCLEAN?0:CH.s);tgl.uniform1f(BG.U.u_bt,(performance.now()/1000)%1000);tgl.uniform3f(BG.U.u_fg,FGL.x,FGL.y,TCLEAN?0:FGL.k);
+ tgl.uniform1i(BG.U.u_fx,2);tgl.uniform1f(BG.U.u_fxk,fxOn&&!TCLEAN?1:0);tgl.uniform1f(BG.U.u_clean,TCLEAN);tgl.uniform4f(BG.U.u_bh,BH.x,BH.y,BH.r,TCLEAN?0:BH.k);tgl.uniform1f(BG.U.u_rn,TCLEAN?0:RPn);if(RPn)tgl.uniform4fv(BG.U.u_rp,RPU);tgl.uniform3f(BG.U.u_ch,CH.x,CH.y,TCLEAN?0:CH.s);tgl.uniform1f(BG.U.u_bt,(performance.now()/1000)%1000);tgl.uniform3f(BG.U.u_fg,FGL.x,FGL.y,TCLEAN?0:FGL.k*(1+2.4*(FGL.p||0)));
  tgl.useProgram(FX.main);tgl.activeTexture(tgl.TEXTURE3);tgl.bindTexture(tgl.TEXTURE_2D,BG.tex);tgl.activeTexture(tgl.TEXTURE0);
 }
 function pass2(x,y,w,h){   /* фон у текстуру, потім скло — у межах прямокутника (координати WebGL) */

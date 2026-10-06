@@ -45,6 +45,7 @@ function curSym(c){return c;}
 
 /* ===== сторінки ===== */
 var PAGE_IDS=['insights','debts','home','balanceAnalysis','accountDetail','flowDetail','people','person','marketDetail','folder'];
+var DEEP={};   /* миттєві версії довгого утримання для сильного натискання */
 var FLD={id:null,cols:4,scr:''};   /* відкрита папка (лише в інтерфейсі, сторінка №9) */
 var NP=PAGE_IDS.length;
 var PAGE_OF={};PAGE_IDS.forEach(function(n,i){PAGE_OF[n]=i;});

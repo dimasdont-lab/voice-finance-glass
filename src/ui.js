@@ -680,6 +680,7 @@ root.addEventListener('pointerdown',function(e){
  var r=e.target.closest&&e.target.closest('[data-act=tx],[data-act=dperson],[data-act=dedit]');if(!r)return;
  LP.el=r;LP.x=e.clientX;LP.y=e.clientY;LP.fired=0;clearTimeout(LP.t);
  LP.t=setTimeout(function(){if(LP.el!==r)return;LP.fired=1;longPress(r);},520);
+ DEEP.r=function(){if(LP.el!==r||LP.fired)return false;clearTimeout(LP.t);LP.fired=1;longPress(r);return true;};
 });
 root.addEventListener('pointermove',function(e){if(LP.el&&Math.hypot(e.clientX-LP.x,e.clientY-LP.y)>8){clearTimeout(LP.t);LP.el=null;}});
 ['pointerup','pointercancel'].forEach(function(n){root.addEventListener(n,function(){clearTimeout(LP.t);LP.el=null;});});
@@ -1114,7 +1115,8 @@ function wfStep(t){
   if(tg.closest('[data-act=tx],[data-act=dperson],[data-act=dedit],[data-act=tpl],input,textarea,select,.eggd'))return;
   var b=tg.closest('.tile,.srch');if(!b||!b.parentNode||[].indexOf.call(inn,b.parentNode)<0)return;
   dn={b:b,x:e.clientX,y:e.clientY};clearTimeout(tm);
-  tm=setTimeout(function(){if(!dn)return;var d=dn;dn=null;WF.sup=1;setTimeout(function(){WF.sup=0;},600);wfDetach(d.b,d.x,d.y);},520);});
+  tm=setTimeout(function(){if(!dn)return;var d=dn;dn=null;WF.sup=1;setTimeout(function(){WF.sup=0;},600);wfDetach(d.b,d.x,d.y);},520);
+  DEEP.w=function(){if(!dn)return false;clearTimeout(tm);var d=dn;dn=null;WF.sup=1;setTimeout(function(){WF.sup=0;},600);wfDetach(d.b,d.x,d.y);return true;};});
  root.addEventListener('pointermove',function(e){if(dn&&Math.hypot(e.clientX-dn.x,e.clientY-dn.y)>8){clearTimeout(tm);dn=null;}});
  ['pointerup','pointercancel'].forEach(function(n){root.addEventListener(n,function(){clearTimeout(tm);dn=null;});});
  /* жести на від'єднаному віджеті: перетягування, кидок, подвійний тап; кнопки всередині неактивні */
@@ -1236,3 +1238,25 @@ document.getElementById('sheets').addEventListener('click',function(e){
  gmDraw();gmUi();
 });
 document.getElementById('sheets').addEventListener('change',function(e){if(GM&&e.target.id==='gmPair'){gmSetPair(e.target.value);gmDraw();gmUi();}});
+
+/* ---------- сила натискання (3D Touch): Touch.force; якщо iPhone її не віддає — зростання площі контакту. Сильний швидкий тиск = миттєве «довге утримання» ---------- */
+(function(){
+ var T={},seen=0,lastLog=0;
+ function area(t){return Math.max(1,(t.radiusX||1)*(t.radiusY||1));}
+ function press(o,t){
+  var f=t.force||0,p;
+  if(f>0&&f!==1){o.hasF=1;p=Math.min(1,f/(t.maxPossibleForce&&t.maxPossibleForce>1?t.maxPossibleForce:1));}
+  else{var a=area(t);if(!o.n){o.base=a;o.n=1;}else if(o.n<6){o.base=Math.min(o.base,a)*.5+o.base*.5;o.n++;}o.pa=a/o.base;p=Math.max(0,Math.min(1,(o.pa-1.18)/.85));}
+  return p;}
+ function top(){var m=0,k;for(k in T)m=Math.max(m,T[k].p);return m;}
+ function push(){FGL.p=top();dirty=true;}
+ document.addEventListener('touchstart',function(e){var i,t;for(i=0;i<e.changedTouches.length;i++){t=e.changedTouches[i];T[t.identifier]={p:0,x:t.clientX,y:t.clientY,mv:0,fired:0,t0:performance.now(),n:0,hasF:0,base:0,tg:e.target};}},{capture:true,passive:true});
+ document.addEventListener('touchmove',function(e){var i,t,o;for(i=0;i<e.changedTouches.length;i++){t=e.changedTouches[i];o=T[t.identifier];if(!o)continue;
+  o.mv=Math.max(o.mv,Math.hypot(t.clientX-o.x,t.clientY-o.y));var p=press(o,t);o.p+=(p-o.p)*.5;if(!seen){seen=1;LG('touch','сила натискання: '+(o.hasF?'Touch.force':'площа контакту')+' (force='+(t.force||0)+', радіус '+(t.radiusX||0)+'×'+(t.radiusY||0)+')');}
+  if(p>.2&&performance.now()-lastLog>700){lastLog=performance.now();LG('touch','тиск '+p.toFixed(2)+(o.hasF?' (force '+(t.force||0).toFixed(2)+')':' (площа ×'+(o.pa||0).toFixed(2)+')'));}
+  if(!o.fired&&o.p>=.72&&o.mv<12){o.fired=1;var did=(DEEP.r&&DEEP.r())||(DEEP.w&&DEEP.w())||(DEEP.f&&DEEP.f());if(did){LG('touch','сильне натискання → миттєве утримання');try{if(navigator.vibrate)navigator.vibrate(18);}catch(er){}}}}
+  push();},{capture:true,passive:true});
+ /* нерухомий палець: touchmove майже не приходить, тож тиск читаємо й на старті та за таймером */
+ setInterval(function(){var k;for(k in T)if(T[k].p>.2)dirty=true;},120);
+ ['touchend','touchcancel'].forEach(function(n){document.addEventListener(n,function(e){var i;for(i=0;i<e.changedTouches.length;i++)delete T[e.changedTouches[i].identifier];push();},{capture:true,passive:true});});
+})();

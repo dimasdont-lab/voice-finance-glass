@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-06 22:03 UTC';
+<script>window.__VF_BUILD='2026-10-06 22:05 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -3017,6 +3017,7 @@ function curSym(c){return c;}
 
 /* ===== сторінки ===== */
 var PAGE_IDS=['insights','debts','home','balanceAnalysis','accountDetail','flowDetail','people','person','marketDetail','folder'];
+var DEEP={};   /* миттєві версії довгого утримання для сильного натискання */
 var FLD={id:null,cols:4,scr:''};   /* відкрита папка (лише в інтерфейсі, сторінка №9) */
 var NP=PAGE_IDS.length;
 var PAGE_OF={};PAGE_IDS.forEach(function(n,i){PAGE_OF[n]=i;});
@@ -3294,6 +3295,7 @@ function wgAddMenu(anchor){
   if(FLD.addAt){FLD.addAt=null;fbUpdate();}
   P[e.pointerId]={x:e.clientX,y:e.clientY};clearTimeout(lp);
   if(Object.keys(P).length===2){FLD.d0=d();FLD.z0=FLD.zoom;pan=null;}else{pan={x:e.clientX,y:e.clientY};lp0={x:e.clientX,y:e.clientY};
+   DEEP.f=function(){if(!lp0||WFL.length||tg.closest('.tile'))return false;clearTimeout(lp);FLD.addAt={x:lp0.x,y:lp0.y};fbUpdate();return true;};
    if(!(tg.closest&&tg.closest('.tile'))&&!WFL.length)lp=setTimeout(function(){if(!lp0)return;FLD.addAt={x:lp0.x,y:lp0.y};fbUpdate();setTimeout(function(){if(FLD.addAt){FLD.addAt=null;fbUpdate();}},6000);},520);}},true);
  root.addEventListener('pointermove',function(e){if(!FLD.id||!P[e.pointerId])return;var p=P[e.pointerId],dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
   if(lp0&&Math.hypot(e.clientX-lp0.x,e.clientY-lp0.y)>12){clearTimeout(lp);lp0=null;}
@@ -5355,7 +5357,7 @@ function bgPrep(W,H,fxOn){
   BG.fb=tgl.createFramebuffer();tgl.bindFramebuffer(tgl.FRAMEBUFFER,BG.fb);tgl.framebufferTexture2D(tgl.FRAMEBUFFER,tgl.COLOR_ATTACHMENT0,tgl.TEXTURE_2D,BG.tex,0);tgl.bindFramebuffer(tgl.FRAMEBUFFER,null);BG.w=W;BG.h=H;}
  tgl.useProgram(BG.p);
  tgl.uniform2f(BG.U.u_vp,VW,VH);tgl.uniform2f(BG.U.u_res,W,H);tgl.uniform2f(BG.U.u_go,gOX,gOY);tgl.uniform1f(BG.U.u_cell,gridCell());tgl.uniform1f(BG.U.u_isl,ISL);tgl.uniform3f(BG.U.u_gcol,GCOL[0],GCOL[1],GCOL[2]);
- tgl.uniform1i(BG.U.u_fx,2);tgl.uniform1f(BG.U.u_fxk,fxOn&&!TCLEAN?1:0);tgl.uniform1f(BG.U.u_clean,TCLEAN);tgl.uniform4f(BG.U.u_bh,BH.x,BH.y,BH.r,TCLEAN?0:BH.k);tgl.uniform1f(BG.U.u_rn,TCLEAN?0:RPn);if(RPn)tgl.uniform4fv(BG.U.u_rp,RPU);tgl.uniform3f(BG.U.u_ch,CH.x,CH.y,TCLEAN?0:CH.s);tgl.uniform1f(BG.U.u_bt,(performance.now()/1000)%1000);tgl.uniform3f(BG.U.u_fg,FGL.x,FGL.y,TCLEAN?0:FGL.k);
+ tgl.uniform1i(BG.U.u_fx,2);tgl.uniform1f(BG.U.u_fxk,fxOn&&!TCLEAN?1:0);tgl.uniform1f(BG.U.u_clean,TCLEAN);tgl.uniform4f(BG.U.u_bh,BH.x,BH.y,BH.r,TCLEAN?0:BH.k);tgl.uniform1f(BG.U.u_rn,TCLEAN?0:RPn);if(RPn)tgl.uniform4fv(BG.U.u_rp,RPU);tgl.uniform3f(BG.U.u_ch,CH.x,CH.y,TCLEAN?0:CH.s);tgl.uniform1f(BG.U.u_bt,(performance.now()/1000)%1000);tgl.uniform3f(BG.U.u_fg,FGL.x,FGL.y,TCLEAN?0:FGL.k*(1+2.4*(FGL.p||0)));
  tgl.useProgram(FX.main);tgl.activeTexture(tgl.TEXTURE3);tgl.bindTexture(tgl.TEXTURE_2D,BG.tex);tgl.activeTexture(tgl.TEXTURE0);
 }
 function pass2(x,y,w,h){   /* фон у текстуру, потім скло — у межах прямокутника (координати WebGL) */
@@ -6294,6 +6296,7 @@ root.addEventListener('pointerdown',function(e){
  var r=e.target.closest&&e.target.closest('[data-act=tx],[data-act=dperson],[data-act=dedit]');if(!r)return;
  LP.el=r;LP.x=e.clientX;LP.y=e.clientY;LP.fired=0;clearTimeout(LP.t);
  LP.t=setTimeout(function(){if(LP.el!==r)return;LP.fired=1;longPress(r);},520);
+ DEEP.r=function(){if(LP.el!==r||LP.fired)return false;clearTimeout(LP.t);LP.fired=1;longPress(r);return true;};
 });
 root.addEventListener('pointermove',function(e){if(LP.el&&Math.hypot(e.clientX-LP.x,e.clientY-LP.y)>8){clearTimeout(LP.t);LP.el=null;}});
 ['pointerup','pointercancel'].forEach(function(n){root.addEventListener(n,function(){clearTimeout(LP.t);LP.el=null;});});
@@ -6728,7 +6731,8 @@ function wfStep(t){
   if(tg.closest('[data-act=tx],[data-act=dperson],[data-act=dedit],[data-act=tpl],input,textarea,select,.eggd'))return;
   var b=tg.closest('.tile,.srch');if(!b||!b.parentNode||[].indexOf.call(inn,b.parentNode)<0)return;
   dn={b:b,x:e.clientX,y:e.clientY};clearTimeout(tm);
-  tm=setTimeout(function(){if(!dn)return;var d=dn;dn=null;WF.sup=1;setTimeout(function(){WF.sup=0;},600);wfDetach(d.b,d.x,d.y);},520);});
+  tm=setTimeout(function(){if(!dn)return;var d=dn;dn=null;WF.sup=1;setTimeout(function(){WF.sup=0;},600);wfDetach(d.b,d.x,d.y);},520);
+  DEEP.w=function(){if(!dn)return false;clearTimeout(tm);var d=dn;dn=null;WF.sup=1;setTimeout(function(){WF.sup=0;},600);wfDetach(d.b,d.x,d.y);return true;};});
  root.addEventListener('pointermove',function(e){if(dn&&Math.hypot(e.clientX-dn.x,e.clientY-dn.y)>8){clearTimeout(tm);dn=null;}});
  ['pointerup','pointercancel'].forEach(function(n){root.addEventListener(n,function(){clearTimeout(tm);dn=null;});});
  /* жести на від'єднаному віджеті: перетягування, кидок, подвійний тап; кнопки всередині неактивні */
@@ -6850,6 +6854,28 @@ document.getElementById('sheets').addEventListener('click',function(e){
  gmDraw();gmUi();
 });
 document.getElementById('sheets').addEventListener('change',function(e){if(GM&&e.target.id==='gmPair'){gmSetPair(e.target.value);gmDraw();gmUi();}});
+
+/* ---------- сила натискання (3D Touch): Touch.force; якщо iPhone її не віддає — зростання площі контакту. Сильний швидкий тиск = миттєве «довге утримання» ---------- */
+(function(){
+ var T={},seen=0,lastLog=0;
+ function area(t){return Math.max(1,(t.radiusX||1)*(t.radiusY||1));}
+ function press(o,t){
+  var f=t.force||0,p;
+  if(f>0&&f!==1){o.hasF=1;p=Math.min(1,f/(t.maxPossibleForce&&t.maxPossibleForce>1?t.maxPossibleForce:1));}
+  else{var a=area(t);if(!o.n){o.base=a;o.n=1;}else if(o.n<6){o.base=Math.min(o.base,a)*.5+o.base*.5;o.n++;}o.pa=a/o.base;p=Math.max(0,Math.min(1,(o.pa-1.18)/.85));}
+  return p;}
+ function top(){var m=0,k;for(k in T)m=Math.max(m,T[k].p);return m;}
+ function push(){FGL.p=top();dirty=true;}
+ document.addEventListener('touchstart',function(e){var i,t;for(i=0;i<e.changedTouches.length;i++){t=e.changedTouches[i];T[t.identifier]={p:0,x:t.clientX,y:t.clientY,mv:0,fired:0,t0:performance.now(),n:0,hasF:0,base:0,tg:e.target};}},{capture:true,passive:true});
+ document.addEventListener('touchmove',function(e){var i,t,o;for(i=0;i<e.changedTouches.length;i++){t=e.changedTouches[i];o=T[t.identifier];if(!o)continue;
+  o.mv=Math.max(o.mv,Math.hypot(t.clientX-o.x,t.clientY-o.y));var p=press(o,t);o.p+=(p-o.p)*.5;if(!seen){seen=1;LG('touch','сила натискання: '+(o.hasF?'Touch.force':'площа контакту')+' (force='+(t.force||0)+', радіус '+(t.radiusX||0)+'×'+(t.radiusY||0)+')');}
+  if(p>.2&&performance.now()-lastLog>700){lastLog=performance.now();LG('touch','тиск '+p.toFixed(2)+(o.hasF?' (force '+(t.force||0).toFixed(2)+')':' (площа ×'+(o.pa||0).toFixed(2)+')'));}
+  if(!o.fired&&o.p>=.72&&o.mv<12){o.fired=1;var did=(DEEP.r&&DEEP.r())||(DEEP.w&&DEEP.w())||(DEEP.f&&DEEP.f());if(did){LG('touch','сильне натискання → миттєве утримання');try{if(navigator.vibrate)navigator.vibrate(18);}catch(er){}}}}
+  push();},{capture:true,passive:true});
+ /* нерухомий палець: touchmove майже не приходить, тож тиск читаємо й на старті та за таймером */
+ setInterval(function(){var k;for(k in T)if(T[k].p>.2)dirty=true;},120);
+ ['touchend','touchcancel'].forEach(function(n){document.addEventListener(n,function(e){var i;for(i=0;i<e.changedTouches.length;i++)delete T[e.changedTouches[i].identifier];push();},{capture:true,passive:true});});
+})();
 
 /* ---------- Скупчення галактик (пасхалка після чорної діри) ----------
    Скляна кнопка із зірками з'являється вгорі праворуч, коли чорна діра все засмоктала. Тап — 3D-карта скупчення: 9 різних галактик
