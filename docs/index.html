@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-06 16:10 UTC';
+<script>window.__VF_BUILD='2026-10-06 16:59 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -514,6 +514,26 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 .acw .aic svg{width:clamp(22px,36cqi,32px);height:auto}
 .acw .acn{font-size:10px;line-height:1.1;margin-top:-2px}
 @container (min-width:111px){.inner.g4>.tile.acw{display:block;padding:14px}.acw .acb{display:block;height:auto}.acw .ach{width:auto}.acw .aic{font-size:24px;width:40px}.acw .acn{font-size:13px;margin-top:0}}
+/* мінімальна висота всіх віджетів = одна колонка (як квадрат «Додати рахунок»); у такій висоті вміст стає одним рядком */
+.inner.g4>.tile{min-height:var(--wu,70px)}
+.inner.g4>.tile.cmp{padding:8px 14px!important;display:flex;flex-wrap:wrap;align-items:baseline;align-content:center;column-gap:8px;row-gap:0;overflow:hidden}
+.inner.g4>.tile.cmp .big,.inner.g4>.tile.cmp .mid{font-size:22px;margin:0;padding:0;line-height:1.15;order:2}
+.inner.g4>.tile.cmp .lbl{font-size:12px;order:1;flex-basis:100%;line-height:1.2}
+.inner.g4>.tile.cmp .cap,.inner.g4>.tile.cmp .bar:not(.wv),.inner.g4>.tile.cmp .th button,.inner.g4>.tile.cmp .th>.lbl,.inner.g4>.tile.cmp .chev,.inner.g4>.tile.cmp .wpb .bar{display:none}
+.inner.g4>.tile.cmp .wrow,.inner.g4>.tile.cmp .wtx{display:contents}
+.inner.g4>.tile.cmp .wpb{width:auto;min-width:0;order:3}.inner.g4>.tile.cmp .wpb b{font-size:15px;color:var(--mu);font-weight:600}
+.inner.g4>.tile.cmp .th{margin:0;order:1;flex-basis:100%}.inner.g4>.tile.cmp .th h2{font-size:13px;color:var(--mu);font-weight:600}
+.inner.g4>.tile.cmp .row{border:0;padding:0;order:2;flex-basis:100%}.inner.g4>.tile.cmp .row .ic{display:none}.inner.g4>.tile.cmp .row ~ .row{display:none}
+.inner.g4>.tile.cmp .chg{margin:0;font-size:13px;order:3}.inner.g4>.tile.cmp .chg span{display:none}
+.inner.g4>.tile.cmp .wbars{height:38px;margin:0;flex:1;order:2}.inner.g4>.tile.cmp .wb em{display:none}
+.inner.g4>.tile.cmp.wg-week{flex-wrap:nowrap;align-items:center}.inner.g4>.tile.cmp.wg-week .th{flex-basis:auto}
+.inner.g4>.tile.cmp .wnotes{min-height:0;height:32px;margin:0;flex:1;order:2;padding:6px 10px}
+.inner.g4>.tile.cmp .wq{margin:0;padding:6px 10px}.inner.g4>.tile.cmp .wq .lbl{display:none}
+.inner.g4>.tile.cmp.wg-today .big,.inner.g4>.tile.cmp.wg-focus .mid{color:#fff}
+.inner.g4>.tile.cmp .cat,.inner.g4>.tile.cmp .split,.inner.g4>.tile.cmp .grid2{display:none}
+.inner.g4>.tile.cmp .empty{font-size:12.5px;padding:0;margin:0;order:2;flex-basis:100%;text-align:left}
+.inner.g4>.tile.cmp .wb .bar.wv{display:flex}
+.inner.g4>.tile.cmp .wbars{align-items:flex-end;gap:4px}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -5876,7 +5896,7 @@ var _ss=sheetStale;sheetStale=function(){_ss();setTimeout(layoutSheet,0);};
 /* ---------- жести на скляних вікнах: слідкування за пальцем, розтягування, свайп вниз закриває ---------- */
 var TG={P:null,x0:0,y0:0,t0:0,ty:0,tt:0,vy:0,drag:0,moved:false,sc:null,top0:0};
 function rb(d){return d/(1+Math.abs(d)/55)*.55;}
-function scrollParent(n,stop){while(n&&n!==stop){if(n.scrollHeight>n.clientHeight+2){var o=getComputedStyle(n).overflowY;if(o==='auto'||o==='scroll')return n;}n=n.parentNode;}return stop&&stop.scrollHeight>stop.clientHeight+2&&/auto|scroll/.test(getComputedStyle(stop).overflowY)?stop:null;}
+function scrollParent(n,stop){while(n&&n!==stop){if(n.scrollHeight>n.clientHeight+2){var o=getComputedStyle(n).overflowY;if(o==='auto'||o==='scroll'||n._vs)return n;}n=n.parentNode;}return stop&&stop.scrollHeight>stop.clientHeight+2&&(stop._vs||/auto|scroll/.test(getComputedStyle(stop).overflowY))?stop:null;}
 function gStart(P,x,y,t,tg){
  if(!P.on)return;if(tg&&tg.closest&&tg.closest('input[type=range]'))return;TG.atBot=false;
  TG.P=P;TG.x0=x;TG.y0=y;TG.t0=t;TG.ty=y;TG.tt=t;TG.vy=0;TG.drag=0;TG.moved=false;
@@ -6414,10 +6434,11 @@ var WFL=[],WFraf=0,WFlast=0,WFcur=null;
 var WL=(function(){try{return JSON.parse(localStorage.getItem('vf-widgets')||'{}')||{};}catch(e){return{};}})();
 function wlSave(){try{localStorage.setItem('vf-widgets',JSON.stringify(WL));}catch(e){}}
 function wlKey(el){var hh=el.querySelector('h2,.lbl,.mh,.big'),tx=((hh&&hh.textContent)||'').trim().slice(0,28)||el.className;return[].indexOf.call(inn,el.parentNode)+':'+tx;}
-function wlApply(i){var host=inn[i];if(!host||i>2||!WL)return;var ch=host.children,chg=false,k;
+function wuUnit(){return Math.max(60,(VW-68)/4);}   /* висота й ширина одноколонкового віджета: мінімальна висота всіх віджетів */
+function wlApply(i){var host=inn[i];if(!host||i>2||!WL)return;document.documentElement.style.setProperty('--wu',wuUnit().toFixed(1)+'px');var ch=host.children,chg=false,k;
  for(k=0;k<ch.length;k++){var el=ch[k],tile=el.classList.contains('tile'),dd=tile?WL[wlKey(el)]:null;
   var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws1')?1:el.classList.contains('ws2')?2:4),gc=ds<4?'span '+ds:'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
-  if(el._gc!==gc||el._mh!==mh||el._od!==od){el._gc=gc;el._mh=mh;el._od=od;el.style.gridColumn=gc;if(el.classList.contains('acw'))el.style.aspectRatio=ds===1?'1':'auto';el.style.minHeight=mh;el.style.order=od;chg=true;}}
+  if(el._gc!==gc||el._mh!==mh||el._od!==od){el._gc=gc;el._mh=mh;el._od=od;el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=wuUnit()*1.35));el.style.gridColumn=gc;if(el.classList.contains('acw'))el.style.aspectRatio=ds===1?'1':'auto';el.style.minHeight=mh;el.style.order=od;chg=true;}}
  if(chg){needSync[i]=1;tlStale[i]=1;dirty=true;}try{wgFill();}catch(e){}}
 for(var wli=0;wli<3;wli++)wlApply(wli);
 /* м'яке опускання віджета в сітку: стає на місце найближчого, решта розсуваються */
@@ -6442,7 +6463,7 @@ function wrhEnsure(){
  d.addEventListener('pointerdown',function(e){var w=WFcur;if(!w)return;e.stopPropagation();e.preventDefault();try{d.setPointerCapture(e.pointerId);}catch(_){}
   var host=w.el.parentNode,cs=getComputedStyle(host);WRZ={w:w,id:e.pointerId,x0:e.clientX,y0:e.clientY,w0:w.el.offsetWidth,h0:w.el.offsetHeight,iw:host.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),pi:[].indexOf.call(inn,host)};});
  d.addEventListener('pointermove',function(e){var Z=WRZ;if(!Z||e.pointerId!==Z.id)return;e.preventDefault();
-  var cell=(Z.iw-36)/4,span=Math.max(1,Math.min(4,Math.round((Z.w0+e.clientX-Z.x0+12)/(cell+12)))),h=Math.max(64,Math.round(Z.h0+e.clientY-Z.y0)),key=wlKey(Z.w.el);
+  var cell=(Z.iw-36)/4,span=Math.max(1,Math.min(4,Math.round((Z.w0+e.clientX-Z.x0+12)/(cell+12)))),h=Math.max(wuUnit(),Math.round(Z.h0+e.clientY-Z.y0)),key=wlKey(Z.w.el);
   WL[key]=Object.assign(WL[key]||{},{s:span,h:h});wlApply(Z.pi);wfKick();});
  ['pointerup','pointercancel'].forEach(function(n){d.addEventListener(n,function(e){if(!WRZ||e.pointerId!==WRZ.id)return;WRZ=null;wlSave();LG('egg','розмір віджета збережено');});});
  return d;
@@ -6454,6 +6475,7 @@ function wrhPlace(){
 }
 function wfFind(t){for(var i=0;i<WFL.length;i++)if(WFL[i].el.contains(t))return WFL[i];return null;}
 function wfDetach(el,x,y){
+ CH.on=0;CH.s=0;CH.drag=0;CH.rel=0;dirty=true;   /* заряд від утримання на віджеті скасовується: pointerup відкріпленого віджета до нього не доходить */
  if(PRS.has(el)){PRS.delete(el);el.style.scale='';el.style.translate='';}   /* анімація натискання більше не керує цим віджетом */
  var w=wfFind(el);if(!w){w={el:el,dx:0,dy:0,vx:0,vy:0,ex:0,ey:0,evx:0,evy:0,home:0,taps:0,lt:0};WFL.push(w);
   w.z=el.style.zIndex;w.pos=el.style.position;el.style.position='relative';el.style.zIndex='6';el.classList.add('wfd');LG('egg','віджет від\'єднано');}

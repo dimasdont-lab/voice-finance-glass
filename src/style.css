@@ -440,3 +440,23 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 .acw .aic svg{width:clamp(22px,36cqi,32px);height:auto}
 .acw .acn{font-size:10px;line-height:1.1;margin-top:-2px}
 @container (min-width:111px){.inner.g4>.tile.acw{display:block;padding:14px}.acw .acb{display:block;height:auto}.acw .ach{width:auto}.acw .aic{font-size:24px;width:40px}.acw .acn{font-size:13px;margin-top:0}}
+/* мінімальна висота всіх віджетів = одна колонка (як квадрат «Додати рахунок»); у такій висоті вміст стає одним рядком */
+.inner.g4>.tile{min-height:var(--wu,70px)}
+.inner.g4>.tile.cmp{padding:8px 14px!important;display:flex;flex-wrap:wrap;align-items:baseline;align-content:center;column-gap:8px;row-gap:0;overflow:hidden}
+.inner.g4>.tile.cmp .big,.inner.g4>.tile.cmp .mid{font-size:22px;margin:0;padding:0;line-height:1.15;order:2}
+.inner.g4>.tile.cmp .lbl{font-size:12px;order:1;flex-basis:100%;line-height:1.2}
+.inner.g4>.tile.cmp .cap,.inner.g4>.tile.cmp .bar:not(.wv),.inner.g4>.tile.cmp .th button,.inner.g4>.tile.cmp .th>.lbl,.inner.g4>.tile.cmp .chev,.inner.g4>.tile.cmp .wpb .bar{display:none}
+.inner.g4>.tile.cmp .wrow,.inner.g4>.tile.cmp .wtx{display:contents}
+.inner.g4>.tile.cmp .wpb{width:auto;min-width:0;order:3}.inner.g4>.tile.cmp .wpb b{font-size:15px;color:var(--mu);font-weight:600}
+.inner.g4>.tile.cmp .th{margin:0;order:1;flex-basis:100%}.inner.g4>.tile.cmp .th h2{font-size:13px;color:var(--mu);font-weight:600}
+.inner.g4>.tile.cmp .row{border:0;padding:0;order:2;flex-basis:100%}.inner.g4>.tile.cmp .row .ic{display:none}.inner.g4>.tile.cmp .row ~ .row{display:none}
+.inner.g4>.tile.cmp .chg{margin:0;font-size:13px;order:3}.inner.g4>.tile.cmp .chg span{display:none}
+.inner.g4>.tile.cmp .wbars{height:38px;margin:0;flex:1;order:2}.inner.g4>.tile.cmp .wb em{display:none}
+.inner.g4>.tile.cmp.wg-week{flex-wrap:nowrap;align-items:center}.inner.g4>.tile.cmp.wg-week .th{flex-basis:auto}
+.inner.g4>.tile.cmp .wnotes{min-height:0;height:32px;margin:0;flex:1;order:2;padding:6px 10px}
+.inner.g4>.tile.cmp .wq{margin:0;padding:6px 10px}.inner.g4>.tile.cmp .wq .lbl{display:none}
+.inner.g4>.tile.cmp.wg-today .big,.inner.g4>.tile.cmp.wg-focus .mid{color:#fff}
+.inner.g4>.tile.cmp .cat,.inner.g4>.tile.cmp .split,.inner.g4>.tile.cmp .grid2{display:none}
+.inner.g4>.tile.cmp .empty{font-size:12.5px;padding:0;margin:0;order:2;flex-basis:100%;text-align:left}
+.inner.g4>.tile.cmp .wb .bar.wv{display:flex}
+.inner.g4>.tile.cmp .wbars{align-items:flex-end;gap:4px}
