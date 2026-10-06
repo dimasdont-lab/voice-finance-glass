@@ -988,10 +988,10 @@ var WL=(function(){try{return JSON.parse(localStorage.getItem('vf-widgets')||'{}
 function wlSave(){try{localStorage.setItem('vf-widgets',JSON.stringify(WL));}catch(e){}}
 function wlKey(el){var hh=el.querySelector('h2,.lbl,.mh,.big'),tx=((hh&&hh.textContent)||'').trim().slice(0,28)||el.className;return[].indexOf.call(inn,el.parentNode)+':'+tx;}
 function wuUnit(n){n=n||4;return Math.max(24,(VW-32-(n-1)*12)/n);}   /* висота й ширина одноколонкового віджета: мінімальна висота всіх віджетів */
-function wlApply(i){var host=inn[i];if(!host||(i>2&&i!==9)||!WL)return;var NC=i===9?FLD.cols:4,WU=wuUnit(NC);host._wu=WU;host.style.setProperty('--wu',WU.toFixed(1)+'px');var ch=host.children,chg=false,k;
+function wlApply(i){var host=inn[i];if(!host||(i>2&&i!==9)||!WL)return;var NC=4,WU=wuUnit(4);host._wu=WU;host.style.setProperty('--wu',WU.toFixed(1)+'px');var ch=host.children,chg=false,k;
  for(k=0;k<ch.length;k++){var el=ch[k],tile=el.classList.contains('tile'),dd=tile?WL[wlKey(el)]:null;
   var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws1')?1:el.classList.contains('ws2')?2:4),gc=ds<4||NC!==4?'span '+Math.max(1,Math.min(NC,Math.round(ds*NC/4))):'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
-  if(el._gc!==gc||el._mh!==mh||el._od!==od||el._nc!==NC){el._nc=NC;el._gc=gc;el._mh=mh;el._od=od;el.classList.toggle('tall',!!(dd&&dd.h&&dd.h>=WU*2.6));el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=WU*1.35)||(NC>5&&!el.classList.contains('acw')));el.style.gridColumn=gc;if(el.classList.contains('acw'))el.style.aspectRatio=ds===1?'1':'auto';el.style.minHeight=mh;el.style.order=od;chg=true;}}
+  if(el._gc!==gc||el._mh!==mh||el._od!==od||el._nc!==NC){el._nc=NC;el._gc=gc;el._mh=mh;el._od=od;el.classList.toggle('tall',!!(dd&&dd.h&&dd.h>=WU*2.6));el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=WU*1.35)||0);el.style.gridColumn=gc;if(el.classList.contains('acw'))el.style.aspectRatio=ds===1?'1':'auto';el.style.minHeight=mh;el.style.order=od;chg=true;}}
  if(chg){needSync[i]=1;tlStale[i]=1;dirty=true;}try{wgFill();}catch(e){}}
 for(var wli=0;wli<3;wli++)wlApply(wli);
 /* м'яке опускання віджета в сітку: стає на місце найближчого, решта розсуваються */
@@ -1014,9 +1014,9 @@ function wrhEnsure(){
  if(WRH)return WRH;var d=document.createElement('div');d.id='wfh';d.setAttribute('aria-label','Змінити розмір');
  d.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M10 19 19 10M15 19l4-4"/></svg>';document.body.appendChild(d);WRH=d;
  d.addEventListener('pointerdown',function(e){var w=WFcur;if(!w)return;e.stopPropagation();e.preventDefault();try{d.setPointerCapture(e.pointerId);}catch(_){}
-  var host=w.el.parentNode,cs=getComputedStyle(host);WRZ={w:w,id:e.pointerId,x0:e.clientX,y0:e.clientY,w0:w.el.offsetWidth,h0:w.el.offsetHeight,iw:host.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),pi:[].indexOf.call(inn,host)};});
+  var host=w.el.parentNode,cs=getComputedStyle(host);WRZ={w:w,id:e.pointerId,x0:e.clientX,y0:e.clientY,w0:w.el.getBoundingClientRect().width/((host===inn[9]&&FLD.zoom)||1),h0:w.el.getBoundingClientRect().height/((host===inn[9]&&FLD.zoom)||1),iw:host.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),pi:[].indexOf.call(inn,host)};});
  d.addEventListener('pointermove',function(e){var Z=WRZ;if(!Z||e.pointerId!==Z.id)return;e.preventDefault();
-  var NC=Z.pi===9?FLD.cols:4,cell=(Z.iw-(NC-1)*12)/NC,span=Math.max(1,Math.min(NC,Math.round((Z.w0+e.clientX-Z.x0+12)/(cell+12)))),h=Math.max(wuUnit(NC),Math.round(Z.h0+e.clientY-Z.y0)),key=wlKey(Z.w.el);
+  var NC=4,zk=Z.pi===9?(FLD.zoom||1):1,cell=wuUnit(4),span=Math.max(1,Math.min(4,Math.round((Z.w0+(e.clientX-Z.x0)/zk+12)/(cell+12)))),h=Math.max(wuUnit(4),Math.round(Z.h0+(e.clientY-Z.y0)/zk)),key=wlKey(Z.w.el);
   WL[key]=Object.assign(WL[key]||{},{s:Math.max(1,Math.min(4,Math.round(span*4/NC))),h:h});if(!Z.lg||performance.now()-Z.lg>400){Z.lg=performance.now();LG('egg','розмір «'+key+'»: колонок '+span+' з '+NC+', висота '+h+', одиниця '+Math.round(wuUnit(NC))+', фактично '+Z.w.el.offsetHeight+'x'+Z.w.el.offsetWidth);}wlApply(Z.pi);wfKick();});
  ['pointerup','pointercancel'].forEach(function(n){d.addEventListener(n,function(e){if(!WRZ||e.pointerId!==WRZ.id)return;WRZ=null;wlSave();LG('egg','розмір віджета збережено');});});
  return d;

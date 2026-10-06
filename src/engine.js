@@ -904,7 +904,7 @@ function step(h,target){
 /* ---- власний скрол: позиція одна на DOM і на скло, оновлюються в одному rAF ---- */
 var sy=[],ly=[],sv=0,sIdx=0,sMax=0,sp=null,lastMotion=0,scrimV=0,scrimT=0;
 for(var qq=0;qq<NP;qq++)sy.push(0);
-function maxScroll(i){return Math.max(0,inn[i].offsetHeight-VH);}
+function maxScroll(i){if(i===9&&FLD.zoom&&FLD.zoom!==1)return Math.max(0,inn[9].getBoundingClientRect().height-VH);return Math.max(0,inn[i].offsetHeight-VH);}
 /* ---- перегортання вкладок дока свайпом: Аналітика ↔ Борги ↔ Дім → «Додатково». Сторінки їдуть за пальцем ---- */
 var HS={on:0,ca:0,x0:0,vx:0,lx:0,lt:0},hsAt=0;
 function tabSwipeOk(){return sel<=2&&!nav.getState().overlays.length&&mode!==1&&!boot.on&&!menu.on&&!sheetOn;}
@@ -969,7 +969,7 @@ function stepScroll(dt){
   else sv=0;
   sy[i]=y;
  }
- for(var q=0;q<NP;q++)if(ly[q]!==sy[q]){ly[q]=sy[q];inn[q].style.transform='translate3d(0,'+(-sy[q])+'px,0)';}
+ for(var q=0;q<NP;q++)if(ly[q]!==sy[q]){ly[q]=sy[q];inn[q].style.transform='translate3d(0,'+(-sy[q]/(q===9&&FLD.zoom?FLD.zoom:1))+'px,0)';inn[q]._sy=q===9?sy[q]:0;}
  return act;
 }
 /* ---- скляне меню: Додатково / випадаючі списки ---- */

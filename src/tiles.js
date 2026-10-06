@@ -217,7 +217,7 @@ function tlMeasure(i){
   var hot=el.classList.contains('bal')?(el.classList.contains('dn')?-1:el.classList.contains('up')?1:0):0;
   var bcx=el.offsetLeft+el.offsetWidth/2,bcy=el.offsetTop+el.offsetHeight/2;
   list.push({el:el,blk:el,bcx:bcx,bcy:bcy,l:el.offsetLeft,t:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight,r:r,hot:hot,lv:0,c:null});
-  if(!el.classList.contains('tile'))continue;
+  if(!el.classList.contains('tile')||el.classList.contains('wg-folder'))continue;
   NEST.forEach(function(q){[].forEach.call(el.querySelectorAll(q[0]),function(c){
    var o=offIn(c,host);if(!o||!c.offsetWidth)return;
    var h2=hot;if(q[2]===2)h2=c.classList.contains('up')?1.6:c.classList.contains('dn')?-1.6:hot;
@@ -242,7 +242,9 @@ function tlMeasure(i){
    pts=chaikin(pts);
    if(pts.length>1)lines.push({fade:sv.closest('.chw')?18:0,blk:el,bcx:bcx,bcy:bcy,pts:pts,base:t+h,r:parseFloat(sv.getAttribute('data-lw'))||3,c:hexRgb(sv.getAttribute('data-col'))||[1,1,1]});});
  }
- list.forEach(function(t){t.gl=glyphable(t.el);});GA.dirty=true;
+ list.forEach(function(t){t.gl=glyphable(t.el);});
+ if(i===9&&FLD.zoom&&Math.abs(FLD.zoom-1)>.001){var zz=FLD.zoom;list.forEach(function(t){t.l*=zz;t.t*=zz;t.w*=zz;t.h*=zz;t.r*=zz;t.bcx*=zz;t.bcy*=zz;t.gl=false;});}   /* полотно папки масштабується зумом: геометрію скла переводимо у видимі пікселі */
+ GA.dirty=true;
  TL[i]=list;TLL[i]=lines;tlStale[i]=0;
 }
 function tlAllStale(){for(var i=0;i<NP;i++)tlStale[i]=1;}

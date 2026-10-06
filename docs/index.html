@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-06 20:59 UTC';
+<script>window.__VF_BUILD='2026-10-06 21:32 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -571,6 +571,18 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 .balx .row{padding:8px 0}.balx .dot{width:26px;height:26px;font-size:13px}
 
 .inner.g4>.tile .cap.fp{display:block}
+
+/* порядок «підпис → значення» у віджетах «Найбільше на» й «Заощаджено» */
+.inner.g4>.tile.cmp .fl1 .lbl{order:0}.inner.g4>.tile.cmp .fl1 .fv{order:1}
+.fl1 .lbl{order:0}.fl1 .fv{order:1}
+/* папка: полотно масштабується справжнім зумом (щипок), стільки колонок, скільки влізає */
+.page[data-p=folder] .inner.g4{grid-template-columns:repeat(auto-fill,minmax(var(--wu,77px),1fr))}
+/* міні-копія вмісту папки на головній */
+.fbx{display:block;width:100%;text-align:left;color:inherit;padding:0}
+.fmini{position:relative;width:100%;height:104px;overflow:hidden;border-radius:14px;pointer-events:none;background:rgba(255,255,255,.03)}
+.fgm{width:340px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;transform:scale(.37);transform-origin:0 0;position:absolute;left:4px;top:4px}
+.fgm>.tile{grid-column:span 4;margin:0}.fgm>.ws2{grid-column:span 2}.fgm>.hdr,.fgm>.egg{display:none}
+.fnm{font-size:14px;font-weight:650;margin-top:6px}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -3207,9 +3219,10 @@ var WG=(function(){try{var j=JSON.parse(localStorage.getItem('vf-wg')||'null');i
 /* ---- папки: власний великий простір для віджетів; відкриваються «провалом» у просторі ---- */
 var FOLDERS=(function(){try{var j=JSON.parse(localStorage.getItem('vf-folders')||'null');if(j&&typeof j==='object')return j;}catch(e){}return{};})();
 function foldSave(){try{localStorage.setItem('vf-folders',JSON.stringify(FOLDERS));}catch(e){}}
-function blocksFolder(){var F=FOLDERS[FLD.id];if(!F)return[hdr('Папку не знайдено','',1)];var o=[hdr(F.n,'Папка · щипок змінює масштаб',1)];o=o.concat(wgBlocks(F.wg));if(!F.wg.length)o.push(B_('tile','<div class="empty">Папка порожня. Затисніть будь-який віджет і натисніть «+» унизу ліворуч, щоб додати віджети.</div>'));return o;}
+function blocksFolder(){var F=FOLDERS[FLD.id];if(!F)return[hdr('Папку не знайдено','',1)];var o=[hdr(F.n,'Папка · щипок — масштаб',1)];o=o.concat(wgBlocks(F.wg));if(!F.wg.length)o.push(B_('tile','<div class="empty">Папка порожня. Затисніть будь-який віджет і натисніть «+» унизу ліворуч, щоб додати віджети.</div>'));return o;}
 function foldFx(k){try{cv.animate(k>0?[{transform:'scale(.7)',opacity:0},{transform:'none',opacity:1}]:[{transform:'scale(1.45)',opacity:0},{transform:'none',opacity:1}],{duration:460,easing:'cubic-bezier(.2,.8,.2,1)'});}catch(e){}}
-function openFolder(id){if(!FOLDERS[id])return;FLD.id=id;FLD.scr=nav.getState().screen;FLD.cols=4;sel=9;ca=9;sy[9]=0;document.documentElement.style.setProperty('--gcn',4);renderPages();foldFx(1);dirty=true;LG('egg','папка: '+FOLDERS[id].n);}
+function foldZoom(z){FLD.zoom=Math.max(.4,Math.min(1.7,z));inn[9].style.zoom=FLD.zoom.toFixed(3);needSync[9]=1;tlStale[9]=1;dirty=true;}
+function openFolder(id){if(!FOLDERS[id])return;FLD.id=id;FLD.scr=nav.getState().screen;FLD.zoom=1;sel=9;ca=9;sy[9]=0;renderPages();foldZoom(1);foldFx(1);dirty=true;LG('egg','папка: '+FOLDERS[id].n);}
 function closeFolder(){if(!FLD.id)return;FLD.id=null;sel=2;ca=2;renderPages();foldFx(-1);dirty=true;}
 function foldAdd(){var n=Object.keys(FOLDERS).length+1,nm='Папка '+n;try{var r=window.prompt('Назва папки',nm);if(r===null)return;nm=(r||nm).trim().slice(0,24)||nm;}catch(e){}var id='k'+Date.now().toString(36);FOLDERS[id]={n:nm,wg:[]};foldSave();WG.push('f:'+id);wgSave();renderPages();}
 function wgCur(){return FLD.id&&FOLDERS[FLD.id]?FOLDERS[FLD.id].wg:WG;}
@@ -3223,9 +3236,9 @@ function wgAddMenu(anchor){
 }
 /* масштаб папки щипком: більше/менше колонок — віджети стискаються й перебудовуються */
 (function(){var P={};function d(){var k=Object.keys(P);if(k.length<2)return 0;var a=P[k[0]],b=P[k[1]];return Math.hypot(a.x-b.x,a.y-b.y);}
- root.addEventListener('pointerdown',function(e){if(!FLD.id)return;P[e.pointerId]={x:e.clientX,y:e.clientY};if(Object.keys(P).length===2){FLD.d0=d();FLD.c0=FLD.cols;}},true);
+ root.addEventListener('pointerdown',function(e){if(!FLD.id)return;P[e.pointerId]={x:e.clientX,y:e.clientY};if(Object.keys(P).length===2){FLD.d0=d();FLD.z0=FLD.zoom;}},true);
  root.addEventListener('pointermove',function(e){if(!FLD.id||!P[e.pointerId])return;P[e.pointerId].x=e.clientX;P[e.pointerId].y=e.clientY;if(Object.keys(P).length<2||!FLD.d0)return;
-  var c=Math.max(2,Math.min(8,Math.round(FLD.c0*FLD.d0/Math.max(20,d()))));if(c!==FLD.cols){FLD.cols=c;document.documentElement.style.setProperty('--gcn',c);wlApply(9);needSync[9]=1;tlStale[9]=1;dirty=true;}},true);
+  foldZoom(FLD.z0*d()/Math.max(20,FLD.d0));},true);
  ['pointerup','pointercancel'].forEach(function(n){root.addEventListener(n,function(e){delete P[e.pointerId];if(Object.keys(P).length<2)FLD.d0=0;},true);});})();
 function wgSave(){try{localStorage.setItem('vf-wg',JSON.stringify(WG));}catch(e){}}
 function wgToggle(id){if(id.indexOf('f:')===0)return;var i=WG.indexOf(id);if(i>=0)WG.splice(i,1);else WG.push(id);wgSave();renderPages();}
@@ -3237,7 +3250,8 @@ function wgBlocks(list){
  var st=fin.getState(),now=new Date(),o=[],ms=new Date(now.getFullYear(),now.getMonth(),1);
  function mon(type){var s=0;st.transactions.forEach(function(t){if(t.type===type&&t.currency==='PLN'&&new Date(t.date)>=ms)s+=t.amount;});return s;}
  list.forEach(function(id){
-  if(id.indexOf('f:')===0){var F=FOLDERS[id.slice(2)];if(!F)return;o.push(B_('tile wg wg-folder ws2','<button class="fbx" data-act="fopen" data-id="'+esc(id.slice(2))+'"><div class="f3d"><i></i><i></i><i></i></div><div class="fnm">'+esc(F.n)+'</div><div class="fct">'+F.wg.length+' '+(F.wg.length===1?'віджет':'віджетів')+'</div></button>'));return;}
+  if(id.indexOf('f:')===0){var F=FOLDERS[id.slice(2)];if(!F)return;var mini=wgBlocks(F.wg.filter(function(q){return q.indexOf('f:')!==0;})).map(function(b2){return'<div class="'+b2.c+'">'+b2.h.replace(/<button/g,'<div').replace(/<\/button>/g,'</div>').replace(/<textarea[^>]*>[^<]*<\/textarea>/g,'<div class="wnotes"></div>')+'</div>';}).join('');
+   o.push(B_('tile wg wg-folder ws2','<button class="fbx" data-act="fopen" data-id="'+esc(id.slice(2))+'"><div class="fmini"><div class="fgm">'+mini+'</div></div><div class="fnm">'+esc(F.n)+'</div></button>'));return;}
   var w=WG_LIST.find(function(q){return q.id===id;});if(!w)return;var c='tile wg wg-'+id+(w.s===2?' ws2':''),h='';
   if(id==='clock'){h='<div class="lbl">Зараз</div><div class="big wclk" data-clk="1">'+now.toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'})+'</div><div class="cap">'+esc(todayStr())+'</div>';}
   else if(id==='today'){var fc=forecastMonth(),left=Math.max(1,fc.left+1),rest=fc.limit-fc.spent,per=rest/left;
@@ -4177,7 +4191,7 @@ function step(h,target){
 /* ---- власний скрол: позиція одна на DOM і на скло, оновлюються в одному rAF ---- */
 var sy=[],ly=[],sv=0,sIdx=0,sMax=0,sp=null,lastMotion=0,scrimV=0,scrimT=0;
 for(var qq=0;qq<NP;qq++)sy.push(0);
-function maxScroll(i){return Math.max(0,inn[i].offsetHeight-VH);}
+function maxScroll(i){if(i===9&&FLD.zoom&&FLD.zoom!==1)return Math.max(0,inn[9].getBoundingClientRect().height-VH);return Math.max(0,inn[i].offsetHeight-VH);}
 /* ---- перегортання вкладок дока свайпом: Аналітика ↔ Борги ↔ Дім → «Додатково». Сторінки їдуть за пальцем ---- */
 var HS={on:0,ca:0,x0:0,vx:0,lx:0,lt:0},hsAt=0;
 function tabSwipeOk(){return sel<=2&&!nav.getState().overlays.length&&mode!==1&&!boot.on&&!menu.on&&!sheetOn;}
@@ -4242,7 +4256,7 @@ function stepScroll(dt){
   else sv=0;
   sy[i]=y;
  }
- for(var q=0;q<NP;q++)if(ly[q]!==sy[q]){ly[q]=sy[q];inn[q].style.transform='translate3d(0,'+(-sy[q])+'px,0)';}
+ for(var q=0;q<NP;q++)if(ly[q]!==sy[q]){ly[q]=sy[q];inn[q].style.transform='translate3d(0,'+(-sy[q]/(q===9&&FLD.zoom?FLD.zoom:1))+'px,0)';inn[q]._sy=q===9?sy[q]:0;}
  return act;
 }
 /* ---- скляне меню: Додатково / випадаючі списки ---- */
@@ -5231,7 +5245,7 @@ function tlMeasure(i){
   var hot=el.classList.contains('bal')?(el.classList.contains('dn')?-1:el.classList.contains('up')?1:0):0;
   var bcx=el.offsetLeft+el.offsetWidth/2,bcy=el.offsetTop+el.offsetHeight/2;
   list.push({el:el,blk:el,bcx:bcx,bcy:bcy,l:el.offsetLeft,t:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight,r:r,hot:hot,lv:0,c:null});
-  if(!el.classList.contains('tile'))continue;
+  if(!el.classList.contains('tile')||el.classList.contains('wg-folder'))continue;
   NEST.forEach(function(q){[].forEach.call(el.querySelectorAll(q[0]),function(c){
    var o=offIn(c,host);if(!o||!c.offsetWidth)return;
    var h2=hot;if(q[2]===2)h2=c.classList.contains('up')?1.6:c.classList.contains('dn')?-1.6:hot;
@@ -5256,7 +5270,9 @@ function tlMeasure(i){
    pts=chaikin(pts);
    if(pts.length>1)lines.push({fade:sv.closest('.chw')?18:0,blk:el,bcx:bcx,bcy:bcy,pts:pts,base:t+h,r:parseFloat(sv.getAttribute('data-lw'))||3,c:hexRgb(sv.getAttribute('data-col'))||[1,1,1]});});
  }
- list.forEach(function(t){t.gl=glyphable(t.el);});GA.dirty=true;
+ list.forEach(function(t){t.gl=glyphable(t.el);});
+ if(i===9&&FLD.zoom&&Math.abs(FLD.zoom-1)>.001){var zz=FLD.zoom;list.forEach(function(t){t.l*=zz;t.t*=zz;t.w*=zz;t.h*=zz;t.r*=zz;t.bcx*=zz;t.bcy*=zz;t.gl=false;});}   /* полотно папки масштабується зумом: геометрію скла переводимо у видимі пікселі */
+ GA.dirty=true;
  TL[i]=list;TLL[i]=lines;tlStale[i]=0;
 }
 function tlAllStale(){for(var i=0;i<NP;i++)tlStale[i]=1;}
@@ -6520,10 +6536,10 @@ var WL=(function(){try{return JSON.parse(localStorage.getItem('vf-widgets')||'{}
 function wlSave(){try{localStorage.setItem('vf-widgets',JSON.stringify(WL));}catch(e){}}
 function wlKey(el){var hh=el.querySelector('h2,.lbl,.mh,.big'),tx=((hh&&hh.textContent)||'').trim().slice(0,28)||el.className;return[].indexOf.call(inn,el.parentNode)+':'+tx;}
 function wuUnit(n){n=n||4;return Math.max(24,(VW-32-(n-1)*12)/n);}   /* висота й ширина одноколонкового віджета: мінімальна висота всіх віджетів */
-function wlApply(i){var host=inn[i];if(!host||(i>2&&i!==9)||!WL)return;var NC=i===9?FLD.cols:4,WU=wuUnit(NC);host._wu=WU;host.style.setProperty('--wu',WU.toFixed(1)+'px');var ch=host.children,chg=false,k;
+function wlApply(i){var host=inn[i];if(!host||(i>2&&i!==9)||!WL)return;var NC=4,WU=wuUnit(4);host._wu=WU;host.style.setProperty('--wu',WU.toFixed(1)+'px');var ch=host.children,chg=false,k;
  for(k=0;k<ch.length;k++){var el=ch[k],tile=el.classList.contains('tile'),dd=tile?WL[wlKey(el)]:null;
   var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws1')?1:el.classList.contains('ws2')?2:4),gc=ds<4||NC!==4?'span '+Math.max(1,Math.min(NC,Math.round(ds*NC/4))):'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
-  if(el._gc!==gc||el._mh!==mh||el._od!==od||el._nc!==NC){el._nc=NC;el._gc=gc;el._mh=mh;el._od=od;el.classList.toggle('tall',!!(dd&&dd.h&&dd.h>=WU*2.6));el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=WU*1.35)||(NC>5&&!el.classList.contains('acw')));el.style.gridColumn=gc;if(el.classList.contains('acw'))el.style.aspectRatio=ds===1?'1':'auto';el.style.minHeight=mh;el.style.order=od;chg=true;}}
+  if(el._gc!==gc||el._mh!==mh||el._od!==od||el._nc!==NC){el._nc=NC;el._gc=gc;el._mh=mh;el._od=od;el.classList.toggle('tall',!!(dd&&dd.h&&dd.h>=WU*2.6));el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=WU*1.35)||0);el.style.gridColumn=gc;if(el.classList.contains('acw'))el.style.aspectRatio=ds===1?'1':'auto';el.style.minHeight=mh;el.style.order=od;chg=true;}}
  if(chg){needSync[i]=1;tlStale[i]=1;dirty=true;}try{wgFill();}catch(e){}}
 for(var wli=0;wli<3;wli++)wlApply(wli);
 /* м'яке опускання віджета в сітку: стає на місце найближчого, решта розсуваються */
@@ -6546,9 +6562,9 @@ function wrhEnsure(){
  if(WRH)return WRH;var d=document.createElement('div');d.id='wfh';d.setAttribute('aria-label','Змінити розмір');
  d.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M10 19 19 10M15 19l4-4"/></svg>';document.body.appendChild(d);WRH=d;
  d.addEventListener('pointerdown',function(e){var w=WFcur;if(!w)return;e.stopPropagation();e.preventDefault();try{d.setPointerCapture(e.pointerId);}catch(_){}
-  var host=w.el.parentNode,cs=getComputedStyle(host);WRZ={w:w,id:e.pointerId,x0:e.clientX,y0:e.clientY,w0:w.el.offsetWidth,h0:w.el.offsetHeight,iw:host.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),pi:[].indexOf.call(inn,host)};});
+  var host=w.el.parentNode,cs=getComputedStyle(host);WRZ={w:w,id:e.pointerId,x0:e.clientX,y0:e.clientY,w0:w.el.getBoundingClientRect().width/((host===inn[9]&&FLD.zoom)||1),h0:w.el.getBoundingClientRect().height/((host===inn[9]&&FLD.zoom)||1),iw:host.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),pi:[].indexOf.call(inn,host)};});
  d.addEventListener('pointermove',function(e){var Z=WRZ;if(!Z||e.pointerId!==Z.id)return;e.preventDefault();
-  var NC=Z.pi===9?FLD.cols:4,cell=(Z.iw-(NC-1)*12)/NC,span=Math.max(1,Math.min(NC,Math.round((Z.w0+e.clientX-Z.x0+12)/(cell+12)))),h=Math.max(wuUnit(NC),Math.round(Z.h0+e.clientY-Z.y0)),key=wlKey(Z.w.el);
+  var NC=4,zk=Z.pi===9?(FLD.zoom||1):1,cell=wuUnit(4),span=Math.max(1,Math.min(4,Math.round((Z.w0+(e.clientX-Z.x0)/zk+12)/(cell+12)))),h=Math.max(wuUnit(4),Math.round(Z.h0+(e.clientY-Z.y0)/zk)),key=wlKey(Z.w.el);
   WL[key]=Object.assign(WL[key]||{},{s:Math.max(1,Math.min(4,Math.round(span*4/NC))),h:h});if(!Z.lg||performance.now()-Z.lg>400){Z.lg=performance.now();LG('egg','розмір «'+key+'»: колонок '+span+' з '+NC+', висота '+h+', одиниця '+Math.round(wuUnit(NC))+', фактично '+Z.w.el.offsetHeight+'x'+Z.w.el.offsetWidth);}wlApply(Z.pi);wfKick();});
  ['pointerup','pointercancel'].forEach(function(n){d.addEventListener(n,function(e){if(!WRZ||e.pointerId!==WRZ.id)return;WRZ=null;wlSave();LG('egg','розмір віджета збережено');});});
  return d;

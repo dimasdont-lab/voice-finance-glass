@@ -497,3 +497,15 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 .balx .row{padding:8px 0}.balx .dot{width:26px;height:26px;font-size:13px}
 
 .inner.g4>.tile .cap.fp{display:block}
+
+/* порядок «підпис → значення» у віджетах «Найбільше на» й «Заощаджено» */
+.inner.g4>.tile.cmp .fl1 .lbl{order:0}.inner.g4>.tile.cmp .fl1 .fv{order:1}
+.fl1 .lbl{order:0}.fl1 .fv{order:1}
+/* папка: полотно масштабується справжнім зумом (щипок), стільки колонок, скільки влізає */
+.page[data-p=folder] .inner.g4{grid-template-columns:repeat(auto-fill,minmax(var(--wu,77px),1fr))}
+/* міні-копія вмісту папки на головній */
+.fbx{display:block;width:100%;text-align:left;color:inherit;padding:0}
+.fmini{position:relative;width:100%;height:104px;overflow:hidden;border-radius:14px;pointer-events:none;background:rgba(255,255,255,.03)}
+.fgm{width:340px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;transform:scale(.37);transform-origin:0 0;position:absolute;left:4px;top:4px}
+.fgm>.tile{grid-column:span 4;margin:0}.fgm>.ws2{grid-column:span 2}.fgm>.hdr,.fgm>.egg{display:none}
+.fnm{font-size:14px;font-weight:650;margin-top:6px}

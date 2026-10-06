@@ -9,9 +9,10 @@ var WG=(function(){try{var j=JSON.parse(localStorage.getItem('vf-wg')||'null');i
 /* ---- папки: власний великий простір для віджетів; відкриваються «провалом» у просторі ---- */
 var FOLDERS=(function(){try{var j=JSON.parse(localStorage.getItem('vf-folders')||'null');if(j&&typeof j==='object')return j;}catch(e){}return{};})();
 function foldSave(){try{localStorage.setItem('vf-folders',JSON.stringify(FOLDERS));}catch(e){}}
-function blocksFolder(){var F=FOLDERS[FLD.id];if(!F)return[hdr('Папку не знайдено','',1)];var o=[hdr(F.n,'Папка · щипок змінює масштаб',1)];o=o.concat(wgBlocks(F.wg));if(!F.wg.length)o.push(B_('tile','<div class="empty">Папка порожня. Затисніть будь-який віджет і натисніть «+» унизу ліворуч, щоб додати віджети.</div>'));return o;}
+function blocksFolder(){var F=FOLDERS[FLD.id];if(!F)return[hdr('Папку не знайдено','',1)];var o=[hdr(F.n,'Папка · щипок — масштаб',1)];o=o.concat(wgBlocks(F.wg));if(!F.wg.length)o.push(B_('tile','<div class="empty">Папка порожня. Затисніть будь-який віджет і натисніть «+» унизу ліворуч, щоб додати віджети.</div>'));return o;}
 function foldFx(k){try{cv.animate(k>0?[{transform:'scale(.7)',opacity:0},{transform:'none',opacity:1}]:[{transform:'scale(1.45)',opacity:0},{transform:'none',opacity:1}],{duration:460,easing:'cubic-bezier(.2,.8,.2,1)'});}catch(e){}}
-function openFolder(id){if(!FOLDERS[id])return;FLD.id=id;FLD.scr=nav.getState().screen;FLD.cols=4;sel=9;ca=9;sy[9]=0;document.documentElement.style.setProperty('--gcn',4);renderPages();foldFx(1);dirty=true;LG('egg','папка: '+FOLDERS[id].n);}
+function foldZoom(z){FLD.zoom=Math.max(.4,Math.min(1.7,z));inn[9].style.zoom=FLD.zoom.toFixed(3);needSync[9]=1;tlStale[9]=1;dirty=true;}
+function openFolder(id){if(!FOLDERS[id])return;FLD.id=id;FLD.scr=nav.getState().screen;FLD.zoom=1;sel=9;ca=9;sy[9]=0;renderPages();foldZoom(1);foldFx(1);dirty=true;LG('egg','папка: '+FOLDERS[id].n);}
 function closeFolder(){if(!FLD.id)return;FLD.id=null;sel=2;ca=2;renderPages();foldFx(-1);dirty=true;}
 function foldAdd(){var n=Object.keys(FOLDERS).length+1,nm='Папка '+n;try{var r=window.prompt('Назва папки',nm);if(r===null)return;nm=(r||nm).trim().slice(0,24)||nm;}catch(e){}var id='k'+Date.now().toString(36);FOLDERS[id]={n:nm,wg:[]};foldSave();WG.push('f:'+id);wgSave();renderPages();}
 function wgCur(){return FLD.id&&FOLDERS[FLD.id]?FOLDERS[FLD.id].wg:WG;}
@@ -25,9 +26,9 @@ function wgAddMenu(anchor){
 }
 /* масштаб папки щипком: більше/менше колонок — віджети стискаються й перебудовуються */
 (function(){var P={};function d(){var k=Object.keys(P);if(k.length<2)return 0;var a=P[k[0]],b=P[k[1]];return Math.hypot(a.x-b.x,a.y-b.y);}
- root.addEventListener('pointerdown',function(e){if(!FLD.id)return;P[e.pointerId]={x:e.clientX,y:e.clientY};if(Object.keys(P).length===2){FLD.d0=d();FLD.c0=FLD.cols;}},true);
+ root.addEventListener('pointerdown',function(e){if(!FLD.id)return;P[e.pointerId]={x:e.clientX,y:e.clientY};if(Object.keys(P).length===2){FLD.d0=d();FLD.z0=FLD.zoom;}},true);
  root.addEventListener('pointermove',function(e){if(!FLD.id||!P[e.pointerId])return;P[e.pointerId].x=e.clientX;P[e.pointerId].y=e.clientY;if(Object.keys(P).length<2||!FLD.d0)return;
-  var c=Math.max(2,Math.min(8,Math.round(FLD.c0*FLD.d0/Math.max(20,d()))));if(c!==FLD.cols){FLD.cols=c;document.documentElement.style.setProperty('--gcn',c);wlApply(9);needSync[9]=1;tlStale[9]=1;dirty=true;}},true);
+  foldZoom(FLD.z0*d()/Math.max(20,FLD.d0));},true);
  ['pointerup','pointercancel'].forEach(function(n){root.addEventListener(n,function(e){delete P[e.pointerId];if(Object.keys(P).length<2)FLD.d0=0;},true);});})();
 function wgSave(){try{localStorage.setItem('vf-wg',JSON.stringify(WG));}catch(e){}}
 function wgToggle(id){if(id.indexOf('f:')===0)return;var i=WG.indexOf(id);if(i>=0)WG.splice(i,1);else WG.push(id);wgSave();renderPages();}
@@ -39,7 +40,8 @@ function wgBlocks(list){
  var st=fin.getState(),now=new Date(),o=[],ms=new Date(now.getFullYear(),now.getMonth(),1);
  function mon(type){var s=0;st.transactions.forEach(function(t){if(t.type===type&&t.currency==='PLN'&&new Date(t.date)>=ms)s+=t.amount;});return s;}
  list.forEach(function(id){
-  if(id.indexOf('f:')===0){var F=FOLDERS[id.slice(2)];if(!F)return;o.push(B_('tile wg wg-folder ws2','<button class="fbx" data-act="fopen" data-id="'+esc(id.slice(2))+'"><div class="f3d"><i></i><i></i><i></i></div><div class="fnm">'+esc(F.n)+'</div><div class="fct">'+F.wg.length+' '+(F.wg.length===1?'віджет':'віджетів')+'</div></button>'));return;}
+  if(id.indexOf('f:')===0){var F=FOLDERS[id.slice(2)];if(!F)return;var mini=wgBlocks(F.wg.filter(function(q){return q.indexOf('f:')!==0;})).map(function(b2){return'<div class="'+b2.c+'">'+b2.h.replace(/<button/g,'<div').replace(/<\/button>/g,'</div>').replace(/<textarea[^>]*>[^<]*<\/textarea>/g,'<div class="wnotes"></div>')+'</div>';}).join('');
+   o.push(B_('tile wg wg-folder ws2','<button class="fbx" data-act="fopen" data-id="'+esc(id.slice(2))+'"><div class="fmini"><div class="fgm">'+mini+'</div></div><div class="fnm">'+esc(F.n)+'</div></button>'));return;}
   var w=WG_LIST.find(function(q){return q.id===id;});if(!w)return;var c='tile wg wg-'+id+(w.s===2?' ws2':''),h='';
   if(id==='clock'){h='<div class="lbl">Зараз</div><div class="big wclk" data-clk="1">'+now.toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'})+'</div><div class="cap">'+esc(todayStr())+'</div>';}
   else if(id==='today'){var fc=forecastMonth(),left=Math.max(1,fc.left+1),rest=fc.limit-fc.spent,per=rest/left;
