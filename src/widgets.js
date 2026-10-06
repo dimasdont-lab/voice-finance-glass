@@ -47,12 +47,12 @@ function wgAddMenu(anchor){
   if(WFL.length&&!(tg.closest&&tg.closest('.wfd'))){WFL.slice().forEach(function(w){w.home=1;});wfKick();}   /* дотик по порожньому місцю виходить із режиму редагування */
   if(FLD.addAt){FLD.addAt=null;fbUpdate();}
   P[e.pointerId]={x:e.clientX,y:e.clientY};clearTimeout(lp);
-  if(Object.keys(P).length===2){FLD.d0=d();FLD.z0=FLD.zoom;pan=null;}else{pan={x:e.clientX,y:e.clientY};lp0={x:e.clientX,y:e.clientY};
+  if(Object.keys(P).length===2){FLD.d0=d();FLD.z0=FLD.zoom;pan=null;FLD.m0=mid();clearTimeout(lp);lp0=null;}else{pan={x:e.clientX,y:e.clientY};lp0={x:e.clientX,y:e.clientY};
    DEEP.f=function(){if(!lp0||WFL.length||tg.closest('.tile'))return false;clearTimeout(lp);FLD.addAt={x:lp0.x,y:lp0.y};fbUpdate();return true;};
    if(!(tg.closest&&tg.closest('.tile'))&&!WFL.length)lp=setTimeout(function(){if(!lp0)return;FLD.addAt={x:lp0.x,y:lp0.y};fbUpdate();setTimeout(function(){if(FLD.addAt){FLD.addAt=null;fbUpdate();}},6000);},520);}},true);
  root.addEventListener('pointermove',function(e){if(!FLD.id||!P[e.pointerId])return;var p=P[e.pointerId],dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
   if(lp0&&Math.hypot(e.clientX-lp0.x,e.clientY-lp0.y)>12){clearTimeout(lp);lp0=null;}
-  if(Object.keys(P).length>=2&&FLD.d0){var m=mid();foldZoomAt(FLD.z0*d()/Math.max(20,FLD.d0),m.x,m.y);return;}
+  if(Object.keys(P).length>=2&&FLD.d0){var m=mid(),mm=FLD.m0||m;FLD.tx+=m.x-mm.x;FLD.ty+=m.y-mm.y;FLD.m0=m;foldZoomAt(FLD.z0*d()/Math.max(20,FLD.d0),m.x,m.y);return;}   /* два пальці: масштаб і переміщення одночасно */
   if(pan&&!FLD.anim&&!WF.drag&&!WRZ&&!WFL.length){FLD.tx+=dx;FLD.ty+=dy;foldClamp();dirty=true;}},true);
  ['pointerup','pointercancel'].forEach(function(n){root.addEventListener(n,function(e){delete P[e.pointerId];clearTimeout(lp);lp0=null;if(Object.keys(P).length<2)FLD.d0=0;if(!Object.keys(P).length)pan=null;},true);});})();
 function wgRemove(el){var id=wgIdOf(el),L=wgCur(),F;if(id.indexOf('f:')===0){F=FOLDERS[id.slice(2)];if(F&&F.wg.length&&!confirm('Видалити папку «'+F.n+'» разом з усім, що в ній?'))return;delete FOLDERS[id.slice(2)];foldSave();}
