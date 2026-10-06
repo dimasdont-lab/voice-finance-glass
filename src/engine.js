@@ -30,7 +30,7 @@ var GLSL_BG=['vec3 blob(vec3 c,vec2 n,vec2 ce,vec2 r,vec3 col){float a=clamp(1.-
  ' vec3 g=vec3(gridL(gridWarp(p,1.)+u_go-u_vp*.5),gridL(gridWarp(p,1.22)+u_go-u_vp*.5),gridL(gridWarp(p,1.44)+u_go-u_vp*.5));vec3 gm=min(vec3(1.),.17*g*(1.+gBoost));return mix(c,u_gcol,gm)+u_gcol*g*gBoost*.05+fgAt(p)+auraAt(p);}'].join('\n');
 var VS='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
 var FS_H=['#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
-'uniform vec3 u_xs;uniform float u_atw;uniform vec4 u_ln[16];uniform vec4 u_lj[16];uniform vec4 u_fb[3];uniform vec4 u_fq[3];uniform sampler2D u_lt;uniform float u_lp;uniform vec4 u_bb[14];uniform vec4 u_bq[14];uniform vec4 u_bc[14];uniform float u_bn;uniform vec4 u_dk;uniform float u_dkv;uniform vec4 u_dki;uniform vec3 u_dkt;uniform vec4 u_tk;uniform sampler2D u_tx;uniform sampler2D u_tt;uniform float u_th;uniform vec4 u_tv;uniform vec4 u_tc;uniform vec4 u_tp;uniform vec2 u_tq;uniform vec4 u_tr;uniform vec2 u_tko;uniform sampler2D u_tb0;uniform sampler2D u_tb1;uniform sampler2D u_tb2;uniform float u_bm;uniform float u_bs;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform float u_gb2;uniform vec2 u_res;uniform vec2 u_org;uniform vec2 u_vp;uniform sampler2D u_t0;uniform sampler2D u_t1;uniform sampler2D u_t2;uniform vec4 u_p0;uniform vec4 u_p1;uniform vec4 u_p2;uniform vec3 u_w;uniform float u_scrim;uniform vec4 u_g;uniform float u_gr;uniform float u_gv;uniform vec4 u_a;uniform vec4 u_b;uniform vec4 u_c;uniform float u_cv;uniform float u_nk;uniform vec4 u_k;uniform float u_kv;uniform float u_bl;uniform float u_s;uniform vec4 u_rp;uniform vec4 u_rs;uniform float u_rb;uniform float u_gm;uniform float u_gd;uniform float u_gbl;uniform vec4 u_g2;uniform float u_gr2;uniform float u_gv2;uniform float u_sho;uniform vec4 u_rt;uniform float u_ord;',
+'uniform vec3 u_xs;uniform float u_atw;uniform vec4 u_ln[16];uniform vec4 u_lj[16];uniform vec4 u_fb[6];uniform vec4 u_fq[6];uniform sampler2D u_lt;uniform float u_lp;uniform vec4 u_bb[14];uniform vec4 u_bq[14];uniform vec4 u_bc[14];uniform float u_bn;uniform vec4 u_dk;uniform float u_dkv;uniform vec4 u_dki;uniform vec3 u_dkt;uniform vec4 u_tk;uniform sampler2D u_tx;uniform sampler2D u_tt;uniform float u_th;uniform vec4 u_tv;uniform vec4 u_tc;uniform vec4 u_tp;uniform vec2 u_tq;uniform vec4 u_tr;uniform vec2 u_tko;uniform sampler2D u_tb0;uniform sampler2D u_tb1;uniform sampler2D u_tb2;uniform float u_bm;uniform float u_bs;uniform vec2 u_go;uniform float u_cell;uniform float u_isl;uniform vec3 u_gcol;uniform float u_gb2;uniform vec2 u_res;uniform vec2 u_org;uniform vec2 u_vp;uniform sampler2D u_t0;uniform sampler2D u_t1;uniform sampler2D u_t2;uniform vec4 u_p0;uniform vec4 u_p1;uniform vec4 u_p2;uniform vec3 u_w;uniform float u_scrim;uniform vec4 u_g;uniform float u_gr;uniform float u_gv;uniform vec4 u_a;uniform vec4 u_b;uniform vec4 u_c;uniform float u_cv;uniform float u_nk;uniform vec4 u_k;uniform float u_kv;uniform float u_bl;uniform float u_s;uniform vec4 u_rp;uniform vec4 u_rs;uniform float u_rb;uniform float u_gm;uniform float u_gd;uniform float u_gbl;uniform vec4 u_g2;uniform float u_gr2;uniform float u_gv2;uniform float u_sho;uniform vec4 u_rt;uniform float u_ord;',
 'float sdRB(vec2 p,vec2 b,float r){vec2 q=abs(p)-b+r;return min(max(q.x,q.y),0.)+length(max(q,0.))-r;}',
 'float smin(float a,float b,float k){float h=max(k-abs(a-b),0.)/k;return min(a,b)-h*h*k*0.25;}',
 'float sdBar(vec2 x){float a=sdRB(x-u_a.xy,u_a.zw,min(u_a.z,u_a.w));if(u_kv<.01)return a;return smin(a,sdRB(x-u_k.xy,u_k.zw,min(u_k.z,u_k.w)),17.*u_s);}',
@@ -166,7 +166,7 @@ var FS_LP=FS_H+'\n'+['void main(){',
 '    if(al>.003){vec2 qx=px+dsp*u_s;vec4 T=scAt(qx);vec3 bs=(u_tk.w>.5&&u_tr.x<.5&&u_tr.y<.5&&u_tr.z>=u_vp.x-1.&&u_org.y+qx.y/u_s<u_tr.w-4.)?bgT(qx):bgG(qx);oc=vec4((T.rgb+bs*(1.-T.a))*al,al);}}}',
 '  vec4 ip=oc;',
 '  if(ds<=1.5*u_s){vec4 lg=lnGlass(px,ds,bl,bj);oc=vec4(lg.rgb*lg.a,lg.a)+ip*(1.-lg.a);}else if(ds<30.*u_s){float shl=1.-ds/(30.*u_s);float sa=.3*shl*shl;oc=vec4(0.,0.,0.,sa)+ip*(1.-sa);}',
-'  for(int k=0;k<3;k++){vec4 F=u_fb[k];if(F.z>.5){vec4 Q=u_fq[k];float df=sdRB(px-F.xy,F.zw,Q.x);if(df<1.5*u_s){vec4 fg=btnGlass(px,F,vec4(Q.x,0.,0.,Q.w),vec4(-1e4,-1e4,1e5,1e5),df);oc=oc*(1.-fg.a)+vec4(fg.rgb*fg.a,fg.a);}}}',
+'  for(int k=0;k<6;k++){vec4 F=u_fb[k];if(F.z>.5){vec4 Q=u_fq[k];float df=sdRB(px-F.xy,F.zw,Q.x);if(df<1.5*u_s){vec4 fg=btnGlass(px,F,vec4(Q.x,0.,0.,Q.w),vec4(-1e4,-1e4,1e5,1e5),df);oc=oc*(1.-fg.a)+vec4(fg.rgb*fg.a,fg.a);}}}',
 '  gl_FragColor=oc;return;}',
 ' gl_FragColor=vec4(0.);}'].join('\n');
 function sh(t,q){var o=gl.createShader(t);gl.shaderSource(o,q);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS)){var lg=gl.getShaderInfoLog(o),mm=/0:([0-9]+)/.exec(lg||'');console.error(lg,mm?q.split(String.fromCharCode(10))[mm[1]-1]:'');}return o;}
@@ -237,7 +237,7 @@ function bkGlt(){   /* зменшена копія шару скла відже�
  gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,bkGT);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,bkCv);gl.activeTexture(gl.TEXTURE0);
 }
 /* ---- пасхалка: скляні лінзи (до 6) ⌀ 50–140; невагомість, відскок від країв, желе; близькі лінзи зливаються в одну, як краплі ---- */
-var LNS=[],LNid=0,LNclr=0,LNP={},FBL=[],FBA=new Float32Array(12),FBQ=new Float32Array(12),LNA=new Float32Array(64),LNB=new Float32Array(64),LNtex=null,LNtw=0,LNth=0;
+var LNS=[],LNid=0,LNclr=0,LNP={},FBL=[],FBA=new Float32Array(24),FBQ=new Float32Array(24),LNA=new Float32Array(64),LNB=new Float32Array(64),LNtex=null,LNtw=0,LNth=0;
 function lensNew(x,y,R,vx,vy){var L={id:++LNid,x:x,y:y,vx:vx,vy:vy,R:R,s:0,sv:0,e:0,ev:0,a:0,wob:.04,imp:0,drag:null,die:0,born:performance.now()};LNS.push(L);dirty=true;return L;}
 function lensSpawnOne(x,y){LG('egg','лінза ⌀100');var a=Math.random()*6.2832;lensNew(x,y,50,Math.cos(a)*60,-60+Math.sin(a)*40);}
 function lensAlive(){for(var i=0;i<LNS.length;i++)if(!LNS[i].die)return true;return false;}
@@ -353,10 +353,11 @@ function lpEnsure(){
 setTimeout(function(){try{if(ISL)lpEnsure();}catch(_){}},2500);   /* програма другого проходу компілюється заздалегідь, щоб не було розриву на першому кадрі острівця */
 var LNdead=false,LPinfo="";window.__lp=function(){return{LPG:!!LPG,dead:LNdead,ulp:Object.keys(ULP).join(","),umir:Object.keys(UMIR).length,info:LPinfo};};
 window.__lnSpawn=function(x,y){lensSpawn(x,y);};
+window.__fbl=function(){return FBL.map(function(f){var r=f.el.getBoundingClientRect();return[f.el.id,+f.a.toFixed(2),Math.round(r.left),Math.round(r.top),Math.round(r.width),Math.round(r.height)];});};
 function lensPass(t){
  if(LNdead||!lpEnsure())return;
  var CWp=cv.width,CHp=cv.height,i,j,rects=[];
- for(i=0;i<3;i++){var f=FBL[i];
+ for(i=0;i<6;i++){var f=FBL[i];
   if(!f||f.a<.01){FBA[i*4+2]=0;continue;}
   var fr=f.el.getBoundingClientRect(),fx=(fr.left+fr.width/2-R.x)*S,fy=(fr.top+fr.height/2-R.y)*S,fw=fr.width/2*S,fh=fr.height/2*S;
   FBA[i*4]=fx;FBA[i*4+1]=fy;FBA[i*4+2]=fw;FBA[i*4+3]=fh;FBQ[i*4]=Math.min(fw,fh)*(f.rad||1);FBQ[i*4+3]=f.a;
