@@ -243,7 +243,6 @@ function tlMeasure(i){
    if(pts.length>1)lines.push({fade:sv.closest('.chw')?18:0,blk:el,bcx:bcx,bcy:bcy,pts:pts,base:t+h,r:parseFloat(sv.getAttribute('data-lw'))||3,c:hexRgb(sv.getAttribute('data-col'))||[1,1,1]});});
  }
  list.forEach(function(t){t.gl=glyphable(t.el);});
- if(i===9&&FLD.zoom&&Math.abs(FLD.zoom-1)>.001){var zz=FLD.zoom;list.forEach(function(t){t.l*=zz;t.t*=zz;t.w*=zz;t.h*=zz;t.r*=zz;t.bcx*=zz;t.bcy*=zz;t.gl=false;});}   /* полотно папки масштабується зумом: геометрію скла переводимо у видимі пікселі */
  GA.dirty=true;
  TL[i]=list;TLL[i]=lines;tlStale[i]=0;
 }

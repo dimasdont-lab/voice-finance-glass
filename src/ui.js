@@ -1,6 +1,6 @@
 /* ===== 6. Інтерфейс: події, аркуші, скляні меню, синхронізація зі станом логіки ===== */
 var sheetsEl=document.getElementById('sheets'),scrimEl=document.getElementById('scrim'),toastEl=document.getElementById('toast');
-var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet','confirmWipe','budgets','recurring','game'];
+var SHEET_KINDS=['calendar','transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet','confirmWipe','budgets','recurring','game'];
 var CURS=['PLN','EUR','USD','GBP'],curSheet=null,lastScreen='',toastT=0;
 
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){toastEl.classList.remove('on');},2200);}
@@ -78,6 +78,7 @@ root.addEventListener('click',function(e){
  try{
   if(a==='back'){if(FLD.id)closeFolder();else app.back();}
   else if(a==='fopen')openFolder(id,t);
+  else if(a==='wcal'){CAL.y=0;nav.openOverlay('calendar');}
   else if(a==='tx')app.editTransaction(id);
   else if(a==='balance')nav.navigate('balanceAnalysis');
   else if(a==='wnew')app.openTransaction();
@@ -120,9 +121,21 @@ function accItems(){return[{v:'',l:'Без прив’язки'}].concat(fin.act
 var CURITEMS=CURS.map(function(c){return{v:c,l:c};});
 
 /* налаштування: заголовок розділу і повзунок (підпис зверху, повзунок на всю ширину під ним) */
-var SETV=null;
+var SETV=null,setBusy=0;
+function setGo(v){if(setBusy||!curSheet)return;setBusy=1;var b=curSheet.body;b.classList.add('swo');setTimeout(function(){SETV=v;b.scrollTop=0;syncUI();sheetStale();b.classList.remove('swo');b.classList.add('swi');setTimeout(function(){b.classList.remove('swi');setBusy=0;},300);},150);}
+var CAL={y:0,m:0,s:0};
+var MN_UA=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+function calHtml(){var now=new Date();if(!CAL.y){CAL.y=now.getFullYear();CAL.m=now.getMonth();CAL.s=now.getDate();}
+ var st=fin.getState(),nd=new Date(CAL.y,CAL.m+1,0).getDate(),first=(new Date(CAL.y,CAL.m,1).getDay()+6)%7,sum={},list=[],i;
+ st.transactions.forEach(function(t){if(t.type!=='expense'||t.currency!=='PLN')return;var d=new Date(t.date);if(d.getFullYear()===CAL.y&&d.getMonth()===CAL.m){sum[d.getDate()]=(sum[d.getDate()]||0)+t.amount;if(d.getDate()===CAL.s)list.push(t);}});
+ var h='<div class="sh"><button class="ok" data-s="calm" data-v="-1">‹</button><h3>'+MN_UA[CAL.m]+' '+CAL.y+'</h3><button class="ok" data-s="calm" data-v="1">›</button></div><div class="cal">'+['Пн','Вт','Ср','Чт','Пт','Сб','Нд'].map(function(n){return'<i>'+n+'</i>';}).join('');
+ for(i=0;i<first;i++)h+='<u></u>';
+ for(i=1;i<=nd;i++)h+='<button class="cd'+(i===CAL.s?' on':'')+(sum[i]?' has':'')+'" data-s="calday" data-v="'+i+'"><b>'+i+'</b><span>'+(sum[i]?Math.round(sum[i]):'')+'</span></button>';
+ h+='</div><div class="mh2">'+(CAL.s?CAL.s+' '+MN_UA[CAL.m].toLowerCase()+' · витрати: '+esc(money(sum[CAL.s]||0)):'Оберіть день')+'</div>';
+ h+=list.length?list.map(function(x,k){return txRow(x,k===0).replace(/<button /,'<div ').replace(/<\/button>$/,'</div>');}).join(''):'<div class="empty" style="padding:8px 0">За цей день витрат немає.</div>';
+ return h+'<button class="btnw" data-s="cancel">Закрити</button>';}
 function SEC(t){return'<div class="sec2">'+esc(t)+'</div>';}
-function RNG(kind,k,label,max){var o=kind==='cg'?CG:FGS;return'<div class="fr rng"><label>'+esc(label)+'</label><input type="range" min="0" max="'+max+'" data-'+kind+'="'+k+'" value="'+o[k]+'"></div>';}
+function RNG(kind,k,label,max){var o=kind==='cg'?CG:FGS;return'<div class="fr rng"><label>'+esc(label)+'<em>'+Math.round(o[k])+'</em></label><input type="range" min="0" max="'+max+'" data-'+kind+'="'+k+'" value="'+o[k]+'" style="--p:'+(o[k]/max*100).toFixed(1)+'%"></div>';}
 function sheetHtml(kind,ov){
  var ix=app.getState().interaction,f=ix.form;
  if(kind==='transaction'&&f){var v=f.values;
@@ -152,6 +165,7 @@ function sheetHtml(kind,ov){
  }
  if(kind==='marketSheet')return marketSheetHtml(ov.data&&ov.data.marketId);
  if(kind==='game')return gmHtml();
+ if(kind==='calendar')return calHtml();
  if(kind==='budgets'){var cs2=fin.getState().categories;return'<div class="sh"><span style="min-width:70px"></span><h3>Бюджети</h3><button class="ok" data-s="cancel">Закрити</button></div><div class="mkinfo" style="padding:0 0 8px">Сума на місяць. Порожньо — без бюджету. Після 80% прийде попередження.</div>'+cs2.map(function(c){return'<div class="fr"><label>'+esc(c.name)+' <span style="opacity:.6">(цього місяця '+esc(money(monthSpend(c.id)))+')</span></label><input data-bud="'+esc(c.id)+'" inputmode="decimal" autocomplete="off" value="'+(c.budget?esc(c.budget):'')+'" placeholder="—"></div>';}).join('')+'<button class="btnw pri" data-s="savebud">Зберегти бюджети</button>';}
  if(kind==='recurring'){var rl=fin.getState().recurring||[],cl2=fin.getState().categories;return'<div class="sh"><span style="min-width:70px"></span><h3>Повторювані</h3><button class="ok" data-s="cancel">Закрити</button></div>'+(rl.length?rl.map(function(r,i){return'<div class="row'+(i?'':' first')+'">'+icon(r.name,hashCol(r.category))+'<div class="rc"><b>'+esc(r.name)+'</b><span>'+r.day+' числа · '+esc(money(r.amount,r.currency))+'</span></div><button data-s="delrec" data-id="'+esc(r.id)+'" style="color:var(--ac);font-weight:600;padding:8px">Видалити</button></div>';}).join(''):'<div class="empty">Поки порожньо.</div>')+
   '<div class="mkinfo" style="padding:14px 0 4px">Новий платіж</div><div class="fr"><label>Назва</label><input data-rc="name" placeholder="Netflix, оренда, зарплата" autocomplete="off"></div><div class="fr"><label>Сума, zł</label><input data-rc="amount" inputmode="decimal" autocomplete="off"></div><div class="fr"><label>День місяця</label><input data-rc="day" inputmode="numeric" value="1" autocomplete="off"></div>'+
@@ -252,7 +266,7 @@ function layoutSheet(){
  var topMin=place==='t'?TKP.y+tkh/2+10:Math.max(SAFE.t,14),maxH=Math.max(200,bottom-topMin-(place==='t'?0:60));
  var sb=body.scrollTop,se=el.scrollTop;   /* висота auto на мить скидає прокрутку в 0 — запам'ятовуємо й повертаємо */
  el.style.width=w+'px';el.style.height='auto';body.style.height='auto';
- var h=Math.min(body.scrollHeight,maxH);
+ var h=Math.min(body.scrollHeight,maxH);if(curSheet.kind==='settings'||curSheet.kind==='calendar')h=maxH;
  el.style.height=h+'px';body.style.height='100%';
  if(sb)body.scrollTop=sb;if(se)el.scrollTop=se;
  var left=lx!==null?lx:m.l+(m.w-w)/2,top=bottom-h;if(place==='t')top=topMin;else if(place==='l'||place==='r')top=Math.max(Math.max(SAFE.t,14),Math.min(bottom-h,tkPA.y-h/2));
@@ -274,6 +288,7 @@ function showSheet(top){
  }
  var swap=!!curSheet&&sheetP.on===1;
  if(sheetP.el&&sheetP.el.parentNode)sheetP.el.remove();
+ if(top.kind==='settings')SETV=null;
  var el=document.createElement('div');el.className='sheet';
  var body=document.createElement('div');body.className='sbody';
  var html=sheetHtml(top.kind,top.ov);body.innerHTML=html;el.appendChild(body);sheetsEl.appendChild(el);
@@ -346,8 +361,10 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);setCG('gt',65);setCG('gsat',50);setCG('gbr',50);setCG('wh',200);setCG('ws',0);setCG('wv',100);setCG('mh',200);setCG('ms',0);setCG('mv',100);setFGS('a',50);setFGS('ah',0);setFGS('as',100);setFGS('av',100);setFGS('i',56);setFGS('w',62);setFGS('l',30);[].forEach.call(curSheet.body.querySelectorAll('[data-fg]'),function(i){i.value=FGS[i.dataset.fg];});[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
   else if(s==='bfx'){try{localStorage.setItem('vf-bfx',localStorage.getItem('vf-bfx')==='0'?'1':'0');}catch(e){}t.textContent=bfxLabel();}
   else if(s==='wg'){var wq=WG_LIST.find(function(q){return q.id===t.dataset.v;});wgToggle(t.dataset.v);t.textContent=wgLabel(wq);sheetStale();}
-  else if(s==='setv'){SETV=t.dataset.v;if(curSheet)curSheet.body.scrollTop=0;syncUI();sheetStale();}
-  else if(s==='setback'){SETV=null;syncUI();sheetStale();}
+  else if(s==='setv'){setGo(t.dataset.v);}
+  else if(s==='setback'){setGo(null);}
+  else if(s==='calday'){CAL.s=+t.dataset.v;syncUI();sheetStale();}
+  else if(s==='calm'){CAL.m+=+t.dataset.v;if(CAL.m<0){CAL.m=11;CAL.y--;}if(CAL.m>11){CAL.m=0;CAL.y++;}CAL.s=0;syncUI();sheetStale();}
   else if(s==='fgwave'){setFGS('tw',FGS.tw?0:1);t.textContent=fgWaveLabel();LG('ui',fgWaveLabel());}
   else if(s==='fgglow'){setFGS('tg',FGS.tg?0:1);t.textContent=fgGlowLabel();LG('ui',fgGlowLabel());}
   else if(s==='auramode'){setFGS('am',FGS.am?0:1);t.textContent=auraModeLabel();LG('ui',auraModeLabel());}
@@ -695,7 +712,7 @@ window.addEventListener('resize',fitSoon);if(document.fonts&&document.fonts.read
 fitSoon();
 
 /* повзунки кольорового скла */
-document.getElementById('sheets').addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.cg){setCG(t.dataset.cg,+t.value);tlAll();}if(t.dataset&&t.dataset.fg)setFGS(t.dataset.fg,+t.value);});
+document.getElementById('sheets').addEventListener('input',function(e){var t=e.target;if(t.type==='range'){t.style.setProperty('--p',(t.value/t.max*100).toFixed(1)+'%');var em=t.parentNode.querySelector('em');if(em)em.textContent=t.value;}if(t.dataset&&t.dataset.cg){setCG(t.dataset.cg,+t.value);tlAll();}if(t.dataset&&t.dataset.fg)setFGS(t.dataset.fg,+t.value);});
 
 /* ---------- синхронізація між пристроями: шифрований код (AES-256-GCM, PBKDF2) ---------- */
 var SYE=new TextEncoder(),SYD=new TextDecoder();
@@ -994,7 +1011,7 @@ function wlApplyFolder(){var host=inn[9],F=FOLDERS[FLD.id];if(!F)return;var u=wu
   el.style.cssText+=';position:absolute;left:'+P.x+'px;top:'+P.y+'px;width:'+wd+'px;margin:0;grid-column:auto;min-height:'+(mh||'var(--wu)');
   el.classList.toggle('tall',!!(dd&&dd.h&&dd.h>=u*2.6));el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=u*1.35));
   mx=Math.max(mx,P.x+wd);my=Math.max(my,P.y+Math.max(el.offsetHeight||110,110));}
- FLD.cw=Math.max(VW*3,mx+80);host.style.width=FLD.cw+'px';host.style.height=Math.max(my+420,VH*2.4)+'px';host.style.position='relative';host.style.padding='0';}
+ FLD.cw=Math.max(VW*3,mx+80);host.style.width=FLD.cw+'px';host.style.height=(FLD.ch=Math.max(my+420,VH*2.4))+'px';host.style.position='relative';host.style.padding='0';}
 function wlApply(i){if(i===9){if(FLD.id)wlApplyFolder();return;}var host=inn[i];if(!host||i>2||!WL)return;var NC=4,WU=wuUnit(4);host._wu=WU;host.style.setProperty('--wu',WU.toFixed(1)+'px');var ch=host.children,chg=false,k;
  for(k=0;k<ch.length;k++){var el=ch[k],tile=el.classList.contains('tile'),dd=tile?WL[wlKey(el)]:null;
   var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws1')?1:el.classList.contains('ws2')?2:4),gc=ds<4||NC!==4?'span '+Math.max(1,Math.min(NC,Math.round(ds*NC/4))):'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
@@ -1030,18 +1047,28 @@ function wrhEnsure(){
 }
 var WAD=null;
 function wadEnsure(){if(WAD)return WAD;var d=document.createElement('button');d.id='wfadd';d.setAttribute('aria-label','Додати');d.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';document.body.appendChild(d);WAD=d;d.addEventListener('click',function(e){e.stopPropagation();wgAddMenu(d);});d.addEventListener('pointerdown',function(e){e.stopPropagation();});return d;}
-function wrhPlace(){
- if(!WFL.length||!WFcur||WFL.indexOf(WFcur)<0){if(WRH&&WRH.style.display!=='none'){WRH.style.display='none';if(WAD)WAD.style.display='none';if(!GX.on)fbSet([]);}return;}
- var d=wrhEnsure(),a=wadEnsure(),r=WFcur.el.getBoundingClientRect();d.style.display='flex';d.style.left=Math.min(VW-40,Math.max(4,r.right-34))+'px';d.style.top=Math.min(VH-40,Math.max(4,r.bottom-34))+'px';
- a.style.display='flex';a.style.left=((DKP.side==='l'?DKV+DKMV+16:16))+'px';a.style.top=(DKP.side==='b'?DR.top-62:VH-66)+'px';
- if(!GX.on)fbSet([{el:d,a:1,rad:.5},{el:a,a:1,rad:1}]);
-}
+var WDEL=null,FHM=null;
+function wdelEnsure(){if(WDEL)return WDEL;var d=document.createElement('button');d.id='wfdel';d.setAttribute('aria-label','Видалити');d.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';document.body.appendChild(d);WDEL=d;d.addEventListener('click',function(e){e.stopPropagation();if(WFcur)wgRemove(WFcur.el);});d.addEventListener('pointerdown',function(e){e.stopPropagation();});return d;}
+function fhomeEnsure(){if(FHM)return FHM;var d=document.createElement('button');d.id='fhome';d.setAttribute('aria-label','Дім');d.innerHTML='<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg>';document.body.appendChild(d);FHM=d;d.addEventListener('click',function(e){e.stopPropagation();closeFolder();});d.addEventListener('pointerdown',function(e){e.stopPropagation();});return d;}
+function fbUpdate(){
+ if(GX.on||BH.ph)return;var L=[],ed=!!(WFL.length&&WFcur&&WFL.indexOf(WFcur)>=0);
+ if(ed){var d=wrhEnsure(),a=wadEnsure(),x=wdelEnsure(),r=WFcur.el.getBoundingClientRect();
+  d.style.display='flex';d.style.left=Math.min(VW-40,Math.max(4,r.right-34))+'px';d.style.top=Math.min(VH-40,Math.max(4,r.bottom-34))+'px';
+  a.style.display='flex';a.style.left=((DKP.side==='l'?DKV+DKMV+16:16))+'px';a.style.top=(FLD.id?VH-SAFE.b-150:(DKP.side==='b'?DR.top-62:VH-66))+'px';
+  x.style.display='flex';x.style.left=Math.max(4,r.left-16)+'px';x.style.top=Math.max(4,r.top-16)+'px';
+  L.push({el:d,a:1,rad:.5},{el:a,a:1,rad:1},{el:x,a:1,rad:1});}
+ else{if(WRH)WRH.style.display='none';if(WDEL)WDEL.style.display='none';
+  if(FLD.addAt){var a2=wadEnsure();a2.style.display='flex';a2.style.left=Math.max(8,Math.min(VW-58,FLD.addAt.x-25))+'px';a2.style.top=Math.max(8,FLD.addAt.y-80)+'px';L.push({el:a2,a:1,rad:1});}else if(WAD)WAD.style.display='none';}
+ if(FLD.id){var h=fhomeEnsure();h.style.display='flex';h.style.left=(VW/2-30)+'px';h.style.top=(VH-SAFE.b-84)+'px';L.push({el:h,a:1,rad:1});}else if(FHM)FHM.style.display='none';
+ fbSet(L);}
+function wrhPlace(){fbUpdate();}
 function wfFind(t){for(var i=0;i<WFL.length;i++)if(WFL[i].el.contains(t))return WFL[i];return null;}
 function wfDetach(el,x,y){
+ var inF=el.parentNode===inn[9];
  CH.on=0;CH.s=0;CH.drag=0;CH.rel=0;dirty=true;   /* заряд від утримання на віджеті скасовується: pointerup відкріпленого віджета до нього не доходить */
  if(PRS.has(el)){PRS.delete(el);el.style.scale='';el.style.translate='';}   /* анімація натискання більше не керує цим віджетом */
  var w=wfFind(el);if(!w){w={el:el,dx:0,dy:0,vx:0,vy:0,ex:0,ey:0,evx:0,evy:0,home:0,taps:0,lt:0};WFL.push(w);
-  w.z=el.style.zIndex;w.pos=el.style.position;el.style.position='relative';el.style.zIndex='6';el.classList.add('wfd');LG('egg','віджет від\'єднано');}
+  w.z=el.style.zIndex;w.pos=el.style.position;if(!inF)el.style.position='relative';el.style.zIndex='6';el.classList.add('wfd');LG('egg','віджет від\'єднано');}
  WFcur=w;WF.drag={w:w,x0:x,y0:y,dx0:w.dx,dy0:w.dy,lx:x,ly:y,lt:performance.now(),mv:0};w.vx=w.vy=0;w.evx-=1.5;w.evy-=1.5;wfKick();
 }
 /* віджети, над якими висить від'єднаний, притлумлюються; прямокутники від'єднаних — для шару скла */
@@ -1101,7 +1128,7 @@ function wfStep(t){
   if(now-(D.pv||0)>140&&Math.hypot(w.vx,w.vy)<700){D.pv=now;try{wfSlot(w,true);w.dx=D.dx0+e.clientX-D.x0;w.dy=D.dy0+e.clientY-D.y0;}catch(er){}}
   wfKick();},true);
  ['pointerup','pointercancel'].forEach(function(n){window.addEventListener(n,function(e){var D=WF.drag;if(!D)return;e.stopPropagation();WF.drag=null;var w=D.w;
-  if(w.el.parentNode===inn[9]&&FLD.id){var Fz=FOLDERS[FLD.id],wid=wgIdOf(w.el),zz=FLD.zoom||1;if(Fz&&Fz.pos[wid]){Fz.pos[wid].x=Math.max(0,Math.round(Fz.pos[wid].x+w.dx/zz));Fz.pos[wid].y=Math.max(60,Math.round(Fz.pos[wid].y+w.dy/zz));foldSave();}w.dx=w.dy=0;w.vx=w.vy=0;w.home=1;wlApply(9);needSync[9]=1;tlStale[9]=1;wfKick();return;}
+  if(w.el.parentNode===inn[9]&&FLD.id){var Fz=FOLDERS[FLD.id],wid=wgIdOf(w.el),zz=FLD.zoom||1;if(Fz&&Fz.pos[wid]){Fz.pos[wid].x=Math.max(0,Math.round(Fz.pos[wid].x+w.dx/zz));Fz.pos[wid].y=Math.max(60,Math.round(Fz.pos[wid].y+w.dy/zz));foldSave();}w.dx=w.dy=0;w.vx=w.vy=0;w.home=0;wlApply(9);needSync[9]=1;tlStale[9]=1;wfKick();return;}
   if(performance.now()-D.lt>90){w.vx*=.2;w.vy*=.2;}var sp=Math.hypot(w.vx,w.vy);if(sp>3000){w.vx*=3000/sp;w.vy*=3000/sp;}
   if(D.mv<6){w.evx-=1.2;w.evy+=1.2;}
   else if(sp<160){try{if(wfSlot(w)){w.home=1;w.vx=w.vy=0;LG('egg','віджет опущено в сітку');}}catch(err){console.error(err);}}   /* повільне відпускання — стає в сітку; кидок — летить */

@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-06 21:46 UTC';
+<script>window.__VF_BUILD='2026-10-06 22:03 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -591,6 +591,34 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 .fgm>.tile{margin:0;grid-column:auto}
 #fhdr{position:fixed;left:12px;z-index:31;display:none;align-items:center;gap:6px;font:700 21px var(--f);color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.6)}
 #fhdr button{width:34px;height:34px;font-size:30px;line-height:1;color:#fff;padding:0;background:none}
+
+/* кнопки режиму редагування: плаваюче скло малює шейдер, DOM лише ловить дотики */
+#wfdel,#fhome{position:fixed;z-index:37;width:40px;height:40px;border-radius:20px;display:none;align-items:center;justify-content:center;padding:0;background:none;border:0}
+#fhome{width:60px;height:60px;border-radius:30px;z-index:36}
+/* перехід між розділами налаштувань: старе зникає, нове виринає */
+.sbody>*{transition:opacity .15s,transform .15s}
+.sbody.swo>*{opacity:0;transform:translateX(-18px) scale(.97)}
+.sbody.swi>*{animation:swIn .3s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes swIn{from{opacity:0;transform:translateX(22px) scale(.97)}to{opacity:1;transform:none}}
+.sbody.swi>*:nth-child(2){animation-delay:.03s}.sbody.swi>*:nth-child(3){animation-delay:.06s}.sbody.swi>*:nth-child(4){animation-delay:.09s}.sbody.swi>*:nth-child(5){animation-delay:.12s}.sbody.swi>*:nth-child(n+6){animation-delay:.15s}
+/* повзунки: тонка доріжка з заливкою й світла крапля */
+.fr.rng{display:block}.fr.rng label{display:flex;justify-content:space-between;align-items:baseline}.fr.rng label em{font-style:normal;color:var(--mu);font-variant-numeric:tabular-nums;font-size:13px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:none;margin:2px 0}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(90deg,rgba(255,255,255,.85) var(--p,50%),rgba(255,255,255,.14) var(--p,50%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#d9dce6 60%,#b9bdcc);box-shadow:0 2px 8px rgba(0,0,0,.5),inset 0 -2px 3px rgba(0,0,0,.18)}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:rgba(255,255,255,.14)}
+input[type=range]::-moz-range-progress{height:6px;border-radius:3px;background:rgba(255,255,255,.85)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border:0;border-radius:50%;background:#e6e8f0;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+/* календар витрат */
+.wcb{display:block;width:100%;text-align:left;color:inherit;padding:0}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:6px 0 10px}
+.cal i{font-style:normal;font-size:11px;color:var(--mu);text-align:center;padding:4px 0}
+.cal u{display:block}
+.cd{display:flex;flex-direction:column;align-items:center;justify-content:center;aspect-ratio:1;border-radius:14px;border:1px solid transparent;padding:0}
+.cd b{font-size:15px;font-weight:650}.cd span{font-size:9.5px;color:var(--mu);min-height:11px}
+.cd.has span{color:var(--ac)}
+.cd.on{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3)}
+.mh2{font-size:13px;color:var(--mu);font-weight:600;margin:6px 0 2px}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -3227,7 +3255,7 @@ var WG=(function(){try{var j=JSON.parse(localStorage.getItem('vf-wg')||'null');i
 /* ---- папки: власний великий простір для віджетів; відкриваються «провалом» у просторі ---- */
 var FOLDERS=(function(){try{var j=JSON.parse(localStorage.getItem('vf-folders')||'null');if(j&&typeof j==='object')return j;}catch(e){}return{};})();
 function foldSave(){try{localStorage.setItem('vf-folders',JSON.stringify(FOLDERS));}catch(e){}}
-function wgIdOf(el){var c=el.classList,i;for(i=0;i<c.length;i++)if(c[i].indexOf('wg-')===0)return c[i].slice(3);return'';}
+function wgIdOf(el){var c=el.classList,i;for(i=0;i<c.length;i++)if(c[i].indexOf('wf-')===0)return'f:'+c[i].slice(3);for(i=0;i<c.length;i++)if(c[i].indexOf('wg-')===0)return c[i].slice(3);return'';}
 function wgSizeOf(id){var w=WG_LIST.find(function(q){return q.id===id;});return w&&w.s===2?2:(id.indexOf('f:')===0?2:4);}
 /* розкладка полотна: нові віджети кладуться на першому екрані «полиці» 4 колонки, далі користувач розставляє як хоче */
 function foldLayout(F){F.pos=F.pos||{};var u=wuUnit(4),g=12,cols=[0,0,0,0],ch=false;
@@ -3238,15 +3266,19 @@ function foldLayout(F){F.pos=F.pos||{};var u=wuUnit(4),g=12,cols=[0,0,0,0],ch=fa
 function blocksFolder(){var F=FOLDERS[FLD.id];if(!F)return[];var o=wgBlocks(F.wg);if(!F.wg.length)o.push(B_('tile','<div class="empty">Папка порожня. Затисніть будь-який віджет і натисніть «+» унизу ліворуч, щоб додати віджети.</div>'));return o;}
 function fhdr(on){var h=document.getElementById('fhdr');if(!h){h=document.createElement('div');h.id='fhdr';h.innerHTML='<button data-fb="1">‹</button><span></span>';document.body.appendChild(h);h.firstChild.addEventListener('click',function(e){e.stopPropagation();closeFolder();});h.addEventListener('pointerdown',function(e){e.stopPropagation();});}
  if(on){h.lastChild.textContent=(FOLDERS[FLD.id]||{}).n||'';h.style.top=(tickerEl.offsetTop+tickerEl.offsetHeight+10)+'px';h.style.display='flex';}else h.style.display='none';}
-function foldFx(k,ox,oy,s0){try{cv.style.transformOrigin=ox+'px '+oy+'px';var an=cv.animate(k>0?[{transform:'scale('+s0+')',opacity:0},{transform:'scale('+(s0+(1-s0)*.35)+')',opacity:1,offset:.25},{transform:'none',opacity:1}]:[{transform:'scale('+(1/s0)+')',opacity:0},{transform:'scale('+(1+(1/s0-1)*.4)+')',opacity:1,offset:.3},{transform:'none',opacity:1}],{duration:620,easing:'cubic-bezier(.22,.8,.2,1)'});an.onfinish=function(){cv.style.transformOrigin='';};}catch(e){}}
-function foldClamp(){var z=FLD.zoom,mx=Math.max(0,(FLD.cw||VW*3)*z-VW);FLD.px=Math.max(0,Math.min(mx,FLD.px));var ms=maxScroll(9);sy[9]=Math.max(0,Math.min(ms,sy[9]));}
-function foldZoomAt(z1,cx,cy){z1=Math.max(.35,Math.min(1.8,z1));var k=z1/(FLD.zoom||1);FLD.px=(FLD.px+cx)*k-cx;sy[9]=(sy[9]+cy)*k-cy;FLD.zoom=z1;inn[9].style.zoom=z1.toFixed(3);needSync[9]=1;tlStale[9]=1;foldClamp();dirty=true;}
-function openFolder(id,srcEl){if(!FOLDERS[id])return;var F=FOLDERS[id],r=srcEl?srcEl.getBoundingClientRect():{left:VW/2,top:VH/2,width:0,height:0},ox=r.left+r.width/2,oy=r.top+r.height/2,s0=.3;
- FLD.id=id;FLD.scr=nav.getState().screen;FLD.zoom=1;FLD.px=0;sel=9;ca=9;sy[9]=0;foldLayout(F);renderPages();inn[9].style.zoom='1';fhdr(true);foldFx(1,ox,oy,s0);dirty=true;LG('egg','папка: '+F.n);}
-function closeFolder(){if(!FLD.id)return;FLD.id=null;sel=2;ca=2;renderPages();fhdr(false);foldFx(-1,VW/2,VH*.3,.3);dirty=true;}
+/* полотно: вигляд = масштаб FLD.zoom і зсув FLD.tx/ty (екран = полотно·масштаб + зсув); сторінка малюється шейдером із цим перетворенням (rec.pg, v=100 — «режим полотна») */
+function foldClamp(){var s=FLD.zoom,W=(FLD.cw||VW*3)*s,H=(FLD.ch||VH*2.4)*s;FLD.tx=Math.max(-(W-VW*.4),Math.min(VW*.6,FLD.tx));FLD.ty=Math.max(-(H-VH*.4),Math.min(VH*.5,FLD.ty));}
+function foldZoomAt(z1,cx,cy){z1=Math.max(.3,Math.min(2.4,z1));var k=z1/FLD.zoom;FLD.tx=cx-(cx-FLD.tx)*k;FLD.ty=cy-(cy-FLD.ty)*k;FLD.zoom=z1;foldClamp();dirty=true;}
+function foldTween(to,dur,done){var f={s:FLD.zoom,x:FLD.tx,y:FLD.ty},t0=performance.now();FLD.anim=1;(function st(){var u=Math.min(1,(performance.now()-t0)/dur),e=1-Math.pow(1-u,3);FLD.zoom=f.s*Math.pow(to.s/f.s,e);FLD.tx=f.x+(to.x-f.x)*e;FLD.ty=f.y+(to.y-f.y)*e;dirty=true;if(u<1)requestAnimationFrame(st);else{FLD.anim=0;if(done)done();}})();}
+function openFolder(id,srcEl){if(!FOLDERS[id])return;var F=FOLDERS[id],m=F._m||{ms:.3,x:0,y:230},mini=srcEl&&srcEl.querySelector('.fmini'),r=mini?mini.getBoundingClientRect():{left:VW*.3,top:VH*.4},
+  s0=m.ms,x0=r.left+4-m.x*s0,y0=r.top+4-m.y*s0;
+ FLD.id=id;FLD.scr=nav.getState().screen;FLD.src={s:s0,x:x0,y:y0};FLD.zoom=s0;FLD.tx=x0;FLD.ty=y0;FLD.addAt=null;sel=9;ca=9;sy[9]=0;foldLayout(F);renderPages();fhdr(true);fbUpdate();dirty=true;
+ foldTween({s:1,x:0,y:0},680);LG('egg','папка: '+F.n);}
+function closeFolder(){if(!FLD.id||FLD.anim)return;WFL.slice().forEach(function(w){w.home=1;});var S0=FLD.src||{s:.3,x:VW*.3,y:VH*.4};FLD.addAt=null;fhdr(false);
+ foldTween(S0,420,function(){FLD.id=null;sel=2;ca=2;rec.pg.v=0;rec.pg.tx=rec.pg.ty=0;renderPages();fbUpdate();dirty=true;});}
 function foldAdd(){var n=Object.keys(FOLDERS).length+1,nm='Папка '+n;try{var r=window.prompt('Назва папки',nm);if(r===null)return;nm=(r||nm).trim().slice(0,24)||nm;}catch(e){}var id='k'+Date.now().toString(36);FOLDERS[id]={n:nm,wg:[]};foldSave();WG.push('f:'+id);wgSave();renderPages();}
 function wgCur(){return FLD.id&&FOLDERS[FLD.id]?FOLDERS[FLD.id].wg:WG;}
-function wgPut(id){var L=wgCur();if(L.indexOf(id)>=0){toast('Цей віджет уже тут');return;}L.push(id);if(FLD.id)foldSave();else wgSave();renderPages();}
+function wgPut(id){var L=wgCur();if(L.indexOf(id)>=0){toast('Цей віджет уже тут');return;}L.push(id);if(FLD.id){var F=FOLDERS[FLD.id];if(FLD.addAt){F.pos=F.pos||{};F.pos[id]={x:Math.max(0,Math.round((FLD.addAt.x-FLD.tx)/FLD.zoom)),y:Math.max(60,Math.round((FLD.addAt.y-FLD.ty)/FLD.zoom))};FLD.addAt=null;}foldSave();}else wgSave();renderPages();fbUpdate();}
 /* кнопка «+»: маленька випливашка «Віджети / Папку», далі список віджетів */
 function wgAddMenu(anchor){
  var items=[{v:'w',l:'Віджети'}];if(!FLD.id)items.push({v:'f',l:'Папку'});
@@ -3255,13 +3287,22 @@ function wgAddMenu(anchor){
   else setTimeout(function(){openDropdown(anchor,WG_LIST.map(function(w){return{v:w.id,l:w.n};}),'',function(id){wgPut(id);});},260);});
 }
 /* масштаб папки щипком: більше/менше колонок — віджети стискаються й перебудовуються */
-(function(){var P={},pan=null;function d(){var k=Object.keys(P);if(k.length<2)return 0;var a=P[k[0]],b=P[k[1]];return Math.hypot(a.x-b.x,a.y-b.y);}
+(function(){var P={},pan=null,lp=0,lp0=null;function d(){var k=Object.keys(P);if(k.length<2)return 0;var a=P[k[0]],b=P[k[1]];return Math.hypot(a.x-b.x,a.y-b.y);}
  function mid(){var k=Object.keys(P),a=P[k[0]],b=P[k[1]];return{x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
- root.addEventListener('pointerdown',function(e){if(!FLD.id)return;P[e.pointerId]={x:e.clientX,y:e.clientY};if(Object.keys(P).length===2){FLD.d0=d();FLD.z0=FLD.zoom;pan=null;}else pan={x:e.clientX};},true);
- root.addEventListener('pointermove',function(e){if(!FLD.id||!P[e.pointerId])return;var p=P[e.pointerId],dx=e.clientX-p.x;p.x=e.clientX;p.y=e.clientY;
+ root.addEventListener('pointerdown',function(e){if(!FLD.id||FLD.anim)return;var tg=e.target;
+  if(WFL.length&&!(tg.closest&&tg.closest('.wfd'))){WFL.slice().forEach(function(w){w.home=1;});wfKick();}   /* дотик по порожньому місцю виходить із режиму редагування */
+  if(FLD.addAt){FLD.addAt=null;fbUpdate();}
+  P[e.pointerId]={x:e.clientX,y:e.clientY};clearTimeout(lp);
+  if(Object.keys(P).length===2){FLD.d0=d();FLD.z0=FLD.zoom;pan=null;}else{pan={x:e.clientX,y:e.clientY};lp0={x:e.clientX,y:e.clientY};
+   if(!(tg.closest&&tg.closest('.tile'))&&!WFL.length)lp=setTimeout(function(){if(!lp0)return;FLD.addAt={x:lp0.x,y:lp0.y};fbUpdate();setTimeout(function(){if(FLD.addAt){FLD.addAt=null;fbUpdate();}},6000);},520);}},true);
+ root.addEventListener('pointermove',function(e){if(!FLD.id||!P[e.pointerId])return;var p=P[e.pointerId],dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
+  if(lp0&&Math.hypot(e.clientX-lp0.x,e.clientY-lp0.y)>12){clearTimeout(lp);lp0=null;}
   if(Object.keys(P).length>=2&&FLD.d0){var m=mid();foldZoomAt(FLD.z0*d()/Math.max(20,FLD.d0),m.x,m.y);return;}
-  if(pan&&!WF.drag&&!WRZ&&!WFL.length){FLD.px-=dx;foldClamp();dirty=true;}},true);
- ['pointerup','pointercancel'].forEach(function(n){root.addEventListener(n,function(e){delete P[e.pointerId];if(Object.keys(P).length<2)FLD.d0=0;if(!Object.keys(P).length)pan=null;},true);});})();
+  if(pan&&!FLD.anim&&!WF.drag&&!WRZ&&!WFL.length){FLD.tx+=dx;FLD.ty+=dy;foldClamp();dirty=true;}},true);
+ ['pointerup','pointercancel'].forEach(function(n){root.addEventListener(n,function(e){delete P[e.pointerId];clearTimeout(lp);lp0=null;if(Object.keys(P).length<2)FLD.d0=0;if(!Object.keys(P).length)pan=null;},true);});})();
+function wgRemove(el){var id=wgIdOf(el),L=wgCur(),F;if(id.indexOf('f:')===0){F=FOLDERS[id.slice(2)];if(F&&F.wg.length&&!confirm('Видалити папку «'+F.n+'» разом з усім, що в ній?'))return;delete FOLDERS[id.slice(2)];foldSave();}
+ var i=L.indexOf(id);if(i>=0)L.splice(i,1);if(FLD.id){var Fc=FOLDERS[FLD.id];if(Fc&&Fc.pos)delete Fc.pos[id];foldSave();}else wgSave();
+ var w=wfFind(el);if(w){wfAttach(w);}WFcur=null;renderPages();wlApply(FLD.id?9:2);fbUpdate();dirty=true;}
 function wgSave(){try{localStorage.setItem('vf-wg',JSON.stringify(WG));}catch(e){}}
 function wgToggle(id){if(id.indexOf('f:')===0)return;var i=WG.indexOf(id);if(i>=0)WG.splice(i,1);else WG.push(id);wgSave();renderPages();}
 function wgLabel(w){return w.n+': '+(WG.indexOf(w.id)>=0?'показано':'сховано');}
@@ -3275,7 +3316,7 @@ function wgBlocks(list){
   if(id.indexOf('f:')===0){var F=FOLDERS[id.slice(2)];if(!F)return;var fp=foldLayout(F),fids=F.wg.filter(function(q){return q.indexOf('f:')!==0;}),fb=wgBlocks(fids),ux=wuUnit(4),minX=1e9,minY=1e9,maxX=0,maxY=0;
    fids.forEach(function(q){var P=fp[q];if(!P)return;var ds=wgSizeOf(q),ww=ds*ux+(ds-1)*12;minX=Math.min(minX,P.x);minY=Math.min(minY,P.y);maxX=Math.max(maxX,P.x+ww);maxY=Math.max(maxY,P.y+(ds===4?130:104));});
    var bw=Math.max(60,maxX-minX),bh=Math.max(60,maxY-minY),ms=Math.min(132/bw,96/bh),mini=fb.map(function(b2,q2){var P=fp[fids[q2]]||{x:minX,y:minY},ds=wgSizeOf(fids[q2]);return'<div class="'+b2.c+'" style="position:absolute;left:'+(P.x-minX)+'px;top:'+(P.y-minY)+'px;width:'+(ds*ux+(ds-1)*12)+'px">'+b2.h.replace(/<button/g,'<div').replace(/<\/button>/g,'</div>').replace(/<textarea[^>]*>[^<]*<\/textarea>/g,'<div class="wnotes"></div>')+'</div>';}).join('');
-   o.push(B_('tile wg wg-folder ws2','<button class="fbx" data-act="fopen" data-id="'+esc(id.slice(2))+'"><div class="fmini"><div class="fgm" style="width:'+bw+'px;height:'+bh+'px;transform:scale('+ms.toFixed(4)+')">'+mini+'</div></div><div class="fnm">'+esc(F.n)+'</div></button>'));return;}
+   F._m={ms:ms,x:minX,y:minY};o.push(B_('tile wg wg-folder wf-'+id.slice(2)+' ws2','<button class="fbx" data-act="fopen" data-id="'+esc(id.slice(2))+'"><div class="fmini"><div class="fgm" style="width:'+bw+'px;height:'+bh+'px;transform:scale('+ms.toFixed(4)+')">'+mini+'</div></div><div class="fnm">'+esc(F.n)+'</div></button>'));return;}
   var w=WG_LIST.find(function(q){return q.id===id;});if(!w)return;var c='tile wg wg-'+id+(w.s===2?' ws2':''),h='';
   if(id==='clock'){h='<div class="lbl">Зараз</div><div class="big wclk" data-clk="1">'+now.toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'})+'</div><div class="cap">'+esc(todayStr())+'</div>';}
   else if(id==='today'){var fc=forecastMonth(),left=Math.max(1,fc.left+1),rest=fc.limit-fc.spent,per=rest/left;
@@ -3288,7 +3329,7 @@ function wgBlocks(list){
   else if(id==='week'){var days=[],mx=1,i;for(i=6;i>=0;i--){var d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i);days.push({d:d,k:wgDay(d),s:0});}
    st.transactions.forEach(function(t){if(t.type!=='expense'||t.currency!=='PLN')return;var k=wgDay(new Date(t.date));days.forEach(function(q){if(q.k===k)q.s+=t.amount;});});
    days.forEach(function(q){mx=Math.max(mx,q.s);});var sum=days.reduce(function(a,q){return a+q.s;},0);
-   h='<div class="th"><h2>Витрати за тиждень</h2><span class="lbl">'+esc(money(sum))+'</span></div><div class="wbars">'+days.map(function(q){return'<div class="wb"><span class="bar wv"><i style="height:'+(q.s/mx*100).toFixed(1)+'%;width:100%"></i></span><em>'+['Нд','Пн','Вт','Ср','Чт','Пт','Сб'][q.d.getDay()]+'</em></div>';}).join('')+'</div>';}
+   h='<button class="wcb" data-act="wcal"><div class="th"><h2>Витрати за тиждень</h2><span class="lbl">'+esc(money(sum))+'</span></div><div class="wbars">'+days.map(function(q){return'<div class="wb"><span class="bar wv"><i style="height:'+(q.s/mx*100).toFixed(1)+'%;width:100%"></i></span><em>'+['Нд','Пн','Вт','Ср','Чт','Пт','Сб'][q.d.getDay()]+'</em></div>';}).join('')+'</div></button>';}
   else if(id==='upc'){var rc=(st.recurring||[]).map(function(r){var nx=wgNextDay(r.day);return{r:r,n:nx};}).sort(function(a,b){return a.n.left-b.n.left;}).slice(0,3);
    h='<div class="th"><h2>Найближчі платежі</h2><button data-act="recurring">Усі</button></div>'+(rc.length?rc.map(function(q,i){var r=q.r;return'<div class="row'+(i?'':' first')+'">'+icon(r.name,hashCol(r.category))+'<div class="rc"><b>'+esc(r.name)+'</b><span>'+(q.n.left===0?'сьогодні':q.n.left===1?'завтра':'через '+q.n.left+' дн.')+'</span></div><em class="'+(r.type==='income'?'in':'')+'">'+(r.type==='income'?'+':'−')+esc(money(r.amount,r.currency))+'</em></div>';}).join(''):'<div class="empty">Повторюваних платежів ще немає.</div>');}
   else if(id==='debt'){var g=fin.debtGroups({}),rv=(g.find(function(x){return x.key==='receivable';})||{items:[]}).items.filter(function(d){return!d.paid;}).slice(0,3),dt=fin.debtTotals();
@@ -3867,7 +3908,7 @@ function grabPage(i){
  a.q.forEach(function(k,qi){var b=bl[k],d2=Math.abs(b.t+b.h/2-cy);if(d2<bs){bs=d2;bi=qi;}});
  var k=a.q[bi],b=bl[k];
  busy=true;
- var zk=(i===9&&FLD.zoom)||1;shot(b.el,b.w/zk,b.h/zk,tgt.ts*zk).then(function(c){busy=false;
+ shot(b.el,b.w,b.h,tgt.ts).then(function(c){busy=false;
   if(asm[i]!==a)return;
   a.x.drawImage(c,Math.round(b.l*tgt.ts),Math.round(b.t*tgt.ts));
   a.q.splice(a.q.indexOf(k),1);
@@ -3879,7 +3920,7 @@ function grabPage(i){
 function grab(i,b){
  var t=T[i];if(!t)return;
  busy=true;b.stale=0;
- var zk=(i===9&&FLD.zoom)||1;shot(b.el,b.w/zk,b.h/zk,t.ts*zk).then(function(c){busy=false;if(T[i]!==t)return;
+ shot(b.el,b.w,b.h,t.ts).then(function(c){busy=false;if(T[i]!==t)return;
   gl.bindTexture(gl.TEXTURE_2D,t.tex);
   gl.texSubImage2D(gl.TEXTURE_2D,0,Math.round(b.l*t.ts),Math.round(b.t*t.ts),gl.RGBA,gl.UNSIGNED_BYTE,c);
   b.done=1;dirty=true;})
@@ -4215,7 +4256,7 @@ function step(h,target){
 /* ---- власний скрол: позиція одна на DOM і на скло, оновлюються в одному rAF ---- */
 var sy=[],ly=[],sv=0,sIdx=0,sMax=0,sp=null,lastMotion=0,scrimV=0,scrimT=0;
 for(var qq=0;qq<NP;qq++)sy.push(0);
-function maxScroll(i){if(i===9&&FLD.zoom&&FLD.zoom!==1)return Math.max(0,inn[9].getBoundingClientRect().height-VH);return Math.max(0,inn[i].offsetHeight-VH);}
+function maxScroll(i){if(i===9)return 0;return Math.max(0,inn[i].offsetHeight-VH);}
 /* ---- перегортання вкладок дока свайпом: Аналітика ↔ Борги ↔ Дім → «Додатково». Сторінки їдуть за пальцем ---- */
 var HS={on:0,ca:0,x0:0,vx:0,lx:0,lt:0},hsAt=0;
 function tabSwipeOk(){return sel<=2&&!nav.getState().overlays.length&&mode!==1&&!boot.on&&!menu.on&&!sheetOn;}
@@ -4235,7 +4276,7 @@ function hsEnd(cancel){
  LG('swipe','вкладки: dx '+Math.round(dx)+' v '+v.toFixed(2)+' → '+(go===1?'вперед':go===-1?'назад':'на місці'));
 }
 root.addEventListener('pointerdown',function(e){
- if(Math.abs(sel-ca)>0.02)return;
+ if(Math.abs(sel-ca)>0.02||FLD.id)return;
  sIdx=sel;sMax=maxScroll(sel);sv=0;sp={id:e.pointerId,x0:e.clientX,y:e.clientY,t:e.timeStamp,start:e.clientY,cap:false,h:false,tg:e.target};
 });
 root.addEventListener('pointermove',function(e){
@@ -4280,7 +4321,7 @@ function stepScroll(dt){
   else sv=0;
   sy[i]=y;
  }
- for(var q=0;q<NP;q++)if(ly[q]!==sy[q]){ly[q]=sy[q];inn[q].style.transform='translate3d(0,'+(-sy[q]/(q===9&&FLD.zoom?FLD.zoom:1))+'px,0)';inn[q]._sy=q===9?sy[q]:0;}
+ for(var q=0;q<NP;q++)if(ly[q]!==sy[q]){ly[q]=sy[q];inn[q].style.transform='translate3d(0,'+(-sy[q])+'px,0)';}
  return act;
 }
 /* ---- скляне меню: Додатково / випадаючі списки ---- */
@@ -4294,7 +4335,7 @@ document.addEventListener('pointerdown',function(e){fd.on=true;fd.x0=e.clientX;f
 document.addEventListener('pointermove',function(e){if(fd.on){fd.dx=e.clientX-fd.x0;fd.dy=e.clientY-fd.y0;}},true);
 ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){fd.on=false;},true);});                              /* розмиття фону під вікнами (σ, px) і зсув сітки за скролом */
 var KZ=.8;                                           /* зум шарів під верхнім вікном: −20% */
-function kOf(v){return Math.pow(KZ,v);}
+function kOf(v){return v>=50?(FLD.zoom||1):Math.pow(KZ,v);}
 function mkPanel(el,o){return Object.assign({on:0,s:0,vs:0,tx:0,ty:0,tw:0,th:0,r:28,ax:0,ay:0,rise:0,mode:'grow',el:el,g:{cx:0,cy:0,hw:0,hh:0,r:1,v:0},
  def:{x:0,y:0,vx:0,vy:0,sx:0,sy:0,wx:0,wy:0},tgt:{x:0,y:0,sx:0,sy:0},dragging:0,cf:1,kind:''},o||{});}
 var menu=mkPanel(document.getElementById('menu'),{shade:document.getElementById('menuShade')});
@@ -4331,14 +4372,15 @@ function recStep(dt){
   if(o.v<.003&&tg[k]===0){o.ox=P.ox;o.oy=P.oy;o.tx=P.tx;o.ty=P.ty;}
   else{var f=1-Math.exp(-dt*8);o.ox+=(P.ox-o.ox)*f;o.oy+=(P.oy-o.oy)*f;o.tx+=(P.tx-o.tx)*f;o.ty+=(P.ty-o.ty)*f;}
  });
+ if(FLD.id&&!sh&&!dd&&!mo){var q9=rec.pg;q9.v=100;q9.ox=0;q9.oy=0;q9.tx=FLD.tx/100;q9.ty=FLD.ty/100;mv=true;}   /* режим полотна папки */
  recMoving=mv;
  applyRec(pagesEl,rec.pg);
  var bsx=Math.min(1,rec.pg.v),bsv=bsx>.003?'blur('+(bsx*BLS).toFixed(1)+'px)':'';
  if(TGC._f!==bsv){TGC._f=bsv;TGC.style.filter=bsv;}
- if(((menu.kind==='more'&&menu.on)||rec.shPush||rec.pg.v>.003)&&TKP.side==='t'){applyRec(tickerEl,rec.pg);tickerEl._dr=1;tickerEl._f=null;}   /* бігучий рядок їде разом зі сторінкою */
+ if(((menu.kind==='more'&&menu.on)||rec.shPush||(rec.pg.v>.003&&rec.pg.v<50))&&TKP.side==='t'){applyRec(tickerEl,rec.pg);tickerEl._dr=1;tickerEl._f=null;}   /* бігучий рядок їде разом зі сторінкою */
  else{if(tickerEl._dr){tickerEl._dr=0;tickerEl.style.transform='';tickerEl._rk=null;tickerEl._f=null;}
   if(tickerEl._f!==bsv){tickerEl._f=bsv;tickerEl.style.filter=bsv;}}
- var ev=Math.min(1,rec.pg.v).toFixed(3);if(edgeEl._ev!==ev){edgeEl._ev=ev;edgeEl.style.opacity=ev;edgeEl.style.visibility=ev>0?'visible':'hidden';}
+ var ev=(rec.pg.v>=50?0:Math.min(1,rec.pg.v)).toFixed(3);if(edgeEl._ev!==ev){edgeEl._ev=ev;edgeEl.style.opacity=ev;edgeEl.style.visibility=ev>0?'visible':'hidden';}
 }
 function applyRec(el,o){
  var st='';
@@ -4673,9 +4715,9 @@ function frame(t){
  var da=sel-ca,moving=false,i;
  if(HS.on){ca=HS.ca;moving=true;}
  else if(Math.abs(da)>0.0005){ca+=da*(1-Math.exp(-dt*9));moving=true;}else if(da!==0){ca=sel;moving=true;}
- if(FLD.id&&sel===9){ca=9+FLD.px/VW;}
+ if(FLD.id&&sel===9){ca=9;}
  for(i=0;i<NP;i++){if(BH.ph&&BH.pg.indexOf(i)>=0)continue;   /* чорна діра тримає сусідні вкладки видимими */
-  var o=i-ca,vis=Math.abs(o)<1,st=vis?'translate3d('+(o*100)+'%,0,0)':'none';if(i===9&&FLD.id){vis=true;st='translate3d('+(-FLD.px).toFixed(1)+'px,0,0)';}
+  var o=i-ca,vis=Math.abs(o)<1,st=vis?'translate3d('+(o*100)+'%,0,0)':'none';if(i===9&&FLD.id){vis=true;st='translate3d(0,0,0)';}
   if(pstyle[i]!==st){pstyle[i]=st;pg[i].style.visibility=vis?'visible':'hidden';inn[i].style.willChange=vis?'transform':'auto';if(vis)pg[i].style.transform=st;}}
  var fl=Math.max(0,Math.min(NP-1,Math.floor(ca))),f2=fl+1;
  var scrolling=stepScroll(dt);
@@ -4720,11 +4762,11 @@ function frame(t){
  var settled=!drag&&Math.abs(target-x)<0.05&&Math.abs(v)<0.5&&Math.abs(j)<0.002&&Math.abs(jv)<0.05;
  if(settled){x=target;v=0;j=0;jv=0;}
  /* панель ховається під клавіатуру / повертається */
- var hT=((mode===1&&op.age>.14)||(mode===2&&cl.age<A1-.06)||(sheetOn&&DKP.side!=='b')||boot.hold||BH.ph===3||(menu.on&&menu.kind==='more'&&DKP.side==='b'))?1:0;
+ var hT=((mode===1&&op.age>.14)||(mode===2&&cl.age<A1-.06)||(sheetOn&&DKP.side!=='b')||FLD.id||boot.hold||BH.ph===3||(menu.on&&menu.kind==='more'&&DKP.side==='b'))?1:0;
  if(hide!==hT){hide+=(hT-hide)*(1-Math.exp(-dt*9));if(Math.abs(hT-hide)<.002)hide=hT;dirty=true;}
  var off=hide*hideOff();lastOff=off;
  var dkMov=dkStep(dt,hide);if(dkMov)dirty=true;
- var hTk=(boot.hold||BH.ph===3)?1:0;
+ var hTk=(boot.hold||BH.ph===3||FLD.id)?1:0;
  if(tkHide!==hTk){tkHide+=(hTk-tkHide)*(1-Math.exp(-dt*9));if(Math.abs(hTk-tkHide)<.002)tkHide=hTk;dirty=true;}
  var tkMov=tkStep(dt,tkHide);if(tkMov)dirty=true;
  /* крапля-поле */
@@ -4791,7 +4833,7 @@ function frame(t){
   for(var bi=0;bi<bl.length&&BTN<14;bi++){var be=bl[bi][0],r=be.getBoundingClientRect(),ck=bl[bi][1]?ckS:ckM;if(r.width<2||r.bottom<0||r.top>VH)continue;
    if(ck&&(r.bottom<ck.top||r.top>ck.bottom))continue;   /* кнопка прокручена за межі видимої області */
    var red=be.classList.contains('red')||be.classList.contains('dng')||be.classList.contains('pri')?1:0,k=BTN*4,rr=Math.min(r.height/2,26)*S;
-   BTB[k]=(r.left+r.width/2-R.x)*S;BTB[k+1]=(r.top+r.height/2-R.y)*S;BTB[k+2]=r.width/2*S;BTB[k+3]=r.height/2*S;BTE[BTN]=be;BTC[k]=ck?(ck.left-2-R.x)*S:-1e4;BTC[k+1]=ck?(ck.top-R.y)*S:-1e4;BTC[k+2]=ck?(ck.right+2-R.x)*S:1e5;BTC[k+3]=ck?(ck.bottom-R.y)*S:1e5;BTQ[k]=rr;BTQ[k+1]=bl[bi][1];BTQ[k+2]=red;BTQ[k+3]=1;
+   BTB[k]=(r.left+r.width/2-R.x)*S;BTB[k+1]=(r.top+r.height/2-R.y)*S;BTB[k+2]=r.width/2*S;BTB[k+3]=r.height/2*S;BTE[BTN]=be;BTC[k]=ck?(ck.left-2-R.x)*S:-1e4;BTC[k+1]=ck?(ck.top-R.y)*S:-1e4;BTC[k+2]=ck?(ck.right+2-R.x)*S:1e5;BTC[k+3]=ck?(ck.bottom-R.y)*S:1e5;BTQ[k]=rr;BTQ[k+1]=bl[bi][1];BTQ[k+2]=red;BTQ[k+3]=(curSheet&&curSheet.body&&(curSheet.body.classList.contains('swo')||curSheet.body.classList.contains('swi')))?Math.max(0,Math.min(1,parseFloat(getComputedStyle(be).opacity)||0)):1;
    BTK+=Math.round(r.left)+','+Math.round(r.top)+','+Math.round(r.width)+','+Math.round(r.height)+';';BTN++;}}
  animLog(t);
  var mg=menu.g,sg=sheetP.g,gkey=BTK+((menuA>0.002||sheetA>0.002)?[mg.cx,mg.cy,mg.hw,mg.hh,mg.r,mg.v,sg.cx,sg.cy,sg.hw,sg.hh,sg.r,sg.v,menuA,sheetA,scrimV,ghost,SH.on,SH.ready,SH.x,SH.y].map(function(q){return typeof q==='number'?q.toFixed(2):String(q);}).join(','):'');   /* дужки: інакше BTK (позиції кнопок) не входив у ключ і скло кнопок не рухалось при прокрутці */
@@ -5296,7 +5338,6 @@ function tlMeasure(i){
    if(pts.length>1)lines.push({fade:sv.closest('.chw')?18:0,blk:el,bcx:bcx,bcy:bcy,pts:pts,base:t+h,r:parseFloat(sv.getAttribute('data-lw'))||3,c:hexRgb(sv.getAttribute('data-col'))||[1,1,1]});});
  }
  list.forEach(function(t){t.gl=glyphable(t.el);});
- if(i===9&&FLD.zoom&&Math.abs(FLD.zoom-1)>.001){var zz=FLD.zoom;list.forEach(function(t){t.l*=zz;t.t*=zz;t.w*=zz;t.h*=zz;t.r*=zz;t.bcx*=zz;t.bcy*=zz;t.gl=false;});}   /* полотно папки масштабується зумом: геометрію скла переводимо у видимі пікселі */
  GA.dirty=true;
  TL[i]=list;TLL[i]=lines;tlStale[i]=0;
 }
@@ -5573,7 +5614,7 @@ root.addEventListener('pointerup',mcrossHide);root.addEventListener('pointercanc
 
 /* ===== 6. Інтерфейс: події, аркуші, скляні меню, синхронізація зі станом логіки ===== */
 var sheetsEl=document.getElementById('sheets'),scrimEl=document.getElementById('scrim'),toastEl=document.getElementById('toast');
-var SHEET_KINDS=['transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet','confirmWipe','budgets','recurring','game'];
+var SHEET_KINDS=['calendar','transaction','debt','input','transactionList','settings','categories','manualAccount','markets','marketSheet','confirmWipe','budgets','recurring','game'];
 var CURS=['PLN','EUR','USD','GBP'],curSheet=null,lastScreen='',toastT=0;
 
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){toastEl.classList.remove('on');},2200);}
@@ -5651,6 +5692,7 @@ root.addEventListener('click',function(e){
  try{
   if(a==='back'){if(FLD.id)closeFolder();else app.back();}
   else if(a==='fopen')openFolder(id,t);
+  else if(a==='wcal'){CAL.y=0;nav.openOverlay('calendar');}
   else if(a==='tx')app.editTransaction(id);
   else if(a==='balance')nav.navigate('balanceAnalysis');
   else if(a==='wnew')app.openTransaction();
@@ -5693,9 +5735,21 @@ function accItems(){return[{v:'',l:'Без прив’язки'}].concat(fin.act
 var CURITEMS=CURS.map(function(c){return{v:c,l:c};});
 
 /* налаштування: заголовок розділу і повзунок (підпис зверху, повзунок на всю ширину під ним) */
-var SETV=null;
+var SETV=null,setBusy=0;
+function setGo(v){if(setBusy||!curSheet)return;setBusy=1;var b=curSheet.body;b.classList.add('swo');setTimeout(function(){SETV=v;b.scrollTop=0;syncUI();sheetStale();b.classList.remove('swo');b.classList.add('swi');setTimeout(function(){b.classList.remove('swi');setBusy=0;},300);},150);}
+var CAL={y:0,m:0,s:0};
+var MN_UA=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+function calHtml(){var now=new Date();if(!CAL.y){CAL.y=now.getFullYear();CAL.m=now.getMonth();CAL.s=now.getDate();}
+ var st=fin.getState(),nd=new Date(CAL.y,CAL.m+1,0).getDate(),first=(new Date(CAL.y,CAL.m,1).getDay()+6)%7,sum={},list=[],i;
+ st.transactions.forEach(function(t){if(t.type!=='expense'||t.currency!=='PLN')return;var d=new Date(t.date);if(d.getFullYear()===CAL.y&&d.getMonth()===CAL.m){sum[d.getDate()]=(sum[d.getDate()]||0)+t.amount;if(d.getDate()===CAL.s)list.push(t);}});
+ var h='<div class="sh"><button class="ok" data-s="calm" data-v="-1">‹</button><h3>'+MN_UA[CAL.m]+' '+CAL.y+'</h3><button class="ok" data-s="calm" data-v="1">›</button></div><div class="cal">'+['Пн','Вт','Ср','Чт','Пт','Сб','Нд'].map(function(n){return'<i>'+n+'</i>';}).join('');
+ for(i=0;i<first;i++)h+='<u></u>';
+ for(i=1;i<=nd;i++)h+='<button class="cd'+(i===CAL.s?' on':'')+(sum[i]?' has':'')+'" data-s="calday" data-v="'+i+'"><b>'+i+'</b><span>'+(sum[i]?Math.round(sum[i]):'')+'</span></button>';
+ h+='</div><div class="mh2">'+(CAL.s?CAL.s+' '+MN_UA[CAL.m].toLowerCase()+' · витрати: '+esc(money(sum[CAL.s]||0)):'Оберіть день')+'</div>';
+ h+=list.length?list.map(function(x,k){return txRow(x,k===0).replace(/<button /,'<div ').replace(/<\/button>$/,'</div>');}).join(''):'<div class="empty" style="padding:8px 0">За цей день витрат немає.</div>';
+ return h+'<button class="btnw" data-s="cancel">Закрити</button>';}
 function SEC(t){return'<div class="sec2">'+esc(t)+'</div>';}
-function RNG(kind,k,label,max){var o=kind==='cg'?CG:FGS;return'<div class="fr rng"><label>'+esc(label)+'</label><input type="range" min="0" max="'+max+'" data-'+kind+'="'+k+'" value="'+o[k]+'"></div>';}
+function RNG(kind,k,label,max){var o=kind==='cg'?CG:FGS;return'<div class="fr rng"><label>'+esc(label)+'<em>'+Math.round(o[k])+'</em></label><input type="range" min="0" max="'+max+'" data-'+kind+'="'+k+'" value="'+o[k]+'" style="--p:'+(o[k]/max*100).toFixed(1)+'%"></div>';}
 function sheetHtml(kind,ov){
  var ix=app.getState().interaction,f=ix.form;
  if(kind==='transaction'&&f){var v=f.values;
@@ -5725,6 +5779,7 @@ function sheetHtml(kind,ov){
  }
  if(kind==='marketSheet')return marketSheetHtml(ov.data&&ov.data.marketId);
  if(kind==='game')return gmHtml();
+ if(kind==='calendar')return calHtml();
  if(kind==='budgets'){var cs2=fin.getState().categories;return'<div class="sh"><span style="min-width:70px"></span><h3>Бюджети</h3><button class="ok" data-s="cancel">Закрити</button></div><div class="mkinfo" style="padding:0 0 8px">Сума на місяць. Порожньо — без бюджету. Після 80% прийде попередження.</div>'+cs2.map(function(c){return'<div class="fr"><label>'+esc(c.name)+' <span style="opacity:.6">(цього місяця '+esc(money(monthSpend(c.id)))+')</span></label><input data-bud="'+esc(c.id)+'" inputmode="decimal" autocomplete="off" value="'+(c.budget?esc(c.budget):'')+'" placeholder="—"></div>';}).join('')+'<button class="btnw pri" data-s="savebud">Зберегти бюджети</button>';}
  if(kind==='recurring'){var rl=fin.getState().recurring||[],cl2=fin.getState().categories;return'<div class="sh"><span style="min-width:70px"></span><h3>Повторювані</h3><button class="ok" data-s="cancel">Закрити</button></div>'+(rl.length?rl.map(function(r,i){return'<div class="row'+(i?'':' first')+'">'+icon(r.name,hashCol(r.category))+'<div class="rc"><b>'+esc(r.name)+'</b><span>'+r.day+' числа · '+esc(money(r.amount,r.currency))+'</span></div><button data-s="delrec" data-id="'+esc(r.id)+'" style="color:var(--ac);font-weight:600;padding:8px">Видалити</button></div>';}).join(''):'<div class="empty">Поки порожньо.</div>')+
   '<div class="mkinfo" style="padding:14px 0 4px">Новий платіж</div><div class="fr"><label>Назва</label><input data-rc="name" placeholder="Netflix, оренда, зарплата" autocomplete="off"></div><div class="fr"><label>Сума, zł</label><input data-rc="amount" inputmode="decimal" autocomplete="off"></div><div class="fr"><label>День місяця</label><input data-rc="day" inputmode="numeric" value="1" autocomplete="off"></div>'+
@@ -5825,7 +5880,7 @@ function layoutSheet(){
  var topMin=place==='t'?TKP.y+tkh/2+10:Math.max(SAFE.t,14),maxH=Math.max(200,bottom-topMin-(place==='t'?0:60));
  var sb=body.scrollTop,se=el.scrollTop;   /* висота auto на мить скидає прокрутку в 0 — запам'ятовуємо й повертаємо */
  el.style.width=w+'px';el.style.height='auto';body.style.height='auto';
- var h=Math.min(body.scrollHeight,maxH);
+ var h=Math.min(body.scrollHeight,maxH);if(curSheet.kind==='settings'||curSheet.kind==='calendar')h=maxH;
  el.style.height=h+'px';body.style.height='100%';
  if(sb)body.scrollTop=sb;if(se)el.scrollTop=se;
  var left=lx!==null?lx:m.l+(m.w-w)/2,top=bottom-h;if(place==='t')top=topMin;else if(place==='l'||place==='r')top=Math.max(Math.max(SAFE.t,14),Math.min(bottom-h,tkPA.y-h/2));
@@ -5847,6 +5902,7 @@ function showSheet(top){
  }
  var swap=!!curSheet&&sheetP.on===1;
  if(sheetP.el&&sheetP.el.parentNode)sheetP.el.remove();
+ if(top.kind==='settings')SETV=null;
  var el=document.createElement('div');el.className='sheet';
  var body=document.createElement('div');body.className='sbody';
  var html=sheetHtml(top.kind,top.ov);body.innerHTML=html;el.appendChild(body);sheetsEl.appendChild(el);
@@ -5919,8 +5975,10 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='cgreset'){setCG('is',40);setCG('ib',45);setCG('bal',45);setCG('gt',65);setCG('gsat',50);setCG('gbr',50);setCG('wh',200);setCG('ws',0);setCG('wv',100);setCG('mh',200);setCG('ms',0);setCG('mv',100);setFGS('a',50);setFGS('ah',0);setFGS('as',100);setFGS('av',100);setFGS('i',56);setFGS('w',62);setFGS('l',30);[].forEach.call(curSheet.body.querySelectorAll('[data-fg]'),function(i){i.value=FGS[i.dataset.fg];});[].forEach.call(curSheet.body.querySelectorAll('[data-cg]'),function(i){i.value=CG[i.dataset.cg];});tlAll();}
   else if(s==='bfx'){try{localStorage.setItem('vf-bfx',localStorage.getItem('vf-bfx')==='0'?'1':'0');}catch(e){}t.textContent=bfxLabel();}
   else if(s==='wg'){var wq=WG_LIST.find(function(q){return q.id===t.dataset.v;});wgToggle(t.dataset.v);t.textContent=wgLabel(wq);sheetStale();}
-  else if(s==='setv'){SETV=t.dataset.v;if(curSheet)curSheet.body.scrollTop=0;syncUI();sheetStale();}
-  else if(s==='setback'){SETV=null;syncUI();sheetStale();}
+  else if(s==='setv'){setGo(t.dataset.v);}
+  else if(s==='setback'){setGo(null);}
+  else if(s==='calday'){CAL.s=+t.dataset.v;syncUI();sheetStale();}
+  else if(s==='calm'){CAL.m+=+t.dataset.v;if(CAL.m<0){CAL.m=11;CAL.y--;}if(CAL.m>11){CAL.m=0;CAL.y++;}CAL.s=0;syncUI();sheetStale();}
   else if(s==='fgwave'){setFGS('tw',FGS.tw?0:1);t.textContent=fgWaveLabel();LG('ui',fgWaveLabel());}
   else if(s==='fgglow'){setFGS('tg',FGS.tg?0:1);t.textContent=fgGlowLabel();LG('ui',fgGlowLabel());}
   else if(s==='auramode'){setFGS('am',FGS.am?0:1);t.textContent=auraModeLabel();LG('ui',auraModeLabel());}
@@ -6268,7 +6326,7 @@ window.addEventListener('resize',fitSoon);if(document.fonts&&document.fonts.read
 fitSoon();
 
 /* повзунки кольорового скла */
-document.getElementById('sheets').addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.cg){setCG(t.dataset.cg,+t.value);tlAll();}if(t.dataset&&t.dataset.fg)setFGS(t.dataset.fg,+t.value);});
+document.getElementById('sheets').addEventListener('input',function(e){var t=e.target;if(t.type==='range'){t.style.setProperty('--p',(t.value/t.max*100).toFixed(1)+'%');var em=t.parentNode.querySelector('em');if(em)em.textContent=t.value;}if(t.dataset&&t.dataset.cg){setCG(t.dataset.cg,+t.value);tlAll();}if(t.dataset&&t.dataset.fg)setFGS(t.dataset.fg,+t.value);});
 
 /* ---------- синхронізація між пристроями: шифрований код (AES-256-GCM, PBKDF2) ---------- */
 var SYE=new TextEncoder(),SYD=new TextDecoder();
@@ -6567,7 +6625,7 @@ function wlApplyFolder(){var host=inn[9],F=FOLDERS[FLD.id];if(!F)return;var u=wu
   el.style.cssText+=';position:absolute;left:'+P.x+'px;top:'+P.y+'px;width:'+wd+'px;margin:0;grid-column:auto;min-height:'+(mh||'var(--wu)');
   el.classList.toggle('tall',!!(dd&&dd.h&&dd.h>=u*2.6));el.classList.toggle('cmp',!!(dd&&dd.h&&dd.h<=u*1.35));
   mx=Math.max(mx,P.x+wd);my=Math.max(my,P.y+Math.max(el.offsetHeight||110,110));}
- FLD.cw=Math.max(VW*3,mx+80);host.style.width=FLD.cw+'px';host.style.height=Math.max(my+420,VH*2.4)+'px';host.style.position='relative';host.style.padding='0';}
+ FLD.cw=Math.max(VW*3,mx+80);host.style.width=FLD.cw+'px';host.style.height=(FLD.ch=Math.max(my+420,VH*2.4))+'px';host.style.position='relative';host.style.padding='0';}
 function wlApply(i){if(i===9){if(FLD.id)wlApplyFolder();return;}var host=inn[i];if(!host||i>2||!WL)return;var NC=4,WU=wuUnit(4);host._wu=WU;host.style.setProperty('--wu',WU.toFixed(1)+'px');var ch=host.children,chg=false,k;
  for(k=0;k<ch.length;k++){var el=ch[k],tile=el.classList.contains('tile'),dd=tile?WL[wlKey(el)]:null;
   var ds=(dd&&dd.s)?dd.s:(el.classList.contains('ws1')?1:el.classList.contains('ws2')?2:4),gc=ds<4||NC!==4?'span '+Math.max(1,Math.min(NC,Math.round(ds*NC/4))):'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
@@ -6603,18 +6661,28 @@ function wrhEnsure(){
 }
 var WAD=null;
 function wadEnsure(){if(WAD)return WAD;var d=document.createElement('button');d.id='wfadd';d.setAttribute('aria-label','Додати');d.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';document.body.appendChild(d);WAD=d;d.addEventListener('click',function(e){e.stopPropagation();wgAddMenu(d);});d.addEventListener('pointerdown',function(e){e.stopPropagation();});return d;}
-function wrhPlace(){
- if(!WFL.length||!WFcur||WFL.indexOf(WFcur)<0){if(WRH&&WRH.style.display!=='none'){WRH.style.display='none';if(WAD)WAD.style.display='none';if(!GX.on)fbSet([]);}return;}
- var d=wrhEnsure(),a=wadEnsure(),r=WFcur.el.getBoundingClientRect();d.style.display='flex';d.style.left=Math.min(VW-40,Math.max(4,r.right-34))+'px';d.style.top=Math.min(VH-40,Math.max(4,r.bottom-34))+'px';
- a.style.display='flex';a.style.left=((DKP.side==='l'?DKV+DKMV+16:16))+'px';a.style.top=(DKP.side==='b'?DR.top-62:VH-66)+'px';
- if(!GX.on)fbSet([{el:d,a:1,rad:.5},{el:a,a:1,rad:1}]);
-}
+var WDEL=null,FHM=null;
+function wdelEnsure(){if(WDEL)return WDEL;var d=document.createElement('button');d.id='wfdel';d.setAttribute('aria-label','Видалити');d.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';document.body.appendChild(d);WDEL=d;d.addEventListener('click',function(e){e.stopPropagation();if(WFcur)wgRemove(WFcur.el);});d.addEventListener('pointerdown',function(e){e.stopPropagation();});return d;}
+function fhomeEnsure(){if(FHM)return FHM;var d=document.createElement('button');d.id='fhome';d.setAttribute('aria-label','Дім');d.innerHTML='<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg>';document.body.appendChild(d);FHM=d;d.addEventListener('click',function(e){e.stopPropagation();closeFolder();});d.addEventListener('pointerdown',function(e){e.stopPropagation();});return d;}
+function fbUpdate(){
+ if(GX.on||BH.ph)return;var L=[],ed=!!(WFL.length&&WFcur&&WFL.indexOf(WFcur)>=0);
+ if(ed){var d=wrhEnsure(),a=wadEnsure(),x=wdelEnsure(),r=WFcur.el.getBoundingClientRect();
+  d.style.display='flex';d.style.left=Math.min(VW-40,Math.max(4,r.right-34))+'px';d.style.top=Math.min(VH-40,Math.max(4,r.bottom-34))+'px';
+  a.style.display='flex';a.style.left=((DKP.side==='l'?DKV+DKMV+16:16))+'px';a.style.top=(FLD.id?VH-SAFE.b-150:(DKP.side==='b'?DR.top-62:VH-66))+'px';
+  x.style.display='flex';x.style.left=Math.max(4,r.left-16)+'px';x.style.top=Math.max(4,r.top-16)+'px';
+  L.push({el:d,a:1,rad:.5},{el:a,a:1,rad:1},{el:x,a:1,rad:1});}
+ else{if(WRH)WRH.style.display='none';if(WDEL)WDEL.style.display='none';
+  if(FLD.addAt){var a2=wadEnsure();a2.style.display='flex';a2.style.left=Math.max(8,Math.min(VW-58,FLD.addAt.x-25))+'px';a2.style.top=Math.max(8,FLD.addAt.y-80)+'px';L.push({el:a2,a:1,rad:1});}else if(WAD)WAD.style.display='none';}
+ if(FLD.id){var h=fhomeEnsure();h.style.display='flex';h.style.left=(VW/2-30)+'px';h.style.top=(VH-SAFE.b-84)+'px';L.push({el:h,a:1,rad:1});}else if(FHM)FHM.style.display='none';
+ fbSet(L);}
+function wrhPlace(){fbUpdate();}
 function wfFind(t){for(var i=0;i<WFL.length;i++)if(WFL[i].el.contains(t))return WFL[i];return null;}
 function wfDetach(el,x,y){
+ var inF=el.parentNode===inn[9];
  CH.on=0;CH.s=0;CH.drag=0;CH.rel=0;dirty=true;   /* заряд від утримання на віджеті скасовується: pointerup відкріпленого віджета до нього не доходить */
  if(PRS.has(el)){PRS.delete(el);el.style.scale='';el.style.translate='';}   /* анімація натискання більше не керує цим віджетом */
  var w=wfFind(el);if(!w){w={el:el,dx:0,dy:0,vx:0,vy:0,ex:0,ey:0,evx:0,evy:0,home:0,taps:0,lt:0};WFL.push(w);
-  w.z=el.style.zIndex;w.pos=el.style.position;el.style.position='relative';el.style.zIndex='6';el.classList.add('wfd');LG('egg','віджет від\'єднано');}
+  w.z=el.style.zIndex;w.pos=el.style.position;if(!inF)el.style.position='relative';el.style.zIndex='6';el.classList.add('wfd');LG('egg','віджет від\'єднано');}
  WFcur=w;WF.drag={w:w,x0:x,y0:y,dx0:w.dx,dy0:w.dy,lx:x,ly:y,lt:performance.now(),mv:0};w.vx=w.vy=0;w.evx-=1.5;w.evy-=1.5;wfKick();
 }
 /* віджети, над якими висить від'єднаний, притлумлюються; прямокутники від'єднаних — для шару скла */
@@ -6674,7 +6742,7 @@ function wfStep(t){
   if(now-(D.pv||0)>140&&Math.hypot(w.vx,w.vy)<700){D.pv=now;try{wfSlot(w,true);w.dx=D.dx0+e.clientX-D.x0;w.dy=D.dy0+e.clientY-D.y0;}catch(er){}}
   wfKick();},true);
  ['pointerup','pointercancel'].forEach(function(n){window.addEventListener(n,function(e){var D=WF.drag;if(!D)return;e.stopPropagation();WF.drag=null;var w=D.w;
-  if(w.el.parentNode===inn[9]&&FLD.id){var Fz=FOLDERS[FLD.id],wid=wgIdOf(w.el),zz=FLD.zoom||1;if(Fz&&Fz.pos[wid]){Fz.pos[wid].x=Math.max(0,Math.round(Fz.pos[wid].x+w.dx/zz));Fz.pos[wid].y=Math.max(60,Math.round(Fz.pos[wid].y+w.dy/zz));foldSave();}w.dx=w.dy=0;w.vx=w.vy=0;w.home=1;wlApply(9);needSync[9]=1;tlStale[9]=1;wfKick();return;}
+  if(w.el.parentNode===inn[9]&&FLD.id){var Fz=FOLDERS[FLD.id],wid=wgIdOf(w.el),zz=FLD.zoom||1;if(Fz&&Fz.pos[wid]){Fz.pos[wid].x=Math.max(0,Math.round(Fz.pos[wid].x+w.dx/zz));Fz.pos[wid].y=Math.max(60,Math.round(Fz.pos[wid].y+w.dy/zz));foldSave();}w.dx=w.dy=0;w.vx=w.vy=0;w.home=0;wlApply(9);needSync[9]=1;tlStale[9]=1;wfKick();return;}
   if(performance.now()-D.lt>90){w.vx*=.2;w.vy*=.2;}var sp=Math.hypot(w.vx,w.vy);if(sp>3000){w.vx*=3000/sp;w.vy*=3000/sp;}
   if(D.mv<6){w.evx-=1.2;w.evy+=1.2;}
   else if(sp<160){try{if(wfSlot(w)){w.home=1;w.vx=w.vy=0;LG('egg','віджет опущено в сітку');}}catch(err){console.error(err);}}   /* повільне відпускання — стає в сітку; кидок — летить */
