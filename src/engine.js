@@ -639,7 +639,7 @@ function dkDraw(){
  if(!ready){dkOK=0;return;}
  var tt=BAL_TREND>0?[.04,.98,.36]:BAL_TREND<0?[1,.03,.07]:[.8,.82,.9];
  var dtn=0;for(var q0=0;q0<3;q0++){dkTint[q0]+=(tt[q0]-dkTint[q0])*.08;dtn+=Math.abs(tt[q0]-dkTint[q0]);}if(dtn>.02)dirty=true;
- var sig=VW+'|'+Math.round(DR.width)+'|'+Math.round(DR.height);if(sig===dkSig&&dkOK)return;dkSig=sig;
+ var sig=VW+'|'+Math.round(DR.width)+'|'+Math.round(DR.height)+'|'+Math.round(DKP.sq*60);if(sig===dkSig&&dkOK)return;dkSig=sig;
  var x=dkXx,c=cells();
  x.setTransform(2,0,0,2,0,0);x.clearRect(0,0,VW,76);
  x.textAlign='center';x.textBaseline='middle';
@@ -648,14 +648,16 @@ function dkDraw(){
   var cxk=c.cx(k);
   var w=0;
   var mix=BAL_TREND===0?.12:0,tr=255*(dkTint[0]*(1-mix)+mix),tg=255*(dkTint[1]*(1-mix)+mix),tb=255*(dkTint[2]*(1-mix)+mix),r=Math.round(255+(tr-255)*w),g=Math.round(255+(tg-255)*w),b=Math.round(255+(tb-255)*w);
-  var col='rgb('+r+','+g+','+b+')',al=1;
+  var col='rgb('+r+','+g+','+b+')',al=1,sqf=Math.max(0,Math.min(1.2,DKP.sq)),offx=0;
+  if(k===3){offx=(DR.width/2-(P.ix+P.iw/2))*sqf;}else al=Math.max(0,1-sqf*1.5);
+  if(al<.01)continue;
   dkTc.clearRect(0,0,48,48);dkTc.globalCompositeOperation='source-over';dkTc.drawImage(dkImg[k],0,0,48,48);
   dkTc.globalCompositeOperation='source-in';dkTc.fillStyle=col;dkTc.fillRect(0,0,48,48);
   if(w>.03){var gx=P.ix+P.iw/2,gy=P.iy+P.iw/2,gc=Math.round(255*dkTint[0])+','+Math.round(255*dkTint[1])+','+Math.round(255*dkTint[2]),gr=x.createRadialGradient(gx,gy,0,gx,gy,24);gr.addColorStop(0,'rgba('+gc+','+(.45*w).toFixed(2)+')');gr.addColorStop(1,'rgba('+gc+',0)');x.globalAlpha=1;x.fillStyle=gr;x.fillRect(gx-24,gy-24,48,48);}
   x.globalAlpha=al;
-  x.drawImage(dkTmp,P.ix,P.iy,P.iw,P.iw);
+  x.drawImage(dkTmp,P.ix+offx,P.iy,P.iw,P.iw);
   x.font='600 10px '+(dkFam||'sans-serif');x.fillStyle=col;
-  x.fillText(btns[k].getAttribute('aria-label')||'',P.lx,P.ly);
+  x.fillText(btns[k].getAttribute('aria-label')||'',P.lx+offx,P.ly);
   x.shadowBlur=0;x.globalAlpha=1;
  }
  dkOK=1;atlDkCh=1;
@@ -699,7 +701,7 @@ function setOn(i){btns.forEach(function(o,k){o.classList.toggle('on',k===slotOf[
 /* ---- закріплення дока: затисни й перетягни до будь-якого краю — внизу/вгорі док горизонтальний, ліворуч/праворуч вертикальний; прилипає пружиною.
    Усередині док лишається «віртуальним» горизонтальним (DR, x, cells()); на екран його переносить відображення dkPt (транспонування при m=1) ---- */
 
-var DKP={side:'b',m:0,x:0,y:0,vx:0,vy:0,vm:0,tx:0,ty:0,tm:0,ex:0,ey:0,drag:0,lf:0,init:0,trans:0,lp:0,sx:0,sy:0,pid:-1,mk:''},DKM=10,DKV=36,DKMV=6;
+var DKP={side:'b',m:0,x:0,y:0,vx:0,vy:0,vm:0,tx:0,ty:0,tm:0,ex:0,ey:0,drag:0,lf:0,sq:0,sqv:0,init:0,trans:0,lp:0,sx:0,sy:0,pid:-1,mk:''},DKM=10,DKV=36,DKMV=6;
 try{var dks0=localStorage.getItem('vf-dock-side');if(dks0==='l'||dks0==='r')DKP.side=dks0;}catch(_){}
 function dkVc(){return{x:DR.left+DR.width/2,y:DR.top+DR.height/2};}
 function dkHome(side){var h=DR.height,vc=dkVc();
@@ -718,6 +720,7 @@ function dkU(e){var vc=dkVc(),dx=e.clientX-DKP.ex,dy=e.clientY-DKP.ey;return DKP
 function kbScreen(hh){var c=cells(),vc=dkVc(),m=DKP.m,du=c.cx(KS)-vc.x,a=dkAway(DKP.side),d=hh*dkHideDist(DKP.side);return{x:DKP.x+du*(1-m)+a[0]*d,y:DKP.y+du*m+a[1]*d};}
 function dkStep(dt,hh){
  if(!DR.width||!VW)return false;
+ var sqT=FLD.id?1:0,sqm=Math.abs(sqT-DKP.sq)>.002||Math.abs(DKP.sqv)>.02;if(sqm){var sh2=dt/2,q2;for(q2=0;q2<2;q2++){DKP.sqv+=(150*(sqT-DKP.sq)-10.5*DKP.sqv)*sh2;DKP.sq+=DKP.sqv*sh2;}}else DKP.sq=sqT;
  var lg=DKP.drag?1:0,lm=Math.abs(lg-DKP.lf)>.004;DKP.lf+=(lg-DKP.lf)*Math.min(1,dt*14);if(!lm)DKP.lf=lg;
  var side=DKP.side,home=dkHome(side),a=dkAway(side),mv=false;
  if(!DKP.init){DKP.init=1;DKP.x=DKP.tx=home.x;DKP.y=DKP.ty=home.y;DKP.m=DKP.tm=home.m;dkInsets();}
@@ -738,7 +741,7 @@ function dkStep(dt,hh){
  /* DOM-кнопки: той самий перенос, щоб натискання потрапляли в скло */
  var Wd=DR.width,Hd=DR.height,mt=DKP.tm>.5?'matrix(0,1,'+(DKV/Hd).toFixed(4)+',0,'+(DKP.ex-DKV/2-DR.left).toFixed(2)+','+(DKP.ey-Wd/2-DR.top).toFixed(2)+')':'translate3d('+(DKP.ex-Wd/2-DR.left).toFixed(2)+'px,'+(DKP.ey-Hd/2-DR.top).toFixed(2)+'px,0)';
  if(DKP.mk!==mt){DKP.mk=mt;btnsBox.style.transform=mt;}
- return mv||!!DKP.drag||lm;
+ return mv||!!DKP.drag||lm||sqm;
 }
 var TKP={side:'t',m:0,x:0,y:0,vx:0,vy:0,vm:0,tx:0,ty:0,tm:0,sg:0,tsg:0,ex:0,ey:0,drag:0,lf:0,init:0,trans:0,lp:0,sx:0,sy:0,pid:-1,mk:''},TKM=8,TKV=56,TKMV=6,tkHide=0;
 /* тікер завжди зверху: перенесення вимкнено */
@@ -867,7 +870,7 @@ var TAB_ROOT=['insights','debts','home'];
 function tabAtRoot(i){try{return i>2||nav.getState().screen===TAB_ROOT[i];}catch(e){return true;}}   /* з будь-якої підсторінки повторний тап по вкладці повертає на її початкову сторінку */
 function actTab(i){if(FLD.id)closeFolder();try{app.activateButton(TAB_IDS[i]);}catch(err){console.error(err);}}
 dock.addEventListener('pointerdown',function(e){
- e.preventDefault();if(mode===1)return;
+ e.preventDefault();if(mode===1)return;if(FLD.id){closeFolder();return;}
  kbClick=false;
  var c=cells(),px=dkU(e),grab=x!==null&&Math.abs(px-x)<c.cw/2+4,sl=slotAt(c,px);
  clearTimeout(DKP.lp);DKP.sx=e.clientX;DKP.sy=e.clientY;DKP.pid=e.pointerId;DKP.lp=setTimeout(dkLift,360);
@@ -1410,7 +1413,7 @@ function frame(t){
  var settled=!drag&&Math.abs(target-x)<0.05&&Math.abs(v)<0.5&&Math.abs(j)<0.002&&Math.abs(jv)<0.05;
  if(settled){x=target;v=0;j=0;jv=0;}
  /* панель ховається під клавіатуру / повертається */
- var hT=((mode===1&&op.age>.14)||(mode===2&&cl.age<A1-.06)||(sheetOn&&DKP.side!=='b')||FLD.id||boot.hold||BH.ph===3||(menu.on&&menu.kind==='more'&&DKP.side==='b'))?1:0;
+ var hT=((mode===1&&op.age>.14)||(mode===2&&cl.age<A1-.06)||(sheetOn&&DKP.side!=='b')||boot.hold||BH.ph===3||(menu.on&&menu.kind==='more'&&DKP.side==='b'))?1:0;
  if(hide!==hT){hide+=(hT-hide)*(1-Math.exp(-dt*9));if(Math.abs(hT-hide)<.002)hide=hT;dirty=true;}
  var off=hide*hideOff();lastOff=off;
  var dkMov=dkStep(dt,hide);if(dkMov)dirty=true;
@@ -1507,10 +1510,10 @@ function frame(t){
   gl.uniform4f(U.u_g,(G.cx-R.x)*S,(G.cy-R.y)*S,G.hw*S,G.hh*S);gl.uniform1f(U.u_gr,G.r*S);gl.uniform1f(U.u_gv,(menuA>0.002||gm)?G.v:0);
   gl.uniform4f(U.u_p1,(f2-ca)*VW,f2<NP?sy[f2]:0,Bt?Bt.ch:1,(Bt&&BH.ph!==3)?1:0);
   gl.uniform2f(U.u_res,cv.width,cv.height);gl.uniform2f(U.u_org,R.x,R.y);gl.uniform2f(U.u_vp,VW,VH);gl.uniform1f(U.u_s,S);
-  var dm0=DKP.m,kc0=1-dm0+(DKV/DR.height)*dm0,dvc=dkVc(),dsw=DR.width/2+(ps.l+ps.r)/2,dsh=(DR.height/2+.22*Math.max(ps.l,ps.r,0))*kc0,dao=(ps.r-ps.l)/2,dxa=(x===null?c.cx(KS):x)-dvc.x,dxk=c.cx(KS)-dvc.x,dkh=(DR.height/2-12+bump*7.75)*kc0;
+  var dm0=DKP.m,kc0=1-dm0+(DKV/DR.height)*dm0,dvc=dkVc(),dsw=Math.max(18,DR.width/2+(DR.height/2+6-DR.width/2)*DKP.sq)+(ps.l+ps.r)/2,dsh=(DR.height/2+.22*Math.max(ps.l,ps.r,0))*kc0,dao=(ps.r-ps.l)/2,dxa=((x===null?c.cx(KS):x)-dvc.x)*(1-DKP.sq),dxk=c.cx(KS)-dvc.x,dkh=(DR.height/2-12+bump*7.75)*kc0;
   gl.uniform4f(U.u_a,(DKP.ex+dao*(1-dm0)-R.x)*S,(DKP.ey+dao*dm0-R.y)*S,(dsw*(1-dm0)+dsh*dm0)*S*(1+.07*DKP.lf),(dsh*(1-dm0)+dsw*dm0)*S*(1+.07*DKP.lf));
   gl.uniform4f(U.u_b,(DKP.ex+dxa*(1-dm0)-R.x)*S,(DKP.ey+dxa*dm0-R.y)*S,(hw*(1-dm0)+hh*kc0*dm0)*S,(hh*kc0*(1-dm0)+hw*dm0)*S);
-  gl.uniform4f(U.u_k,(DKP.ex+dxk*(1-dm0)-R.x)*S,(DKP.ey+dxk*dm0-R.y)*S,(27*(1-dm0)+dkh*dm0)*S,(dkh*(1-dm0)+27*dm0)*S);gl.uniform1f(U.u_kv,bump);
+  gl.uniform4f(U.u_k,(DKP.ex+dxk*(1-dm0)-R.x)*S,(DKP.ey+dxk*dm0-R.y)*S,(27*(1-dm0)+dkh*dm0)*S,(dkh*(1-dm0)+27*dm0)*S);gl.uniform1f(U.u_kv,bump*Math.max(0,1-DKP.sq*1.6));
   if(pr&&pr.w>.5&&pr.h>.5){gl.uniform4f(U.u_c,(pr.x-R.x)*S,(pr.y-R.y)*S,pr.w*S,pr.h*S);gl.uniform1f(U.u_cv,1);gl.uniform1f(U.u_nk,pr.nk*S);gl.uniform1f(U.u_bl,(pr.bl||0)*S);}
   else{gl.uniform4f(U.u_c,0,0,0,0);gl.uniform1f(U.u_cv,0);gl.uniform1f(U.u_bl,0);}
   var bmv=0,bsv=0,shOK=(SH.on&&SH.ready)?1:0;

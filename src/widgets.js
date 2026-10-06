@@ -32,7 +32,7 @@ function closeFolder(){if(!FLD.id||FLD.anim)return;WFL.slice().forEach(function(
  foldTween(S0,420,function(){FLD.id=null;sel=2;ca=2;rec.pg.v=0;rec.pg.tx=rec.pg.ty=0;renderPages();fbUpdate();dirty=true;});}
 function foldAdd(){var n=Object.keys(FOLDERS).length+1,nm='Папка '+n;try{var r=window.prompt('Назва папки',nm);if(r===null)return;nm=(r||nm).trim().slice(0,24)||nm;}catch(e){}var id='k'+Date.now().toString(36);FOLDERS[id]={n:nm,wg:[]};foldSave();WG.push('f:'+id);wgSave();renderPages();}
 function wgCur(){return FLD.id&&FOLDERS[FLD.id]?FOLDERS[FLD.id].wg:WG;}
-function wgPut(id){var L=wgCur();if(L.indexOf(id)>=0){toast('Цей віджет уже тут');return;}L.push(id);if(FLD.id){var F=FOLDERS[FLD.id];if(FLD.addAt){F.pos=F.pos||{};F.pos[id]={x:Math.max(0,Math.round((FLD.addAt.x-FLD.tx)/FLD.zoom)),y:Math.max(60,Math.round((FLD.addAt.y-FLD.ty)/FLD.zoom))};FLD.addAt=null;}foldSave();}else wgSave();renderPages();fbUpdate();}
+function wgPut(id){var L=wgCur();if(L.indexOf(id)>=0){toast('Цей віджет уже тут');return;}L.push(id);if(FLD.id){var F=FOLDERS[FLD.id];F.pos=F.pos||{};var ax=FLD.addAt?FLD.addAt.x:VW*.22,ay=FLD.addAt?FLD.addAt.y:VH*.42;F.pos[id]={x:Math.max(0,Math.round((ax-FLD.tx)/FLD.zoom)),y:Math.max(60,Math.round((ay-FLD.ty)/FLD.zoom))};FLD.addAt=null;foldSave();}else wgSave();renderPages();fbUpdate();}
 /* кнопка «+»: маленька випливашка «Віджети / Папку», далі список віджетів */
 function wgAddMenu(anchor){
  var items=[{v:'w',l:'Віджети'}];if(!FLD.id)items.push({v:'f',l:'Папку'});
@@ -43,7 +43,7 @@ function wgAddMenu(anchor){
 /* масштаб папки щипком: більше/менше колонок — віджети стискаються й перебудовуються */
 (function(){var P={},pan=null,lp=0,lp0=null;function d(){var k=Object.keys(P);if(k.length<2)return 0;var a=P[k[0]],b=P[k[1]];return Math.hypot(a.x-b.x,a.y-b.y);}
  function mid(){var k=Object.keys(P),a=P[k[0]],b=P[k[1]];return{x:(a.x+b.x)/2,y:(a.y+b.y)/2};}
- root.addEventListener('pointerdown',function(e){if(!FLD.id||FLD.anim)return;var tg=e.target;
+ root.addEventListener('pointerdown',function(e){if(!FLD.id||FLD.anim)return;var tg=e.target;if(e.isPrimary){P={};pan=null;FLD.d0=0;}
   if(WFL.length&&!(tg.closest&&tg.closest('.wfd'))){WFL.slice().forEach(function(w){w.home=1;});wfKick();}   /* дотик по порожньому місцю виходить із режиму редагування */
   if(FLD.addAt){FLD.addAt=null;fbUpdate();}
   P[e.pointerId]={x:e.clientX,y:e.clientY};clearTimeout(lp);

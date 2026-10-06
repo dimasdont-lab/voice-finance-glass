@@ -1060,7 +1060,6 @@ function fbUpdate(){
   L.push({el:d,a:1,rad:.5},{el:a,a:1,rad:1},{el:x,a:1,rad:1});}
  else{if(WRH)WRH.style.display='none';if(WDEL)WDEL.style.display='none';
   if(FLD.addAt){var a2=wadEnsure();a2.style.display='flex';a2.style.left=Math.max(8,Math.min(VW-58,FLD.addAt.x-25))+'px';a2.style.top=Math.max(8,FLD.addAt.y-80)+'px';L.push({el:a2,a:1,rad:1});}else if(WAD)WAD.style.display='none';}
- if(FLD.id){var h=fhomeEnsure();h.style.display='flex';h.style.left=(VW/2-30)+'px';h.style.top=(VH-SAFE.b-84)+'px';L.push({el:h,a:1,rad:1});}else if(FHM)FHM.style.display='none';
  fbSet(L);}
 function wrhPlace(){fbUpdate();}
 function wfFind(t){for(var i=0;i<WFL.length;i++)if(WFL[i].el.contains(t))return WFL[i];return null;}
@@ -1084,11 +1083,12 @@ function wfKick(){if(!WFraf){WFlast=performance.now();WFraf=requestAnimationFram
 function wfStep(t){
  WFraf=0;var dt=Math.min(.033,Math.max(.001,(t-WFlast)/1000)),sig=0,mv=0;WFlast=t;
  WFL.slice().forEach(function(w){
-  var el=w.el,r=el.getBoundingClientRect(),hcx=r.left+r.width/2-w.dx,hcy=r.top+r.height/2-w.dy,hw=el.offsetWidth/2,hh=el.offsetHeight/2,n=3,h=dt/n;
+  var el=w.el,inF=el.parentNode===inn[9]&&FLD.id,zf=inF?FLD.zoom:1;if(inF&&!(WF.drag&&WF.drag.w===w)&&!w.home){w.vx=w.vy=0;}
+  var r=el.getBoundingClientRect(),hcx=r.left+r.width/2-w.dx,hcy=r.top+r.height/2-w.dy,hw=el.offsetWidth/2,hh=el.offsetHeight/2,n=3,h=dt/n;
   for(var k=0;k<n;k++){
    var dr=WF.drag&&WF.drag.w===w;
    if(w.home){w.vx+=(-140*w.dx-18*w.vx)*h;w.vy+=(-140*w.dy-18*w.vy)*h;w.dx+=w.vx*h;w.dy+=w.vy*h;}
-   else if(!dr){var fr=Math.exp(-h*.3);w.vx*=fr;w.vy*=fr;w.dx+=w.vx*h;w.dy+=w.vy*h;
+   else if(!dr&&!inF){var fr=Math.exp(-h*.3);w.vx*=fr;w.vy*=fr;w.dx+=w.vx*h;w.dy+=w.vy*h;
     var cx=hcx+w.dx,cy=hcy+w.dy;
     if(cx-hw<0&&w.vx<0||cx+hw>VW&&w.vx>0){if(cx-hw<0)w.dx+=hw-cx;else w.dx-=cx+hw-VW;var vn=Math.abs(w.vx);w.vx=-w.vx*.82;w.evx-=Math.min(5,vn*.004);w.evy+=Math.min(3,vn*.002);}
     if(cy-hh<0&&w.vy<0||cy+hh>VH&&w.vy>0){if(cy-hh<0)w.dy+=hh-cy;else w.dy-=cy+hh-VH;var vn2=Math.abs(w.vy);w.vy=-w.vy*.82;w.evy-=Math.min(5,vn2*.004);w.evx+=Math.min(3,vn2*.002);}}
@@ -1098,7 +1098,7 @@ function wfStep(t){
    w.ex=Math.max(-.22,Math.min(.22,w.ex));w.ey=Math.max(-.22,Math.min(.22,w.ey));
   }
   var jx=1+w.ex-w.ey*.4,jy=1+w.ey-w.ex*.4;
-  el._ps={s:1,jx:jx,jy:jy,dx:w.dx,dy:w.dy};el.style.translate=w.dx.toFixed(2)+'px '+w.dy.toFixed(2)+'px';el.style.scale=jx.toFixed(4)+' '+jy.toFixed(4);
+  el._ps={s:1,jx:jx,jy:jy,dx:w.dx/zf,dy:w.dy/zf};el.style.translate=(w.dx/zf).toFixed(2)+'px '+(w.dy/zf).toFixed(2)+'px';el.style.scale=jx.toFixed(4)+' '+jy.toFixed(4);
   sig+=w.dx*.01+w.dy*.013+jx+jy;
   var moving=(WF.drag&&WF.drag.w===w)||Math.abs(w.vx)+Math.abs(w.vy)>.6||Math.abs(w.ex)+Math.abs(w.ey)+Math.abs(w.evx)*.02+Math.abs(w.evy)*.02>.002;
   if(w.home&&Math.abs(w.dx)+Math.abs(w.dy)<.4&&Math.abs(w.vx)+Math.abs(w.vy)<3&&Math.abs(w.ex)+Math.abs(w.ey)<.003){wfAttach(w);return;}
