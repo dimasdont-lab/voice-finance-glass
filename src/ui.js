@@ -226,13 +226,17 @@ function curSheetOn(){return !!curSheet&&sheetP.on===1;}
 function layoutSheet(){
  if(!curSheet)return;
  var el=curSheet.el,body=curSheet.body,m=vvm(),kb=(VH-(m.t+m.h))>100,w=Math.min(VW-20,520);
- var bottom=m.t+m.h-10-(kb?0:SAFE.b),maxH=Math.max(200,bottom-Math.max(SAFE.t,14)-60);
+ /* вікно ринку тримається найближчої точки тікера: під ним, над ним або збоку */
+ var place=curSheet.kind==='marketSheet'?TKP.side:'',lx=null,tkh=tkThick();
+ if(place==='l'){var l0=TKP.x+TKV/2+10;w=Math.min(520,VW-l0-10);lx=l0;}else if(place==='r'){w=Math.min(520,TKP.x-TKV/2-20);lx=TKP.x-TKV/2-10-w;}
+ var bottom=m.t+m.h-10-(kb?0:SAFE.b);if(place==='b')bottom=Math.min(bottom,TKP.y-tkh/2-10);
+ var topMin=place==='t'?TKP.y+tkh/2+10:Math.max(SAFE.t,14),maxH=Math.max(200,bottom-topMin-(place==='t'?0:60));
  var sb=body.scrollTop,se=el.scrollTop;   /* висота auto на мить скидає прокрутку в 0 — запам'ятовуємо й повертаємо */
  el.style.width=w+'px';el.style.height='auto';body.style.height='auto';
  var h=Math.min(body.scrollHeight,maxH);
  el.style.height=h+'px';body.style.height='100%';
  if(sb)body.scrollTop=sb;if(se)el.scrollTop=se;
- var left=m.l+(m.w-w)/2,top=bottom-h;
+ var left=lx!==null?lx:m.l+(m.w-w)/2,top=bottom-h;if(place==='t')top=topMin;else if(place==='l'||place==='r')top=Math.max(Math.max(SAFE.t,14),Math.min(bottom-h,tkPA.y-h/2));
  el.style.left=left+'px';el.style.top=top+'px';
  sheetP.tx=left;sheetP.ty=top;sheetP.tw=w;sheetP.th=h;sheetP.rise=VH-top+24;
  SH.x=left;SH.y=top;dirty=true;
