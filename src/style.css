@@ -150,7 +150,6 @@ input{font:inherit;color:inherit}
 #boot.lit .blogo{box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 36px rgba(255,70,80,.4);transition:box-shadow .7s ease-out}
 #boot .blogo img{display:block;width:100%;height:100%}
 #boot .bbar{display:none}
-#boot .blogo,#boot .bglow,#boot .brays{opacity:0!important}
 /* смуга біля краю скла: вміст там малює шейдер із заломленням, тому живий DOM біля краю прозорий */
 .rim{-webkit-mask-image:linear-gradient(to right,transparent 14px,#000 30px,#000 calc(100% - 30px),transparent calc(100% - 14px)),linear-gradient(to bottom,transparent 14px,#000 30px,#000 calc(100% - 30px),transparent calc(100% - 14px));-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent 14px,#000 30px,#000 calc(100% - 30px),transparent calc(100% - 14px)),linear-gradient(to bottom,transparent 14px,#000 30px,#000 calc(100% - 30px),transparent calc(100% - 14px));mask-composite:intersect}
 #boot.gx .brays,#boot.gx .bglow{display:none!important}
