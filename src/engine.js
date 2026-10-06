@@ -1008,7 +1008,7 @@ function recStep(dt){
  var tg={pg:Math.min(2,dd+mo+sh),mn:sh,sh:dd&&sh?1:0};
  var top={ox:VW/2,oy:0,tx:0,ty:-.05*VH},ul={ox:0,oy:0,tx:-.045*VW,ty:-.04*VH},mv=false;
  /* налаштування над «Додатково»: шари розходяться — екран тягнеться до лівого краю, панель до правого кута */
- var ulS={ox:VW/2,oy:VH,tx:0,ty:1.08*VH},trc={ox:VW,oy:0,tx:.05*VW,ty:-.05*VH};
+ var ulS={ox:VW/2,oy:VH,tx:0,ty:1.08*VH},trc={ox:VW,oy:VH/2,tx:(menu.left?-1:1)*.8*VW,ty:0};
  var drw=menu.left?{ox:VW,oy:VH/2,tx:.5*VW+10,ty:0}:{ox:0,oy:VH/2,tx:-(.5*VW+10),ty:0};   /* бокова панель: сторінка зсувається вліво (разом зі стисненням −20%) */
  var L={pg:sh?ulS:dd?top:mo?drw:ul,mn:dd?top:trc,sh:top};   /* меню-випадайка (dd) ділить шар mn і мусить рухатись разом із аркушем */
  ['pg','mn','sh'].forEach(function(k){
@@ -1373,7 +1373,7 @@ function frame(t){
  if(menu.s>0||menu.on)stepMenu(dt);
  if(sheetP.s>0||sheetP.on)stepSheet(dt);
  {var mnRim=(menu.on&&MN.ready&&menu.s>.995&&!menu.dragging&&rec.mn.v<.003)?1:0,ae0=document.activeElement,typ0=ae0&&(ae0.tagName==='INPUT'||ae0.tagName==='TEXTAREA')&&sheetsEl.contains(ae0),
-   shRim=(curSheetOn()&&SH.on&&SH.ready&&sheetP.s>.995&&!sheetP.dragging&&rec.sh.v<.003&&SH.el&&curSheet.el.scrollTop<1&&!typ0)?1:0;
+   shRim=(0&&curSheetOn()&&SH.on&&SH.ready&&sheetP.s>.995&&!sheetP.dragging&&rec.sh.v<.003&&SH.el&&curSheet.el.scrollTop<1&&!typ0)?1:0;
   if(menu.el._rim!==mnRim){menu.el._rim=mnRim;menu.el.classList.toggle('rim',!!mnRim);dirty=true;}
   if(curSheet&&curSheet.el._rim!==shRim){curSheet.el._rim=shRim;curSheet.el.classList.toggle('rim',!!shRim);dirty=true;}
   FRM={m:mnRim,s:shRim};}

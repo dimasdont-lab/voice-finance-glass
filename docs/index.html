@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-06 12:51 UTC';
+<script>window.__VF_BUILD='2026-10-06 12:52 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -4170,7 +4170,7 @@ function recStep(dt){
  var tg={pg:Math.min(2,dd+mo+sh),mn:sh,sh:dd&&sh?1:0};
  var top={ox:VW/2,oy:0,tx:0,ty:-.05*VH},ul={ox:0,oy:0,tx:-.045*VW,ty:-.04*VH},mv=false;
  /* налаштування над «Додатково»: шари розходяться — екран тягнеться до лівого краю, панель до правого кута */
- var ulS={ox:VW/2,oy:VH,tx:0,ty:1.08*VH},trc={ox:VW,oy:0,tx:.05*VW,ty:-.05*VH};
+ var ulS={ox:VW/2,oy:VH,tx:0,ty:1.08*VH},trc={ox:VW,oy:VH/2,tx:(menu.left?-1:1)*.8*VW,ty:0};
  var drw=menu.left?{ox:VW,oy:VH/2,tx:.5*VW+10,ty:0}:{ox:0,oy:VH/2,tx:-(.5*VW+10),ty:0};   /* бокова панель: сторінка зсувається вліво (разом зі стисненням −20%) */
  var L={pg:sh?ulS:dd?top:mo?drw:ul,mn:dd?top:trc,sh:top};   /* меню-випадайка (dd) ділить шар mn і мусить рухатись разом із аркушем */
  ['pg','mn','sh'].forEach(function(k){
@@ -4535,7 +4535,7 @@ function frame(t){
  if(menu.s>0||menu.on)stepMenu(dt);
  if(sheetP.s>0||sheetP.on)stepSheet(dt);
  {var mnRim=(menu.on&&MN.ready&&menu.s>.995&&!menu.dragging&&rec.mn.v<.003)?1:0,ae0=document.activeElement,typ0=ae0&&(ae0.tagName==='INPUT'||ae0.tagName==='TEXTAREA')&&sheetsEl.contains(ae0),
-   shRim=(curSheetOn()&&SH.on&&SH.ready&&sheetP.s>.995&&!sheetP.dragging&&rec.sh.v<.003&&SH.el&&curSheet.el.scrollTop<1&&!typ0)?1:0;
+   shRim=(0&&curSheetOn()&&SH.on&&SH.ready&&sheetP.s>.995&&!sheetP.dragging&&rec.sh.v<.003&&SH.el&&curSheet.el.scrollTop<1&&!typ0)?1:0;
   if(menu.el._rim!==mnRim){menu.el._rim=mnRim;menu.el.classList.toggle('rim',!!mnRim);dirty=true;}
   if(curSheet&&curSheet.el._rim!==shRim){curSheet.el._rim=shRim;curSheet.el.classList.toggle('rim',!!shRim);dirty=true;}
   FRM={m:mnRim,s:shRim};}
