@@ -960,13 +960,55 @@ function lensTap(){if(BH.ph)return false;var now=performance.now();BHtap.n=now-B
 
 /* ---------- віджет, що від'єднується: довгий тап по віджету — його можна тягнути й кидати (невагомість, відскок від країв, желе);
    поки від'єднаний, його кнопки неактивні; подвійний тап — повертається на місце ---------- */
-var WFL=[],WFraf=0,WFlast=0;
+var WFL=[],WFraf=0,WFlast=0,WFcur=null;
+/* ---- розкладка віджетів: ширина в колонках (1–4), мінімальна висота й порядок — на пристрої (localStorage), не у фінансових даних ---- */
+var WL=(function(){try{return JSON.parse(localStorage.getItem('vf-widgets')||'{}')||{};}catch(e){return{};}})();
+function wlSave(){try{localStorage.setItem('vf-widgets',JSON.stringify(WL));}catch(e){}}
+function wlKey(el){var hh=el.querySelector('h2,.lbl,.mh,.big'),tx=((hh&&hh.textContent)||'').trim().slice(0,28)||el.className;return[].indexOf.call(inn,el.parentNode)+':'+tx;}
+function wlApply(i){var host=inn[i];if(!host||i>2||!WL)return;var ch=host.children,chg=false,k;
+ for(k=0;k<ch.length;k++){var el=ch[k],tile=el.classList.contains('tile'),dd=tile?WL[wlKey(el)]:null;
+  var gc=(dd&&dd.s&&dd.s<4)?'span '+dd.s:'',mh=(dd&&dd.h)?dd.h+'px':'',od=String((dd&&dd.o!=null)?dd.o:k*10);
+  if(el._gc!==gc||el._mh!==mh||el._od!==od){el._gc=gc;el._mh=mh;el._od=od;el.style.gridColumn=gc;el.style.minHeight=mh;el.style.order=od;chg=true;}}
+ if(chg){needSync[i]=1;tlStale[i]=1;dirty=true;}}
+for(var wli=0;wli<3;wli++)wlApply(wli);
+/* м'яке опускання віджета в сітку: стає на місце найближчого, решта розсуваються */
+function wfSlot(w){
+ var el=w.el,host=el.parentNode,pi=[].indexOf.call(inn,host);if(pi<0||pi>2)return false;
+ var tiles=[].filter.call(host.children,function(x){return x.classList.contains('tile');}),r0=el.getBoundingClientRect(),cx=r0.left+r0.width/2,cy=r0.top+r0.height/2;
+ var best=null,bd=1e9;tiles.forEach(function(x){if(x===el)return;var r=x.getBoundingClientRect(),dd=Math.hypot(r.left+r.width/2-cx,r.top+r.height/2-cy);if(dd<bd){bd=dd;best=x;}});
+ if(!best)return false;
+ var ord=tiles.slice().sort(function(m,n){return(+m.style.order||0)-(+n.style.order||0);}),slots=ord.map(function(x){return+x.style.order||0;});
+ ord.splice(ord.indexOf(el),1);var bi=ord.indexOf(best),rb=best.getBoundingClientRect(),after=cy>rb.top+rb.height/2||(Math.abs(cy-(rb.top+rb.height/2))<rb.height/3&&cx>rb.left+rb.width/2);
+ ord.splice(bi+(after?1:0),0,el);
+ ord.forEach(function(x,k){x.style.order=String(slots[k]);x._od=String(slots[k]);var key=wlKey(x);WL[key]=Object.assign(WL[key]||{},{o:slots[k]});});
+ wlSave();needSync[pi]=1;tlStale[pi]=1;
+ var r1=el.getBoundingClientRect();w.dx+=(r0.left+r0.width/2)-(r1.left+r1.width/2);w.dy+=(r0.top+r0.height/2)-(r1.top+r1.height/2);   /* візуально лишається там, де відпустили, й пружиною їде в нове місце */
+ return true;
+}
+/* ручка зміни розміру: скляна кнопка шейдера на куті віджета, що літає */
+var WRH=null,WRZ=null;
+function wrhEnsure(){
+ if(WRH)return WRH;var d=document.createElement('div');d.id='wfh';d.setAttribute('aria-label','Змінити розмір');
+ d.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M10 19 19 10M15 19l4-4"/></svg>';document.body.appendChild(d);WRH=d;
+ d.addEventListener('pointerdown',function(e){var w=WFcur;if(!w)return;e.stopPropagation();e.preventDefault();try{d.setPointerCapture(e.pointerId);}catch(_){}
+  var host=w.el.parentNode,cs=getComputedStyle(host);WRZ={w:w,id:e.pointerId,x0:e.clientX,y0:e.clientY,w0:w.el.offsetWidth,h0:w.el.offsetHeight,iw:host.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),pi:[].indexOf.call(inn,host)};});
+ d.addEventListener('pointermove',function(e){var Z=WRZ;if(!Z||e.pointerId!==Z.id)return;e.preventDefault();
+  var cell=(Z.iw-36)/4,span=Math.max(1,Math.min(4,Math.round((Z.w0+e.clientX-Z.x0+12)/(cell+12)))),h=Math.max(64,Math.round(Z.h0+e.clientY-Z.y0)),key=wlKey(Z.w.el);
+  WL[key]=Object.assign(WL[key]||{},{s:span,h:h});wlApply(Z.pi);wfKick();});
+ ['pointerup','pointercancel'].forEach(function(n){d.addEventListener(n,function(e){if(!WRZ||e.pointerId!==WRZ.id)return;WRZ=null;wlSave();LG('egg','розмір віджета збережено');});});
+ return d;
+}
+function wrhPlace(){
+ if(!WFL.length||!WFcur||WFL.indexOf(WFcur)<0){if(WRH&&WRH.style.display!=='none'){WRH.style.display='none';if(!GX.on)fbSet([]);}return;}
+ var d=wrhEnsure(),r=WFcur.el.getBoundingClientRect();d.style.display='flex';d.style.left=Math.min(VW-40,Math.max(4,r.right-34))+'px';d.style.top=Math.min(VH-40,Math.max(4,r.bottom-34))+'px';
+ if(!GX.on)fbSet([{el:d,a:1,rad:.5}]);
+}
 function wfFind(t){for(var i=0;i<WFL.length;i++)if(WFL[i].el.contains(t))return WFL[i];return null;}
 function wfDetach(el,x,y){
  if(PRS.has(el)){PRS.delete(el);el.style.scale='';el.style.translate='';}   /* анімація натискання більше не керує цим віджетом */
  var w=wfFind(el);if(!w){w={el:el,dx:0,dy:0,vx:0,vy:0,ex:0,ey:0,evx:0,evy:0,home:0,taps:0,lt:0};WFL.push(w);
   w.z=el.style.zIndex;w.pos=el.style.position;el.style.position='relative';el.style.zIndex='6';el.classList.add('wfd');LG('egg','віджет від\'єднано');}
- WF.drag={w:w,x0:x,y0:y,dx0:w.dx,dy0:w.dy,lx:x,ly:y,lt:performance.now(),mv:0};w.vx=w.vy=0;w.evx-=1.5;w.evy-=1.5;wfKick();
+ WFcur=w;WF.drag={w:w,x0:x,y0:y,dx0:w.dx,dy0:w.dy,lx:x,ly:y,lt:performance.now(),mv:0};w.vx=w.vy=0;w.evx-=1.5;w.evy-=1.5;wfKick();
 }
 /* віджети, над якими висить від'єднаний, притлумлюються; прямокутники від'єднаних — для шару скла */
 function wfUnder(){
@@ -1000,7 +1042,7 @@ function wfStep(t){
   if(w.home&&Math.abs(w.dx)+Math.abs(w.dy)<.4&&Math.abs(w.vx)+Math.abs(w.vy)<3&&Math.abs(w.ex)+Math.abs(w.ey)<.003){wfAttach(w);return;}
   if(!moving){w.vx=w.vy=0;}else mv=1;
  });
- WF.n=WFL.length;WF.mv=mv;wfUnder();PRSIG='wf'+sig.toFixed(3);dirty=true;
+ WF.n=WFL.length;WF.mv=mv;wfUnder();wrhPlace();PRSIG='wf'+sig.toFixed(3)+(WRZ?'z':'');dirty=true;
  if(mv)WFraf=requestAnimationFrame(wfStep);
 }
 (function(){
@@ -1017,14 +1059,16 @@ function wfStep(t){
  /* жести на від'єднаному віджеті: перетягування, кидок, подвійний тап; кнопки всередині неактивні */
  window.addEventListener('pointerdown',function(e){if(BH.ph)return;var w=wfFind(e.target);if(!w)return;e.stopPropagation();if(e.cancelable)e.preventDefault();
   var now=performance.now();if(now-w.lt<320&&Math.hypot(e.clientX-w.lx,e.clientY-w.ly)<30){w.home=1;w.lt=0;WF.drag=null;LG('egg','подвійний тап — віджет додому');wfKick();return;}
-  w.lt=now;w.lx=e.clientX;w.ly=e.clientY;w.home=0;WF.drag={w:w,x0:e.clientX,y0:e.clientY,dx0:w.dx,dy0:w.dy,lx:e.clientX,ly:e.clientY,lt:now,mv:0};w.vx=w.vy=0;wfKick();},true);
+  WFcur=w;w.lt=now;w.lx=e.clientX;w.ly=e.clientY;w.home=0;WF.drag={w:w,x0:e.clientX,y0:e.clientY,dx0:w.dx,dy0:w.dy,lx:e.clientX,ly:e.clientY,lt:now,mv:0};w.vx=w.vy=0;wfKick();},true);
  window.addEventListener('pointermove',function(e){var D=WF.drag;if(!D)return;e.stopPropagation();if(e.cancelable)e.preventDefault();
   var now=performance.now(),w=D.w,dtm=Math.max(1,now-D.lt)/1000,k=Math.min(1,dtm*18);
   w.vx+=((e.clientX-D.lx)/dtm-w.vx)*k;w.vy+=((e.clientY-D.ly)/dtm-w.vy)*k;D.mv+=Math.abs(e.clientX-D.lx)+Math.abs(e.clientY-D.ly);D.lx=e.clientX;D.ly=e.clientY;D.lt=now;
   w.dx=D.dx0+e.clientX-D.x0;w.dy=D.dy0+e.clientY-D.y0;wfKick();},true);
  ['pointerup','pointercancel'].forEach(function(n){window.addEventListener(n,function(e){var D=WF.drag;if(!D)return;e.stopPropagation();WF.drag=null;var w=D.w;
   if(performance.now()-D.lt>90){w.vx*=.2;w.vy*=.2;}var sp=Math.hypot(w.vx,w.vy);if(sp>3000){w.vx*=3000/sp;w.vy*=3000/sp;}
-  if(D.mv<6){w.evx-=1.2;w.evy+=1.2;}wfKick();},true);});
+  if(D.mv<6){w.evx-=1.2;w.evy+=1.2;}
+  else if(sp<160){try{if(wfSlot(w)){w.home=1;w.vx=w.vy=0;LG('egg','віджет опущено в сітку');}}catch(err){console.error(err);}}   /* повільне відпускання — стає в сітку; кидок — летить */
+  wfKick();},true);});
  window.addEventListener('click',function(e){if(WF.sup||wfFind(e.target)){e.stopPropagation();e.preventDefault();}},true);
  ['touchstart','touchmove'].forEach(function(n){window.addEventListener(n,function(e){var t=e.touches[0];if(!t)return;if(WF.drag||(n==='touchstart'&&wfFind(e.target))){if(e.cancelable)e.preventDefault();e.stopPropagation();}},{capture:true,passive:false});});
 })();

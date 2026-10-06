@@ -49,7 +49,7 @@ var NP=PAGE_IDS.length;
 var PAGE_OF={};PAGE_IDS.forEach(function(n,i){PAGE_OF[n]=i;});
 var root=document.getElementById('pages'),pg=[],inn=[];
 PAGE_IDS.forEach(function(id){
- var s=document.createElement('section');s.className='page';s.dataset.p=id;s.innerHTML='<div class="inner"></div>';
+ var s=document.createElement('section');s.className='page';s.dataset.p=id;s.innerHTML='<div class="inner'+(PAGE_IDS.indexOf(id)<3?' g4':'')+'"></div>';
  root.appendChild(s);pg.push(s);inn.push(s.firstChild);
 });
 
@@ -62,6 +62,7 @@ function setBlocks(i,list){
   else if(el.dataset.sig!==sig){el.className=it.c;el.innerHTML=it.h;el.dataset.sig=sig;}
  }
  while(host.children.length>list.length)host.removeChild(host.lastChild);
+ if(i<3&&typeof wlApply==='function')wlApply(i);
 }
 function B_(c,h){return{c:c,h:h};}
 

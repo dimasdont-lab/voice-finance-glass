@@ -340,7 +340,9 @@ textarea[data-sy]{width:100%;box-sizing:border-box;background:rgba(255,255,255,.
 .fr.rng input[type=range]{display:block;width:100%;margin:0;box-sizing:border-box}
 
 /* від'єднаний віджет лишається повністю скляним; віджети під ним притлумлюються (wfUnder) */
-.wfu{opacity:.14!important;transition:opacity .18s}
+.inner.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:12px}
+.inner.g4>div{grid-column:1/-1;min-width:0}
+#wfh{position:fixed;z-index:37;width:36px;height:36px;display:none;align-items:center;justify-content:center;touch-action:none;color:#fff;-webkit-tap-highlight-color:transparent}
 
 /* утримання пальця (хвиля, від'єднання віджета) не виділяє текст і не відкриває системне меню; поля вводу виділяються як звичайно */
 html,body,#pages,#dock,#ticker,#sheets,#menu{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}

@@ -305,7 +305,7 @@ function drawTilesS(S){
    var t=list[j];if(BH.ph&&i!==sel&&t.lv>0)continue;
    var ia=t.blk._ia,pbk=t.blk._ps,pe=t.el!==t.blk?t.el._ps:null,sc=(ia?ia.s:1)*k*(pbk?pbk.s:1)*(pe?pe.s:1),c0=tf(t.l+t.w/2,t.t+t.h/2,t.bcx,t.bcy,ia,t.blk),cx=c0[0]+(pe?pe.dx:0),cy=c0[1]+(pe?pe.dy:0),hw=t.w/2*sc*(pbk&&pbk.jx||1),hh=t.h/2*sc*(pbk&&pbk.jy||1),rr=t.r*sc*Math.min(pbk&&pbk.jx||1,pbk&&pbk.jy||1);
    if(cx+hw<-40||cx-hw>VW+40||cy+hh<-40||cy-hh>VH+40)continue;
-   if(WF.n&&!t.blk.classList.contains('wfd')&&WF.rects.some(function(q){return cx>q[0]&&cx<q[2]&&cy>q[1]&&cy<q[3];}))continue;   /* під від'єднаним віджетом */
+   /* під від'єднаним віджетом */
    tgR[n*4]=cx*S;tgR[n*4+1]=cy*S;tgR[n*4+2]=hw*S;tgR[n*4+3]=hh*S;
    tgM[n*4]=Math.min(rr*S,hw*S,hh*S);tgM[n*4+1]=t.hot*(t.lv===2?CG.ib/45:CG.bal/45);tgM[n*4+2]=ia?ia.a:1;tgM[n*4+3]=t.lv;
    if(t.gu){tgGU[n*4]=t.gu[0];tgGU[n*4+1]=t.gu[1];tgGU[n*4+2]=t.el.classList.contains('chw')?-t.gu[2]:t.gu[2];tgGU[n*4+3]=t.gu[3];if(!t.el._gx){t.el.classList.add('gxh');t.el._gx=1;}t.el._gf=TGF;}else{tgGU[n*4]=tgGU[n*4+1]=tgGU[n*4+2]=tgGU[n*4+3]=0;}
