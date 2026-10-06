@@ -47,8 +47,8 @@ GLSL_BG,
 '  float R=r.z*(280.+26.*min(r.w,9.)),w=(34.+r.z*46.)*(.8+.25*r.w),x=(L-R)/w,fa=1.-r.z/1.7;float env=exp(-x*x*.8)*fa*fa*smoothstep(0.,60.,L);o+=dr/L*sin(x*2.2)*env*6.4*r.w;mA=max(mA,r.w);gb+=env*min(r.w,4.)*1.8;}   /* сітка яскравішає під кільцем хвилі й тане разом із нею */',
 '  p+=o/(1.+length(o)/(9.*mA));}',
 ' if(abs(u_ch.z)>.001){vec2 dc=p-u_ch.xy;float s=u_ch.z,sa=abs(s),L=length(dc)+.001,q=L/(70.+90.*sa);vec2 dr=dc/L;',
-'  float pk=smoothstep(.5,1.,sa),ph=sin(u_bt*(24.+26.*sa));p+=dr*s*sa*46.*q*exp(-q*q)*(1.+.2*pk*ph);',                                              /* стягування до пальця (сильніше, росте з зарядом) */
-'  gb+=sa*(2.8*exp(-q*q)+1.1*exp(-q*q*.12))*(1.+.8*pk*ph);}',
+'  float pk=smoothstep(.45,1.,sa),ph=sin(u_bt*(24.+26.*sa)),qc=L/(26.+34.*sa);p+=dr*s*sa*46.*q*exp(-q*q)+dr*pk*ph*sa*13.*qc*exp(-qc*qc);',                                              /* стягування до пальця (сильніше, росте з зарядом) */
+'  gb+=sa*(2.8*exp(-q*q)+1.1*exp(-q*q*.12))+pk*ph*sa*2.6*exp(-qc*qc*.9);}',
 ' {vec2 df=p0-u_fg.xy;gb+=u_fg.z*2.4*exp(-dot(df,df)/9025.);}',   /* під пальцем сітка світиться яскравіше */
 ' gBoost=min(gb,6.);',
 ' if(u_bh.w>.001){vec2 d=p-u_bh.xy;float L=max(length(d),1.),R=u_bh.z,k=u_bh.w;',
