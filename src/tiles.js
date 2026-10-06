@@ -159,7 +159,7 @@ nseg?(' for(int l=0;l<4;l++){if(float(l)>=u_nl||px.y<tkb)break;vec4 bb=u_lb[l];i
   if(tgl.getProgramParameter(bp,tgl.LINK_STATUS)){BG.p=bp;['u_vp','u_res','u_go','u_cell','u_isl','u_gcol','u_fx','u_fxk','u_clean','u_bh','u_rp','u_rn','u_ch','u_bt','u_fg'].forEach(function(n){BG.U[n]=tgl.getUniformLocation(bp,n);});}}
  if(!BG.p){console.error('tile bg program failed');return;}
  FX.main=p;tgl.useProgram(p);
- tgOK=true;GLASS_LINE_OK=NSEG>0;
+ tgOK=true;GLASS_LINE_OK=false;   /* скляні лінії графіків вимкнено назавжди: графіки — звичайні лінії; скло лише на барах */
  LG('glt','шар скла плиток: WebGL ok, uniform-векторів '+maxV+', ланок ліній '+NSEG);
 })();
 /* згладжування ламаної графіка (зрізання кутів): скло без «зламів» на вершинах */
@@ -178,7 +178,7 @@ function hexRgb(c){c=String(c||'').trim();var m;if((m=c.match(/var\((--[\w-]+)\)
  if((m=c.match(/rgba?\(\s*([\d.]+)[ ,]+([\d.]+)[ ,]+([\d.]+)/)))return[m[1]/255,m[2]/255,m[3]/255];return null;}
 var GA={key:'',cv:document.createElement('canvas'),W:2048,H:1024,tex:null,dirty:true,gen:0};
 GA.cv.width=GA.W;GA.cv.height=GA.H;GA.cx=GA.cv.getContext('2d');
-function glyphable(el){return!!(el&&el.matches&&el.matches('.chw,.split>button,.mini,.gnum')&&(el.classList.contains('chw')||(el.textContent||'').trim().length>0));}
+function glyphable(el){return!!(el&&el.matches&&el.matches('.split>button,.mini,.gnum')&&(el.textContent||'').trim().length>0);}
 function gaDraw(cx,t,ox,oy){
  var el=t.el,er=el.getBoundingClientRect(),sx=er.width/Math.max(1,el.offsetWidth)||1;
  cx.save();cx.translate(ox,oy);cx.scale(2,2);cx.beginPath();cx.rect(-26,-26,t.w+52,t.h+52);cx.clip();cx.textBaseline='middle';cx.textAlign='left';
@@ -210,7 +210,7 @@ function gaBuild(){
  GA.dirty=false;
 }
 function tlMeasure(i){
- var host=inn[i],ch=host.children,list=[],lines=[],gl=GLINES&&GLASS_LINE_OK,ir=null,kx=1,ky=1;
+ var host=inn[i],ch=host.children,list=[],lines=[],gl=false,ir=null,kx=1,ky=1;
  for(var k=0;k<ch.length;k++){var el=ch[k],r=tileRadius(el);
   if(!r&&(el.classList.contains('tools')||el.classList.contains('accs'))){[].forEach.call(el.querySelectorAll('.pillb,.aic'),function(c){var o=offIn(c,host);if(!o)return;var ai=c.classList.contains('aic'),bx=o[0]+c.offsetWidth/2,by=o[1]+c.offsetHeight/2;list.push({el:c,blk:el,bcx:bx,bcy:by,l:o[0],t:o[1],w:c.offsetWidth,h:c.offsetHeight,r:ai?c.offsetWidth*.3:c.offsetHeight/2,hot:0,lv:0,pill:1,c:ai?hexRgb(c.style.color):c.classList.contains('ac')?[1,.49,.51]:null});});continue;}
   if(!r)continue;

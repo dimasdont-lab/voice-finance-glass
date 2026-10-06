@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-06 16:59 UTC';
+<script>window.__VF_BUILD='2026-10-06 17:02 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -534,6 +534,13 @@ input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text;-webk
 .inner.g4>.tile.cmp .empty{font-size:12.5px;padding:0;margin:0;order:2;flex-basis:100%;text-align:left}
 .inner.g4>.tile.cmp .wb .bar.wv{display:flex}
 .inner.g4>.tile.cmp .wbars{align-items:flex-end;gap:4px}
+/* пружинний «хвіст» прокрутки на упорі: вміст тягнеться за пальцем (кнопки йдуть разом із текстом) */
+#menu.more>*,.sbody>*{transform:translate3d(0,var(--ov,0px),0)}
+/* єдина товщина скляних смуг — як у віджета «Можна сьогодні» */
+.bar{height:7px!important;border-radius:4px!important}.bar i{border-radius:4px!important}
+.cat .b{height:7px!important;border-radius:4px!important}.cat .b i{border-radius:4px!important}
+.wpb .bar{height:7px!important}
+.wb .bar.wv{max-width:9px!important;border-radius:4px!important}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -4534,19 +4541,23 @@ function animLog(t){
 var FRM={m:0,s:0},VSL=[];
 /* прокрутка «Додатково» й вікон рахується тут, а не браузером: на iPhone нативна прокрутка йде окремим потоком і випереджає скло на кадр — текст «відклеювався» від кнопок */
 function vsBind(el){
- if(!el||el._vs)return;var o={el:el,v:0,ly:0,lt:0,on:0};el._vs=o;el.style.overflowY='hidden';el.style.touchAction='none';VSL.push(o);
+ if(!el||el._vs)return;var o={el:el,v:0,ly:0,lt:0,on:0,ov:0,ovv:0};el._vs=o;el.style.overflowY='hidden';el.style.touchAction='none';VSL.push(o);
  el.addEventListener('touchstart',function(e){var t=e.touches[0];if(!t)return;o.on=1;o.ly=t.clientY;o.lt=e.timeStamp;o.v=0;},{passive:true});
  el.addEventListener('touchmove',function(e){var t=e.touches[0];if(!o.on||!t||e.touches.length>1)return;var dy=t.clientY-o.ly,dt=Math.max(1,e.timeStamp-o.lt);o.ly=t.clientY;o.lt=e.timeStamp;
-  var mx=el.scrollHeight-el.clientHeight;if(mx<=0)return;if(el.scrollTop<=0&&dy>0){o.v=0;return;}   /* у самому верху тягнемо вниз — це жест закриття */
-  el.scrollTop=Math.max(0,Math.min(mx,el.scrollTop-dy));o.v=.6*o.v+.4*(-dy/dt*1000);dirty=true;},{passive:true});
+  var mx=el.scrollHeight-el.clientHeight;if(mx<=0)return;var ny=el.scrollTop-dy;
+  if(ny<0||ny>mx){o.ov+=dy*.5/(1+Math.abs(o.ov)/50);o.ovv=0;ny=ny<0?0:mx;}else if(o.ov){o.ov*=.5;if(Math.abs(o.ov)<.5)o.ov=0;}   /* упор: ліниво тягнеться за пальцем, а потім пружинить назад */
+  el.scrollTop=ny;o.v=.6*o.v+.4*(-dy/dt*1000);dirty=true;},{passive:true});
  el.addEventListener('touchend',function(e){if(e.timeStamp-o.lt>90)o.v=0;o.on=0;},{passive:true});
+ el.addEventListener('pointerup',function(){o.on=0;});
  el.addEventListener('touchcancel',function(){o.on=0;o.v=0;},{passive:true});
  el.addEventListener('wheel',function(e){var mx=el.scrollHeight-el.clientHeight;if(mx<=0)return;e.preventDefault();el.scrollTop=Math.max(0,Math.min(mx,el.scrollTop+e.deltaY));dirty=true;},{passive:false});
 }
 function vsStep(dt){
  for(var i=VSL.length-1;i>=0;i--){var o=VSL[i];if(!o.el.isConnected){VSL.splice(i,1);continue;}
+  if(!o.on&&(o.ov||o.ovv)){o.ovv+=(-170*o.ov-20*o.ovv)*dt;o.ov+=o.ovv*dt;if(Math.abs(o.ov)<.2&&Math.abs(o.ovv)<2){o.ov=0;o.ovv=0;}dirty=true;}
+  var ovs=o.ov?o.ov.toFixed(1)+'px':'0px';if(o.el._ovs!==ovs){o.el._ovs=ovs;o.el.style.setProperty('--ov',ovs);}
   if(o.on||Math.abs(o.v)<6){if(!o.on)o.v=0;continue;}
-  var el=o.el,mx=el.scrollHeight-el.clientHeight,y=el.scrollTop+o.v*dt;if(y<=0||y>=mx){y=Math.max(0,Math.min(mx,y));o.v=0;}
+  var el=o.el,mx=el.scrollHeight-el.clientHeight,y=el.scrollTop+o.v*dt;if(y<=0||y>=mx){o.ovv=-o.v*.18;o.ov=0;y=Math.max(0,Math.min(mx,y));o.v=0;}
   el.scrollTop=y;o.v*=Math.exp(-2.2*dt);dirty=true;}
 }
 function frame(t){
@@ -5103,7 +5114,7 @@ nseg?(' for(int l=0;l<4;l++){if(float(l)>=u_nl||px.y<tkb)break;vec4 bb=u_lb[l];i
   if(tgl.getProgramParameter(bp,tgl.LINK_STATUS)){BG.p=bp;['u_vp','u_res','u_go','u_cell','u_isl','u_gcol','u_fx','u_fxk','u_clean','u_bh','u_rp','u_rn','u_ch','u_bt','u_fg'].forEach(function(n){BG.U[n]=tgl.getUniformLocation(bp,n);});}}
  if(!BG.p){console.error('tile bg program failed');return;}
  FX.main=p;tgl.useProgram(p);
- tgOK=true;GLASS_LINE_OK=NSEG>0;
+ tgOK=true;GLASS_LINE_OK=false;   /* скляні лінії графіків вимкнено назавжди: графіки — звичайні лінії; скло лише на барах */
  LG('glt','шар скла плиток: WebGL ok, uniform-векторів '+maxV+', ланок ліній '+NSEG);
 })();
 /* згладжування ламаної графіка (зрізання кутів): скло без «зламів» на вершинах */
@@ -5122,7 +5133,7 @@ function hexRgb(c){c=String(c||'').trim();var m;if((m=c.match(/var\((--[\w-]+)\)
  if((m=c.match(/rgba?\(\s*([\d.]+)[ ,]+([\d.]+)[ ,]+([\d.]+)/)))return[m[1]/255,m[2]/255,m[3]/255];return null;}
 var GA={key:'',cv:document.createElement('canvas'),W:2048,H:1024,tex:null,dirty:true,gen:0};
 GA.cv.width=GA.W;GA.cv.height=GA.H;GA.cx=GA.cv.getContext('2d');
-function glyphable(el){return!!(el&&el.matches&&el.matches('.chw,.split>button,.mini,.gnum')&&(el.classList.contains('chw')||(el.textContent||'').trim().length>0));}
+function glyphable(el){return!!(el&&el.matches&&el.matches('.split>button,.mini,.gnum')&&(el.textContent||'').trim().length>0);}
 function gaDraw(cx,t,ox,oy){
  var el=t.el,er=el.getBoundingClientRect(),sx=er.width/Math.max(1,el.offsetWidth)||1;
  cx.save();cx.translate(ox,oy);cx.scale(2,2);cx.beginPath();cx.rect(-26,-26,t.w+52,t.h+52);cx.clip();cx.textBaseline='middle';cx.textAlign='left';
@@ -5154,7 +5165,7 @@ function gaBuild(){
  GA.dirty=false;
 }
 function tlMeasure(i){
- var host=inn[i],ch=host.children,list=[],lines=[],gl=GLINES&&GLASS_LINE_OK,ir=null,kx=1,ky=1;
+ var host=inn[i],ch=host.children,list=[],lines=[],gl=false,ir=null,kx=1,ky=1;
  for(var k=0;k<ch.length;k++){var el=ch[k],r=tileRadius(el);
   if(!r&&(el.classList.contains('tools')||el.classList.contains('accs'))){[].forEach.call(el.querySelectorAll('.pillb,.aic'),function(c){var o=offIn(c,host);if(!o)return;var ai=c.classList.contains('aic'),bx=o[0]+c.offsetWidth/2,by=o[1]+c.offsetHeight/2;list.push({el:c,blk:el,bcx:bx,bcy:by,l:o[0],t:o[1],w:c.offsetWidth,h:c.offsetHeight,r:ai?c.offsetWidth*.3:c.offsetHeight/2,hot:0,lv:0,pill:1,c:ai?hexRgb(c.style.color):c.classList.contains('ac')?[1,.49,.51]:null});});continue;}
   if(!r)continue;

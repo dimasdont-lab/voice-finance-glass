@@ -1326,19 +1326,23 @@ function animLog(t){
 var FRM={m:0,s:0},VSL=[];
 /* прокрутка «Додатково» й вікон рахується тут, а не браузером: на iPhone нативна прокрутка йде окремим потоком і випереджає скло на кадр — текст «відклеювався» від кнопок */
 function vsBind(el){
- if(!el||el._vs)return;var o={el:el,v:0,ly:0,lt:0,on:0};el._vs=o;el.style.overflowY='hidden';el.style.touchAction='none';VSL.push(o);
+ if(!el||el._vs)return;var o={el:el,v:0,ly:0,lt:0,on:0,ov:0,ovv:0};el._vs=o;el.style.overflowY='hidden';el.style.touchAction='none';VSL.push(o);
  el.addEventListener('touchstart',function(e){var t=e.touches[0];if(!t)return;o.on=1;o.ly=t.clientY;o.lt=e.timeStamp;o.v=0;},{passive:true});
  el.addEventListener('touchmove',function(e){var t=e.touches[0];if(!o.on||!t||e.touches.length>1)return;var dy=t.clientY-o.ly,dt=Math.max(1,e.timeStamp-o.lt);o.ly=t.clientY;o.lt=e.timeStamp;
-  var mx=el.scrollHeight-el.clientHeight;if(mx<=0)return;if(el.scrollTop<=0&&dy>0){o.v=0;return;}   /* у самому верху тягнемо вниз — це жест закриття */
-  el.scrollTop=Math.max(0,Math.min(mx,el.scrollTop-dy));o.v=.6*o.v+.4*(-dy/dt*1000);dirty=true;},{passive:true});
+  var mx=el.scrollHeight-el.clientHeight;if(mx<=0)return;var ny=el.scrollTop-dy;
+  if(ny<0||ny>mx){o.ov+=dy*.5/(1+Math.abs(o.ov)/50);o.ovv=0;ny=ny<0?0:mx;}else if(o.ov){o.ov*=.5;if(Math.abs(o.ov)<.5)o.ov=0;}   /* упор: ліниво тягнеться за пальцем, а потім пружинить назад */
+  el.scrollTop=ny;o.v=.6*o.v+.4*(-dy/dt*1000);dirty=true;},{passive:true});
  el.addEventListener('touchend',function(e){if(e.timeStamp-o.lt>90)o.v=0;o.on=0;},{passive:true});
+ el.addEventListener('pointerup',function(){o.on=0;});
  el.addEventListener('touchcancel',function(){o.on=0;o.v=0;},{passive:true});
  el.addEventListener('wheel',function(e){var mx=el.scrollHeight-el.clientHeight;if(mx<=0)return;e.preventDefault();el.scrollTop=Math.max(0,Math.min(mx,el.scrollTop+e.deltaY));dirty=true;},{passive:false});
 }
 function vsStep(dt){
  for(var i=VSL.length-1;i>=0;i--){var o=VSL[i];if(!o.el.isConnected){VSL.splice(i,1);continue;}
+  if(!o.on&&(o.ov||o.ovv)){o.ovv+=(-170*o.ov-20*o.ovv)*dt;o.ov+=o.ovv*dt;if(Math.abs(o.ov)<.2&&Math.abs(o.ovv)<2){o.ov=0;o.ovv=0;}dirty=true;}
+  var ovs=o.ov?o.ov.toFixed(1)+'px':'0px';if(o.el._ovs!==ovs){o.el._ovs=ovs;o.el.style.setProperty('--ov',ovs);}
   if(o.on||Math.abs(o.v)<6){if(!o.on)o.v=0;continue;}
-  var el=o.el,mx=el.scrollHeight-el.clientHeight,y=el.scrollTop+o.v*dt;if(y<=0||y>=mx){y=Math.max(0,Math.min(mx,y));o.v=0;}
+  var el=o.el,mx=el.scrollHeight-el.clientHeight,y=el.scrollTop+o.v*dt;if(y<=0||y>=mx){o.ovv=-o.v*.18;o.ov=0;y=Math.max(0,Math.min(mx,y));o.v=0;}
   el.scrollTop=y;o.v*=Math.exp(-2.2*dt);dirty=true;}
 }
 function frame(t){
