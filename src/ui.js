@@ -37,8 +37,8 @@ function moreHtml(){
 function openMore(){
  var w=Math.round(VW*.7),el=menu.el;   /* бокова скляна сторінка: 70% ширини, на всю висоту, радіус екрана iPhone */
  el.className='more';el.innerHTML=moreHtml();el.style.display='block';
- el.style.paddingTop=(Math.max(SAFE.t,14)+14)+'px';el.style.paddingBottom=(SAFE.b+28)+'px';
- var lf=(DKP.side==='r');showMenu('more',el.innerHTML,{x:lf?0:VW-w,y:0,w:w,h:VH},lf?0:VW,VH/2,62);menu.left=lf;if(lf)menu.slide=-(w+10);   /* док справа — панель виїжджає зліва направо */
+ el.style.paddingTop='22px';el.style.paddingBottom='22px';
+ var lf=(DKP.side==='r');showMenu('more',el.innerHTML,{x:lf?0:VW-w,y:45,w:w,h:VH-75},lf?0:VW,VH/2,62);menu.left=lf;if(lf)menu.slide=-(w+10);   /* док справа — панель виїжджає зліва направо */
  menu.shade.style.bottom='0';menu.shade.style.height='auto';
 }
 function openDropdown(anchor,items,cur,cb){
@@ -268,7 +268,7 @@ function showSheet(top){
  layoutSheet();
  if(!swap){sheetP.s=0;sheetP.vs=0;}
  sheetP.on=1;
- scrimEl.classList.add('on');scrimT=.3;sheetOn=1;dirty=true;
+ scrimEl.classList.add('on');scrimT=0;sheetOn=1;dirty=true;
  SH.el=body;sheetStale();
  showSheet.t=setTimeout(function(){if(curSheet&&curSheet.el===el){layoutSheet();SH.on=1;sheetStale();dirty=true;}},520);
 }
@@ -440,9 +440,9 @@ function gMove(x,y,t){
  if(!TG.drag){if(Math.hypot(dx,dy)<7)return;TG.drag=1;TG.moved=true;P.dragging=1;}
  var dt=Math.max(1,t-TG.tt);TG.vy=.6*TG.vy+.4*(y-TG.ty)/dt;TG.ty=y;TG.tt=t;
  var atTop=!TG.sc||TG.sc.scrollTop<=0&&TG.top0<=0,tg=P.tgt,pull=dy>14&&atTop&&dy>=Math.abs(dx)*1.6;   /* намір закрити: явно вниз, не по діагоналі, після невеликої «мертвої зони» */
- var sh=P===sheetP,sk=sh?.22:1,X=rb(dx)*sk,Y=pull?dy*(sh?.42:.8):rb(dy)*sk;   /* вікно налаштувань іде за пальцем ледь-ледь */
- tg.x=pull?dx*(sh?.06:.15):X;tg.y=Y;
- var ek=sh?.4:1,ex=Math.min(14*ek,Math.abs(tg.x)*.5*ek),ey=Math.min(16*ek,Math.abs(tg.y)*(pull?.18:.5)*ek);
+ var sh=P===sheetP,mre=P===menu&&menu.kind==='more',sk=sh?.22:mre?.33:1,X=rb(dx)*sk,Y=pull?dy*(sh?.42:mre?.27:.8):rb(dy)*sk;   /* вікно налаштувань іде за пальцем ледь-ледь */
+ tg.x=pull?dx*(sh?.06:mre?.05:.15):X;tg.y=Y;
+ var ek=sh?.4:mre?.33:1,ex=Math.min(14*ek,Math.abs(tg.x)*.5*ek),ey=Math.min(16*ek,Math.abs(tg.y)*(pull?.18:.5)*ek);
  tg.sx=(ex-.5*ey)/Math.max(60,P.tw);tg.sy=(ey-.5*ex)/Math.max(60,P.th);
  P.pull=pull;
 }
@@ -937,6 +937,10 @@ function lensTap(){if(BH.ph)return false;var now=performance.now();BHtap.n=now-B
   try{if(navigator.vibrate){navigator.vibrate(Math.round(5+s*22));return;}}catch(e){}
   try{if(!hapEl){var l=document.createElement('label');l.style.cssText='position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none';var i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');l.appendChild(i);document.body.appendChild(l);hapEl=l;}hapEl.click();}catch(e){}
  }
+ var rraf=0,rs0=0,rt0=0;
+ function relStep(){rraf=0;var tt=(performance.now()-rt0)/1000;if(tt>.9||CH.on){CH.rel=0;if(!CH.on)CH.s=0;dirty=true;return;}
+  CH.s=rs0*Math.exp(-5.2*tt)*Math.cos(12.5*tt);dirty=true;rraf=requestAnimationFrame(relStep);}
+ function relStart(s){rs0=s;rt0=performance.now();CH.rel=1;CH.s=s;if(!rraf)rraf=requestAnimationFrame(relStep);}
  function chStep(){raf=0;if(!CH.on)return;var now=performance.now(),h=(now-t0)/1000;
   CH.s=h<.2?0:Math.min(1,(h-.2)/1.5);
   if(CH.drag){CH.x+=(CH.tx-CH.x)*.28;CH.y+=(CH.ty-CH.y)*.28;}   /* стягнута точка тягнеться за пальцем із легким запізненням */
@@ -944,13 +948,13 @@ function lensTap(){if(BH.ph)return false;var now=performance.now();BHtap.n=now-B
   dirty=true;raf=requestAnimationFrame(chStep);}
  document.addEventListener('pointerdown',function(e){
   if(GX.on||(BH.ph&&BH.ph!==3)||!FGS.tw||WF.drag)return;var tg=e.target;
-  if(tg.closest&&tg.closest('.tile,.srch,button,input,textarea,select,a,[data-act],#dock,#ticker,#sheets,#menu'))return;   /* лише фон */
-  CH.on=1;CH.drag=0;CH.x=CH.tx=e.clientX;CH.y=CH.ty=e.clientY;CH.s=0;t0=performance.now();hapT=0;if(!raf)raf=requestAnimationFrame(chStep);},true);
+  if(tg.closest&&tg.closest('input,textarea,select,#dock,#ticker,#sheets,#menu,.eggd,.gxb,#gxmodes,#gal'))return;
+  CH.rel=0;CH.on=1;CH.drag=0;CH.x=CH.tx=e.clientX;CH.y=CH.ty=e.clientY;CH.s=0;t0=performance.now();hapT=0;if(!raf)raf=requestAnimationFrame(chStep);},true);
  document.addEventListener('pointermove',function(e){if(!CH.on)return;
-  if(CH.s>.12){CH.tx=e.clientX;CH.ty=e.clientY;CH.drag=1;}   /* вже заряджено: тягнемо стягнуту точку за пальцем */
-  else if(Math.hypot(e.clientX-CH.x,e.clientY-CH.y)>10){CH.on=0;CH.s=0;dirty=true;}},true);
- document.addEventListener('touchmove',function(e){if(CH.on&&CH.s>.12&&e.cancelable)e.preventDefault();},{capture:true,passive:false});   /* поки тягнемо заряд — сторінка не гортається */
- ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(e){if(!CH.on)return;var s=CH.s,x=n==='pointerup'?e.clientX:CH.x,y=n==='pointerup'?e.clientY:CH.y;CH.on=0;CH.s=0;CH.drag=0;dirty=true;
+  CH.tx=e.clientX;CH.ty=e.clientY;CH.drag=1;},true);   /* точка стягування завжди йде за пальцем */
+  ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(e){if(!CH.on)return;var s=CH.s,x=n==='pointerup'?e.clientX:CH.x,y=n==='pointerup'?e.clientY:CH.y;CH.on=0;CH.drag=0;dirty=true;
+  if(n!=='pointerup'||s<=.05){CH.s=0;return;}
+  CH.x=x;CH.y=y;relStart(s);   /* відпускання стартує з тієї ж деформації: стягнуте плавно відскакує в хвилю */
   if(n==='pointerup'&&s>.05){rippleAdd(x,y,1+8*s);try{if(navigator.vibrate)navigator.vibrate(30);}catch(e2){}LG('egg','накопичена хвиля '+Math.round(s*100)+'%'+(CH.tx!==x?' (перетягнута)':''));}},true);});
 })();
 

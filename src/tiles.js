@@ -46,9 +46,9 @@ GLSL_BG,
 ' if(u_rn>.5){vec2 o=vec2(0.);float mA=1.;for(int i=0;i<16;i++){if(float(i)>=u_rn)break;vec4 r=u_rp[i];vec2 dr=p-r.xy;float L=length(dr)+.001;',
 '  float R=r.z*(280.+26.*min(r.w,9.)),w=(34.+r.z*46.)*(.8+.25*r.w),x=(L-R)/w,fa=1.-r.z/1.7;float env=exp(-x*x*.8)*fa*fa*smoothstep(0.,60.,L);o+=dr/L*sin(x*2.2)*env*6.4*r.w;mA=max(mA,r.w);gb+=env*min(r.w,4.)*1.8;}   /* сітка яскравішає під кільцем хвилі й тане разом із нею */',
 '  p+=o/(1.+length(o)/(9.*mA));}',
-' if(u_ch.z>.001){vec2 dc=p-u_ch.xy;float s=u_ch.z,L=length(dc)+.001,q=L/(70.+90.*s);vec2 dr=dc/L;',
-'  float pk=smoothstep(.5,1.,s),ph=sin(u_bt*(24.+26.*s));p+=dr*s*s*46.*q*exp(-q*q)*(1.+.2*pk*ph);',                                              /* стягування до пальця (сильніше, росте з зарядом) */
-'  gb+=s*(2.8*exp(-q*q)+1.1*exp(-q*q*.12))*(1.+.8*pk*ph);}',
+' if(abs(u_ch.z)>.001){vec2 dc=p-u_ch.xy;float s=u_ch.z,sa=abs(s),L=length(dc)+.001,q=L/(70.+90.*sa);vec2 dr=dc/L;',
+'  float pk=smoothstep(.5,1.,sa),ph=sin(u_bt*(24.+26.*sa));p+=dr*s*sa*46.*q*exp(-q*q)*(1.+.2*pk*ph);',                                              /* стягування до пальця (сильніше, росте з зарядом) */
+'  gb+=sa*(2.8*exp(-q*q)+1.1*exp(-q*q*.12))*(1.+.8*pk*ph);}',
 ' {vec2 df=p0-u_fg.xy;gb+=u_fg.z*2.4*exp(-dot(df,df)/9025.);}',   /* під пальцем сітка світиться яскравіше */
 ' gBoost=min(gb,6.);',
 ' if(u_bh.w>.001){vec2 d=p-u_bh.xy;float L=max(length(d),1.),R=u_bh.z,k=u_bh.w;',
@@ -289,7 +289,7 @@ function drawTilesS(S){
  /* швидкий вихід без жодних виділень пам'яті: якщо сцена не змінилась з минулого малювання — нічого не робимо */
  {var qr=rec.pg,qs=0,qi,qst=false;for(qi=0;qi<NP;qi++){qs+=(sy[qi]||0)*(1.1+qi*.37);if(Math.abs(qi-ca)<1&&(tlStale[qi]||!TL[qi]))qst=true;}
   var qn=ca*7.3+VW*3.1+VH*1.7+S*5+gOX*1.3+gOY*2.1+GCOL[0]*11+GCOL[1]*13+GCOL[2]*17+qr.v*19+qr.ox*.3+qr.oy*.5+qr.tx*.7+qr.ty*.9+qs+CG.is+CG.ib*3+CG.bal*5+CG.gt*7+CG.gsat*9+CG.gbr*11+AREA_MODE*101+(AURA?Math.floor(performance.now()/66):0)*.37+FGgen*.71+GA.gen*13+tickerEl.offsetTop*.11;
-  if(!TCLEAN&&qn===drawTilesS.q&&tgW&&!qst&&!GA.dirty&&!intro.on&&!(typeof PRS!=='undefined'&&PRS.size)&&!(BH.ph===1||BH.ph===2)&&!RPn&&!CH.on&&!WF.n&&!(FGL.k>.004))return;drawTilesS.q=qn;}
+  if(!TCLEAN&&qn===drawTilesS.q&&tgW&&!qst&&!GA.dirty&&!intro.on&&!(typeof PRS!=='undefined'&&PRS.size)&&!(BH.ph===1||BH.ph===2)&&!RPn&&!CH.on&&!CH.rel&&!WF.n&&!(FGL.k>.004))return;drawTilesS.q=qn;}
  var rp=rec.pg,v=rp.v>.003?rp.v:0,k=v?kOf(v):1,n=0,ns=0,nl=0,sig=[ca.toFixed(3),VW,VH,S,gOX.toFixed(1),gOY.toFixed(1),GCOL.map(function(x){return x.toFixed(3);}).join(':'),v.toFixed(3),rp.ox.toFixed(1),rp.oy.toFixed(1),rp.tx.toFixed(1),rp.ty.toFixed(1),'am'+AREA_MODE,'tk'+tickerEl.offsetTop+'/'+tickerEl.offsetHeight,CG.is,CG.ib,CG.bal,CG.gt,CG.gsat,CG.gbr,PRSIG],i,j;
  var NEAR=BH.ph?1.01:1;   /* під час чорної діри скло малюється й для сусідніх вкладок */
  TGF++;for(i=0;i<NP;i++){if((Math.abs(i-ca)<NEAR||(BH.ph&&BH.pg.indexOf(i)>=0))&&(tlStale[i]||!TL[i]))tlMeasure(i);}

@@ -48,7 +48,7 @@ GLSL_BG,
 ' vec4 a=pageS(u_t0,u_p0,u_w.x,pp);a.rgb*=u_rp.w;c=c*(1.-a.a)+a.rgb;',
 ' vec4 b=pageS(u_t1,u_p1,u_w.y,pp);b.rgb*=u_rp.w;c=c*(1.-b.a)+b.rgb;',
 ' c*=(1.-u_scrim);',
-' if(gNS<.5){if(u_gv2>.01){float ds=sdRB(xpx-u_g2.xy,u_g2.zw,u_gr2);c*=mix(1.,.5,clamp(-ds/(1.5*u_s)+.5,0.,1.));}',
+' if(gNS<.5){',
 '  vec4 o=pageS(u_t2,u_p2,u_w.z,rt(p,u_rs,u_rt.zw));o.rgb*=u_rs.w;c=c*(1.-o.a)+o.rgb;}',
 ' return c;}',
 'vec4 tbS(sampler2D tx,vec2 pp){vec2 uv=vec2(pp.x/u_vp.x,1.-pp.y/u_vp.y);float m=step(0.,uv.x)*step(uv.x,1.)*step(0.,uv.y)*step(uv.y,1.);return texture2D(tx,clamp(uv,0.,1.))*m;}',
@@ -143,7 +143,7 @@ var FS_M1=['void main(){',
 ' {vec4 i0=dkS(px);float k0=i0.a*(1.-wI);rgb=rgb*(1.-k0)+i0.rgb*k0;a=a*(1.-k0)+k0;}',
 ' vec4 g1=vec4(0.),g2=vec4(0.);',
 ' if(dg<1.5*u_s){if(u_ord>.5)gNS=1.;g1=glassPx(px,u_g,u_gr,u_gv,dg,u_gd,u_gbl,u_gm);gNS=0.;}',
-' if(dg2<1.5*u_s){gNS=1.;g2=glassPx(px,u_g2,u_gr2,u_gv2,dg2,.5,u_gb2,0.);gNS=0.;',
+' if(dg2<1.5*u_s){gNS=1.;g2=glassPx(px,u_g2,u_gr2,u_gv2,dg2,1.,u_gb2,0.);gNS=0.;',
 '  if(u_sho>.5){vec2 pc=u_org+px/u_s;vec2 rq=rt(pc,u_rs,u_rt.zw);vec4 o=mix(pageS(u_t2,u_p2,u_w.z,rq),tbS(u_tb1,rq)*u_p2.w,u_bs);o.rgb*=u_rs.w;g2.rgb=g2.rgb*(1.-o.a)+o.rgb;}}',
 ' if(u_ord>.5){rgb=rgb*(1.-g1.a)+g1.rgb*g1.a;a=a*(1.-g1.a)+g1.a;rgb=rgb*(1.-g2.a)+g2.rgb*g2.a;a=a*(1.-g2.a)+g2.a;}',
 ' else{rgb=rgb*(1.-g2.a)+g2.rgb*g2.a;a=a*(1.-g2.a)+g2.a;rgb=rgb*(1.-g1.a)+g1.rgb*g1.a;a=a*(1.-g1.a)+g1.a;}',
@@ -958,7 +958,7 @@ function mkPanel(el,o){return Object.assign({on:0,s:0,vs:0,tx:0,ty:0,tw:0,th:0,r
 var menu=mkPanel(document.getElementById('menu'),{shade:document.getElementById('menuShade')});
 var sheetP=mkPanel(null,{r:62,mode:'rise'});
 /* ---- «відступ» шарів під верхнім шаром: зсув до місця відкриття, зменшення, м'яке розмиття ---- */
-var rec={pg:{v:0,ox:0,oy:0,tx:0,ty:0},mn:{v:0,ox:0,oy:0,tx:0,ty:0},sh:{v:0,ox:0,oy:0,tx:0,ty:0}},recMoving=false,RB=0,RD=.1;
+var rec={pg:{v:0,ox:0,oy:0,tx:0,ty:0},mn:{v:0,ox:0,oy:0,tx:0,ty:0},sh:{v:0,ox:0,oy:0,tx:0,ty:0}},recMoving=false,RB=0,RD=0;
 var pagesEl=document.getElementById('pages'),sheetsEl2=document.getElementById('sheets');
 var refAt=[0,0,0];
 function refreshTabs(t){      /* неактивні сторінки-вкладки перезнімаються у випадковий момент протягом ~хвилини */
@@ -1428,7 +1428,7 @@ function frame(t){
   gl.uniform4f(U.u_p0,(fl-ca)*VW,sy[fl],A?A.ch:1,(A&&BH.ph!==3)?1:0);gl.uniform3f(U.u_w,A?A.cw:1,Bt?Bt.cw:1,SH.cw);
   gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,SH.tex||dummy);gl.activeTexture(gl.TEXTURE0);
   gl.uniform4f(U.u_p2,SH.x,-SH.y,SH.ch,(SH.on&&SH.ready)?1:0);gl.uniform1f(U.u_scrim,scrimV);
-  var G=menu.g,G2=sheetP.g,gm=0,gdk=(menu.kind==='more'&&menu.on)?1:.5,gbl=2*BLS*Math.min(1,rec.pg.v);
+  var G=menu.g,G2=sheetP.g,gm=0,gdk=1,gbl=2*BLS*Math.min(1,rec.pg.v);
   if(boot.on&&boot.phase===2){G=boot.g;gm=1;gdk=.9;gbl=0;}
   gl.uniform1f(U.u_gm,gm);gl.uniform1f(U.u_gd,gdk);gl.uniform1f(U.u_gbl,gbl);gl.uniform1f(U.u_gb2,2*BLS*Math.min(1,rec.pg.v));gl.uniform2f(U.u_go,gOX,gOY);gl.uniform1f(U.u_isl,ISL);gl.uniform1f(U.u_cell,gridCell());gl.uniform3f(U.u_gcol,GCOL[0],GCOL[1],GCOL[2]);
   gl.uniform4f(U.u_rp,rec.pg.ox,rec.pg.oy,kOf(rec.pg.v),1-RD*rec.pg.v);gl.uniform4f(U.u_rs,rec.sh.ox,rec.sh.oy,kOf(rec.sh.v),1-RD*rec.sh.v);
