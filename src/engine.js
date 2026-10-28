@@ -1026,7 +1026,7 @@ function recStep(dt){
   if(o.v<.003&&tg[k]===0){o.ox=P.ox;o.oy=P.oy;o.tx=P.tx;o.ty=P.ty;}
   else{var f=1-Math.exp(-dt*8);o.ox+=(P.ox-o.ox)*f;o.oy+=(P.oy-o.oy)*f;o.tx+=(P.tx-o.tx)*f;o.ty+=(P.ty-o.ty)*f;}
  });
- if(FLD.id&&!sh&&!dd&&!mo){var q9=rec.pg;q9.v=100;q9.ox=0;q9.oy=0;q9.tx=FLD.tx/100;q9.ty=FLD.ty/100;mv=true;}   /* режим полотна папки */
+ if(FLD.id&&!sh&&!dd&&!mo){var q9=rec.pg,vk=FLD.zoom.toFixed(4)+','+FLD.tx.toFixed(1)+','+FLD.ty.toFixed(1);q9.v=100;q9.ox=0;q9.oy=0;q9.tx=FLD.tx/100;q9.ty=FLD.ty/100;if(vk!==rec.fk){rec.fk=vk;mv=true;}else mv=false;}   /* режим полотна папки */
  recMoving=mv;
  applyRec(pagesEl,rec.pg);
  var bsx=Math.min(1,rec.pg.v),bsv=bsx>.003?'blur('+(bsx*BLS).toFixed(1)+'px)':'';

@@ -4,7 +4,7 @@
 var WG_LIST=[
  {id:'clock',n:'Годинник і дата',s:2},{id:'today',n:'Можна витратити сьогодні',s:2},{id:'save',n:'Заощадження місяця',s:2},{id:'focus',n:'Головна витрата місяця',s:2},
  {id:'week',n:'Витрати за тиждень',s:4},{id:'upc',n:'Найближчі платежі',s:4},{id:'debt',n:'Хто винен',s:4},{id:'pair',n:'Курс валюти',s:2},
- {id:'pay',n:'Днів до доходу',s:2},{id:'quick',n:'Швидка операція',s:2},{id:'notes',n:'Нотатки',s:4},{id:'game',n:'Успіх',s:2}];
+ {id:'pay',n:'Днів до доходу',s:2},{id:'smk',n:'Без сигарет',s:2},{id:'weed',n:'Без марихуани',s:2},{id:'quick',n:'Швидка операція',s:2},{id:'notes',n:'Нотатки',s:4},{id:'game',n:'Успіх',s:2}];
 var WG=(function(){try{var j=JSON.parse(localStorage.getItem('vf-wg')||'null');if(Array.isArray(j))return j;}catch(e){}return WG_LIST.map(function(w){return w.id;});})();
 /* ---- папки: власний великий простір для віджетів; відкриваються «провалом» у просторі ---- */
 var FOLDERS=(function(){try{var j=JSON.parse(localStorage.getItem('vf-folders')||'null');if(j&&typeof j==='object')return j;}catch(e){}return{};})();
@@ -21,8 +21,8 @@ function blocksFolder(){var F=FOLDERS[FLD.id];if(!F)return[];var o=wgBlocks(F.wg
 function fhdr(on){var h=document.getElementById('fhdr');if(!h){h=document.createElement('div');h.id='fhdr';h.innerHTML='<button data-fb="1">‹</button><span></span>';document.body.appendChild(h);h.firstChild.addEventListener('click',function(e){e.stopPropagation();closeFolder();});h.addEventListener('pointerdown',function(e){e.stopPropagation();});}
  if(on){h.lastChild.textContent=(FOLDERS[FLD.id]||{}).n||'';h.style.top=(tickerEl.offsetTop+tickerEl.offsetHeight+10)+'px';h.style.display='flex';}else h.style.display='none';}
 /* полотно: вигляд = масштаб FLD.zoom і зсув FLD.tx/ty (екран = полотно·масштаб + зсув); сторінка малюється шейдером із цим перетворенням (rec.pg, v=100 — «режим полотна») */
-function foldClamp(){var s=FLD.zoom,W=(FLD.cw||VW*3)*s,H=(FLD.ch||VH*2.4)*s;FLD.tx=Math.max(-(W-VW*.4),Math.min(VW*.6,FLD.tx));FLD.ty=Math.max(-(H-VH*.4),Math.min(VH*.5,FLD.ty));}
-function foldZoomAt(z1,cx,cy){z1=Math.max(.3,Math.min(2.4,z1));var k=z1/FLD.zoom;FLD.tx=cx-(cx-FLD.tx)*k;FLD.ty=cy-(cy-FLD.ty)*k;FLD.zoom=z1;foldClamp();dirty=true;}
+function foldClamp(){FLD.tx=Math.max(-2e5,Math.min(2e5,FLD.tx));FLD.ty=Math.max(-2e5,Math.min(2e5,FLD.ty));}   /* полотно нескінченне: межі лише від переповнення */
+function foldZoomAt(z1,cx,cy){z1=Math.max(.12,Math.min(2.6,z1));var k=z1/FLD.zoom;FLD.tx=cx-(cx-FLD.tx)*k;FLD.ty=cy-(cy-FLD.ty)*k;FLD.zoom=z1;foldClamp();dirty=true;}
 function foldTween(to,dur,done){var f={s:FLD.zoom,x:FLD.tx,y:FLD.ty},t0=performance.now();FLD.anim=1;(function st(){var u=Math.min(1,(performance.now()-t0)/dur),e=1-Math.pow(1-u,3);FLD.zoom=f.s*Math.pow(to.s/f.s,e);FLD.tx=f.x+(to.x-f.x)*e;FLD.ty=f.y+(to.y-f.y)*e;dirty=true;if(u<1)requestAnimationFrame(st);else{FLD.anim=0;if(done)done();}})();}
 function openFolder(id,srcEl){if(!FOLDERS[id])return;var F=FOLDERS[id],m=F._m||{ms:.3,x:0,y:230},mini=srcEl&&srcEl.querySelector('.fmini'),r=mini?mini.getBoundingClientRect():{left:VW*.3,top:VH*.4},
   s0=m.ms,x0=r.left+4-m.x*s0,y0=r.top+4-m.y*s0;
@@ -32,7 +32,7 @@ function closeFolder(){if(!FLD.id||FLD.anim)return;WFL.slice().forEach(function(
  foldTween(S0,420,function(){FLD.id=null;sel=2;ca=2;rec.pg.v=0;rec.pg.tx=rec.pg.ty=0;renderPages();fbUpdate();dirty=true;setTimeout(function(){if(window.__trDump)window.__trDump('після закриття папки',2);},700);});}
 function foldAdd(){var n=Object.keys(FOLDERS).length+1,nm='Папка '+n;try{var r=window.prompt('Назва папки',nm);if(r===null)return;nm=(r||nm).trim().slice(0,24)||nm;}catch(e){}var id='k'+Date.now().toString(36);FOLDERS[id]={n:nm,wg:[]};foldSave();WG.push('f:'+id);wgSave();renderPages();}
 function wgCur(){return FLD.id&&FOLDERS[FLD.id]?FOLDERS[FLD.id].wg:WG;}
-function wgPut(id){var L=wgCur();if(L.indexOf(id)>=0){toast('Цей віджет уже тут');return;}L.push(id);if(FLD.id){var F=FOLDERS[FLD.id];F.pos=F.pos||{};var ax=FLD.addAt?FLD.addAt.x:VW*.22,ay=FLD.addAt?FLD.addAt.y:VH*.42;F.pos[id]={x:Math.max(0,Math.round((ax-FLD.tx)/FLD.zoom)),y:Math.max(60,Math.round((ay-FLD.ty)/FLD.zoom))};FLD.addAt=null;foldSave();}else wgSave();renderPages();fbUpdate();}
+function wgPut(id){var L=wgCur();if(L.indexOf(id)>=0){toast('Цей віджет уже тут');return;}L.push(id);if(FLD.id){var F=FOLDERS[FLD.id];F.pos=F.pos||{};var ax=FLD.addAt?FLD.addAt.x:VW*.22,ay=FLD.addAt?FLD.addAt.y:VH*.42;F.pos[id]={x:Math.round((ax-FLD.tx)/FLD.zoom),y:Math.round((ay-FLD.ty)/FLD.zoom)};FLD.addAt=null;foldSave();}else wgSave();renderPages();fbUpdate();}
 /* кнопка «+»: маленька випливашка «Віджети / Папку», далі список віджетів */
 function wgAddMenu(anchor){
  var items=[{v:'w',l:'Віджети'}];if(!FLD.id)items.push({v:'f',l:'Папку'});
@@ -58,6 +58,14 @@ function wgAddMenu(anchor){
 function wgRemove(el){var id=wgIdOf(el),L=wgCur(),F;if(id.indexOf('f:')===0){F=FOLDERS[id.slice(2)];if(F&&F.wg.length&&!confirm('Видалити папку «'+F.n+'» разом з усім, що в ній?'))return;delete FOLDERS[id.slice(2)];foldSave();}
  var i=L.indexOf(id);if(i>=0)L.splice(i,1);if(FLD.id){var Fc=FOLDERS[FLD.id];if(Fc&&Fc.pos)delete Fc.pos[id];foldSave();}else wgSave();
  var w=wfFind(el);if(w){wfAttach(w);}WFcur=null;renderPages();wlApply(FLD.id?9:2);fbUpdate();dirty=true;}
+/* лічильники днів без куріння: зберігаються лише на пристрої; день рахується сам, без натискань */
+var QUIT=(function(){try{var j=JSON.parse(localStorage.getItem('vf-quit')||'null');if(j&&typeof j==='object')return j;}catch(e){}return{};})();
+function quitSave(){try{localStorage.setItem('vf-quit',JSON.stringify(QUIT));}catch(e){}}
+function quitOf(k){if(!QUIT[k]){QUIT[k]={start:new Date().toISOString(),hist:[]};quitSave();}return QUIT[k];}
+function dayN(iso){var d=new Date(iso);return Math.floor((new Date(new Date().toDateString())-new Date(d.toDateString()))/864e5);}
+function quitReset(k){var q=quitOf(k),now=new Date().toISOString();q.hist.push({from:q.start,to:now,days:dayN(q.start)});q.start=now;quitSave();LG('egg','лічильник '+k+' скинуто');renderPages();}
+var QDAY=new Date().toDateString();setInterval(function(){var d=new Date().toDateString();if(d!==QDAY){QDAY=d;renderPages();}},60000);
+(function(){try{if(!localStorage.getItem('vf-wg-q')){localStorage.setItem('vf-wg-q','1');['smk','weed'].forEach(function(q){if(WG.indexOf(q)<0)WG.push(q);});localStorage.setItem('vf-wg',JSON.stringify(WG));}}catch(e){}})();
 function wgSave(){try{localStorage.setItem('vf-wg',JSON.stringify(WG));}catch(e){}}
 function wgToggle(id){if(id.indexOf('f:')===0)return;var i=WG.indexOf(id);if(i>=0)WG.splice(i,1);else WG.push(id);wgSave();renderPages();}
 function wgLabel(w){return w.n+': '+(WG.indexOf(w.id)>=0?'показано':'сховано');}
@@ -95,6 +103,7 @@ function wgBlocks(list){
    h='<div class="lbl">До доходу</div>'+(ri?'<div class="big">'+ri.n.left+' дн.</div><div class="cap">'+esc(ri.r.name)+' · '+esc(money(ri.r.amount,ri.r.currency))+'</div>':'<div class="empty">Додайте повторюваний дохід</div>');}
   else if(id==='quick'){var tp=(st.templates||[])[0];
    h='<div class="lbl">Швидка операція</div>'+(tp?'<button class="mini wq" data-act="tpl" data-id="'+esc(tp.id)+'"><b>'+esc(tp.name)+'</b><span class="lbl">'+esc(money(tp.amount,tp.currency))+'</span></button>':'<button class="mini wq" data-act="wnew"><b>+ Операція</b><span class="lbl">новий запис</span></button>');}
+  else if(id==='smk'||id==='weed'){var qq=quitOf(id),qn=dayN(qq.start);h='<div class="wcb qw" data-act="qhist" data-v="'+id+'"><div class="lbl">'+(id==='smk'?'Без сигарет':'Без марихуани')+'</div><div class="big">'+qn+'</div><div class="cap">'+(qn%10===1&&qn%100!==11?'день':(qn%10>=2&&qn%10<=4&&(qn%100<10||qn%100>=20))?'дні':'днів')+'</div></div><button class="qrst" data-act="qreset" data-v="'+id+'" aria-label="Скинути">↺</button>';}
   else if(id==='notes'){h='<div class="th"><h2>Нотатки</h2></div><textarea class="wnotes" data-notes="1" rows="4" placeholder="Що не забути…"></textarea>';}
   else if(id==='game'){h='<button data-act="game" style="display:block;width:100%;text-align:left"><div class="lbl">Мінігра</div><div class="mid">Успіх ↗</div><div class="cap">Торгівля, що завжди в плюс</div></button>';}
   o.push(B_(c,h));});

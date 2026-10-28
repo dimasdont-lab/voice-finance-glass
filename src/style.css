@@ -544,3 +544,9 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border:0;border-radiu
 .cd.has span{color:var(--ac)}
 .cd.on{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3)}
 .mh2{font-size:13px;color:var(--mu);font-weight:600;margin:6px 0 2px}
+
+/* лічильники «Без сигарет / Без марихуани»: кружечок скидання в куті */
+.wg-smk,.wg-weed{position:relative}
+.qw{display:block;cursor:pointer}
+.qrst{position:absolute;right:10px;top:10px;width:30px;height:30px;border-radius:15px;padding:0;font-size:17px;line-height:30px;text-align:center;color:rgba(255,255,255,.75);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16)}
+.inner.g4>.tile.cmp .qrst{top:50%;margin-top:-15px}
