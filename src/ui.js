@@ -129,6 +129,7 @@ var CAL={y:0,m:0,s:0},QV='smk';
 function quitHtml(){var q=quitOf(QV),fd=function(s){var d=new Date(s);return d.toLocaleDateString('uk-UA',{day:'numeric',month:'long',year:'numeric'})+' '+d.toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});},n=dayN(q.start),best=q.hist.reduce(function(m,x){return Math.max(m,x.days);},n);
  return'<div class="sh"><span style="min-width:70px"></span><h3>'+(QV==='smk'?'Без сигарет':'Без марихуани')+'</h3><button class="ok" data-s="cancel">Закрити</button></div>'+
   '<div class="pv"><div class="big">'+n+' дн.</div><div class="kv"><span>Почато</span><b>'+esc(fd(q.start))+'</b></div><div class="kv"><span>Найдовше</span><b>'+best+' дн.</b></div><div class="kv"><span>Скидань</span><b>'+q.hist.length+'</b></div><div class="kv"><span>Зекономлено ('+QRATE[QV]+' zł/день)</span><b style="color:var(--gr)">'+esc(money(quitSaved(QV)))+'</b></div></div>'+
+  '<div class="fr"><label>Скільки днів уже не курю</label><input data-g="qdays" inputmode="numeric" value="'+n+'" autocomplete="off"></div><button class="btnw" data-s="qset">Зберегти кількість днів</button>'+
   '<div class="mh2">Історія</div>'+(q.hist.length?q.hist.slice().reverse().map(function(x,i){return'<div class="row'+(i?'':' first')+'"><div class="rc"><b>'+x.days+' дн.</b><span>'+esc(fd(x.from))+' → скинуто '+esc(fd(x.to))+'</span></div></div>';}).join(''):'<div class="empty">Скидань ще не було.</div>')+'<button class="btnw" data-s="cancel">Закрити</button>';}
 var MN_UA=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 function calHtml(){var now=new Date();if(!CAL.y){CAL.y=now.getFullYear();CAL.m=now.getMonth();CAL.s=now.getDate();}
@@ -372,6 +373,7 @@ sheetsEl.addEventListener('click',function(e){
   else if(s==='wg'){var wq=WG_LIST.find(function(q){return q.id===t.dataset.v;});wgToggle(t.dataset.v);t.textContent=wgLabel(wq);sheetStale();}
   else if(s==='setv'){setGo(t.dataset.v);}
   else if(s==='setback'){setGo(null);}
+  else if(s==='qset'){var qi=curSheet.body.querySelector('[data-g=qdays]'),qd=Math.max(0,Math.min(36500,parseInt(qi&&qi.value,10)||0)),qs=new Date();qs.setDate(qs.getDate()-qd);var qo=quitOf(QV);qo.start=qs.toISOString();quitSave();LG('egg','лічильник '+QV+': вписано '+qd+' дн.');renderPages();syncUI();sheetStale();toast('Збережено: '+qd+' дн.');}
   else if(s==='calday'){CAL.s=+t.dataset.v;syncUI();sheetStale();}
   else if(s==='calm'){CAL.m+=+t.dataset.v;if(CAL.m<0){CAL.m=11;CAL.y--;}if(CAL.m>11){CAL.m=0;CAL.y++;}CAL.s=0;syncUI();sheetStale();}
   else if(s==='fgwave'){setFGS('tw',FGS.tw?0:1);t.textContent=fgWaveLabel();LG('ui',fgWaveLabel());}
