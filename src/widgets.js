@@ -63,6 +63,8 @@ var QUIT=(function(){try{var j=JSON.parse(localStorage.getItem('vf-quit')||'null
 function quitSave(){try{localStorage.setItem('vf-quit',JSON.stringify(QUIT));}catch(e){}}
 function quitOf(k){if(!QUIT[k]){QUIT[k]={start:new Date().toISOString(),hist:[]};quitSave();}return QUIT[k];}
 function dayN(iso){var d=new Date(iso);return Math.floor((new Date(new Date().toDateString())-new Date(d.toDateString()))/864e5);}
+var QRATE={smk:22,weed:75};   /* zł на день */
+function quitSaved(k){var q=quitOf(k),d=dayN(q.start)+q.hist.reduce(function(s,x){return s+(x.days||0);},0);return d*(QRATE[k]||0);}   /* зекономлено за всі дні без куріння — скидання не обнуляє */
 function quitReset(k){var q=quitOf(k),now=new Date().toISOString();q.hist.push({from:q.start,to:now,days:dayN(q.start)});q.start=now;quitSave();LG('egg','лічильник '+k+' скинуто');renderPages();}
 var QDAY=new Date().toDateString();setInterval(function(){var d=new Date().toDateString();if(d!==QDAY){QDAY=d;renderPages();}},60000);
 (function(){try{if(!localStorage.getItem('vf-wg-q')){localStorage.setItem('vf-wg-q','1');['smk','weed'].forEach(function(q){if(WG.indexOf(q)<0)WG.push(q);});localStorage.setItem('vf-wg',JSON.stringify(WG));}}catch(e){}})();
@@ -103,7 +105,7 @@ function wgBlocks(list){
    h='<div class="lbl">До доходу</div>'+(ri?'<div class="big">'+ri.n.left+' дн.</div><div class="cap">'+esc(ri.r.name)+' · '+esc(money(ri.r.amount,ri.r.currency))+'</div>':'<div class="empty">Додайте повторюваний дохід</div>');}
   else if(id==='quick'){var tp=(st.templates||[])[0];
    h='<div class="lbl">Швидка операція</div>'+(tp?'<button class="mini wq" data-act="tpl" data-id="'+esc(tp.id)+'"><b>'+esc(tp.name)+'</b><span class="lbl">'+esc(money(tp.amount,tp.currency))+'</span></button>':'<button class="mini wq" data-act="wnew"><b>+ Операція</b><span class="lbl">новий запис</span></button>');}
-  else if(id==='smk'||id==='weed'){var qq=quitOf(id),qn=dayN(qq.start);h='<div class="wcb qw" data-act="qhist" data-v="'+id+'"><div class="lbl">'+(id==='smk'?'Без сигарет':'Без марихуани')+'</div><div class="big">'+qn+'</div><div class="cap">'+(qn%10===1&&qn%100!==11?'день':(qn%10>=2&&qn%10<=4&&(qn%100<10||qn%100>=20))?'дні':'днів')+'</div></div><button class="qrst" data-act="qreset" data-v="'+id+'" aria-label="Скинути">↺</button>';}
+  else if(id==='smk'||id==='weed'){var qq=quitOf(id),qn=dayN(qq.start);h='<div class="wcb qw" data-act="qhist" data-v="'+id+'"><div class="lbl">'+(id==='smk'?'Без сигарет':'Без марихуани')+'</div><div class="big">'+qn+'</div><div class="cap">'+(qn%10===1&&qn%100!==11?'день':(qn%10>=2&&qn%10<=4&&(qn%100<10||qn%100>=20))?'дні':'днів')+'</div><div class="qsv">Зекономлено '+esc(money(quitSaved(id)))+'</div></div><button class="qrst" data-act="qreset" data-v="'+id+'" aria-label="Скинути">↺</button>';}
   else if(id==='notes'){h='<div class="th"><h2>Нотатки</h2></div><textarea class="wnotes" data-notes="1" rows="4" placeholder="Що не забути…"></textarea>';}
   else if(id==='game'){h='<button data-act="game" style="display:block;width:100%;text-align:left"><div class="lbl">Мінігра</div><div class="mid">Успіх ↗</div><div class="cap">Торгівля, що завжди в плюс</div></button>';}
   o.push(B_(c,h));});

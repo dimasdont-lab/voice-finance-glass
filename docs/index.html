@@ -18,7 +18,7 @@
 <link rel="apple-touch-startup-image" href="assets/splash/s-1284x2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <link rel="apple-touch-startup-image" href="assets/splash/s-1125x2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <script>(function(){try{if(navigator.standalone||matchMedia('(display-mode: standalone)').matches){var d=document.documentElement.style;d.setProperty('--sw',screen.width+'px');d.setProperty('--sh',screen.height+'px');}}catch(e){}})();</script>
-<script>window.__VF_BUILD='2026-10-28 02:12 UTC';
+<script>window.__VF_BUILD='2026-10-28 02:26 UTC';
 /* Журнал запуску: стартує в <head> до основного коду. Записує розміри вікна щокадру (перші 8 с, лише зміни), події вікна,
    помилки, проби CSS-одиниць і безпечних зон. Зберігає останні 4 запуски в localStorage ('vf-log'); експорт через window.__vfExport(). */
 (function(){
@@ -625,6 +625,9 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border:0;border-radiu
 .qw{display:block;cursor:pointer}
 .qrst{position:absolute;right:10px;top:10px;width:30px;height:30px;border-radius:15px;padding:0;font-size:17px;line-height:30px;text-align:center;color:rgba(255,255,255,.75);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16)}
 .inner.g4>.tile.cmp .qrst{top:50%;margin-top:-15px}
+
+.qsv{font-size:13px;font-weight:650;color:var(--gr);margin-top:4px}
+.inner.g4>.tile.cmp .qsv{display:none}
 </style></head><body>
 <div id="bg"></div>
 <canvas id="glt"></canvas>
@@ -3316,6 +3319,8 @@ var QUIT=(function(){try{var j=JSON.parse(localStorage.getItem('vf-quit')||'null
 function quitSave(){try{localStorage.setItem('vf-quit',JSON.stringify(QUIT));}catch(e){}}
 function quitOf(k){if(!QUIT[k]){QUIT[k]={start:new Date().toISOString(),hist:[]};quitSave();}return QUIT[k];}
 function dayN(iso){var d=new Date(iso);return Math.floor((new Date(new Date().toDateString())-new Date(d.toDateString()))/864e5);}
+var QRATE={smk:22,weed:75};   /* zł на день */
+function quitSaved(k){var q=quitOf(k),d=dayN(q.start)+q.hist.reduce(function(s,x){return s+(x.days||0);},0);return d*(QRATE[k]||0);}   /* зекономлено за всі дні без куріння — скидання не обнуляє */
 function quitReset(k){var q=quitOf(k),now=new Date().toISOString();q.hist.push({from:q.start,to:now,days:dayN(q.start)});q.start=now;quitSave();LG('egg','лічильник '+k+' скинуто');renderPages();}
 var QDAY=new Date().toDateString();setInterval(function(){var d=new Date().toDateString();if(d!==QDAY){QDAY=d;renderPages();}},60000);
 (function(){try{if(!localStorage.getItem('vf-wg-q')){localStorage.setItem('vf-wg-q','1');['smk','weed'].forEach(function(q){if(WG.indexOf(q)<0)WG.push(q);});localStorage.setItem('vf-wg',JSON.stringify(WG));}}catch(e){}})();
@@ -3356,7 +3361,7 @@ function wgBlocks(list){
    h='<div class="lbl">До доходу</div>'+(ri?'<div class="big">'+ri.n.left+' дн.</div><div class="cap">'+esc(ri.r.name)+' · '+esc(money(ri.r.amount,ri.r.currency))+'</div>':'<div class="empty">Додайте повторюваний дохід</div>');}
   else if(id==='quick'){var tp=(st.templates||[])[0];
    h='<div class="lbl">Швидка операція</div>'+(tp?'<button class="mini wq" data-act="tpl" data-id="'+esc(tp.id)+'"><b>'+esc(tp.name)+'</b><span class="lbl">'+esc(money(tp.amount,tp.currency))+'</span></button>':'<button class="mini wq" data-act="wnew"><b>+ Операція</b><span class="lbl">новий запис</span></button>');}
-  else if(id==='smk'||id==='weed'){var qq=quitOf(id),qn=dayN(qq.start);h='<div class="wcb qw" data-act="qhist" data-v="'+id+'"><div class="lbl">'+(id==='smk'?'Без сигарет':'Без марихуани')+'</div><div class="big">'+qn+'</div><div class="cap">'+(qn%10===1&&qn%100!==11?'день':(qn%10>=2&&qn%10<=4&&(qn%100<10||qn%100>=20))?'дні':'днів')+'</div></div><button class="qrst" data-act="qreset" data-v="'+id+'" aria-label="Скинути">↺</button>';}
+  else if(id==='smk'||id==='weed'){var qq=quitOf(id),qn=dayN(qq.start);h='<div class="wcb qw" data-act="qhist" data-v="'+id+'"><div class="lbl">'+(id==='smk'?'Без сигарет':'Без марихуани')+'</div><div class="big">'+qn+'</div><div class="cap">'+(qn%10===1&&qn%100!==11?'день':(qn%10>=2&&qn%10<=4&&(qn%100<10||qn%100>=20))?'дні':'днів')+'</div><div class="qsv">Зекономлено '+esc(money(quitSaved(id)))+'</div></div><button class="qrst" data-act="qreset" data-v="'+id+'" aria-label="Скинути">↺</button>';}
   else if(id==='notes'){h='<div class="th"><h2>Нотатки</h2></div><textarea class="wnotes" data-notes="1" rows="4" placeholder="Що не забути…"></textarea>';}
   else if(id==='game'){h='<button data-act="game" style="display:block;width:100%;text-align:left"><div class="lbl">Мінігра</div><div class="mid">Успіх ↗</div><div class="cap">Торгівля, що завжди в плюс</div></button>';}
   o.push(B_(c,h));});
@@ -5775,7 +5780,7 @@ function setGo(v){if(setBusy||!curSheet)return;setBusy=1;var b=curSheet.body;b.c
 var CAL={y:0,m:0,s:0},QV='smk';
 function quitHtml(){var q=quitOf(QV),fd=function(s){var d=new Date(s);return d.toLocaleDateString('uk-UA',{day:'numeric',month:'long',year:'numeric'})+' '+d.toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});},n=dayN(q.start),best=q.hist.reduce(function(m,x){return Math.max(m,x.days);},n);
  return'<div class="sh"><span style="min-width:70px"></span><h3>'+(QV==='smk'?'Без сигарет':'Без марихуани')+'</h3><button class="ok" data-s="cancel">Закрити</button></div>'+
-  '<div class="pv"><div class="big">'+n+' дн.</div><div class="kv"><span>Почато</span><b>'+esc(fd(q.start))+'</b></div><div class="kv"><span>Найдовше</span><b>'+best+' дн.</b></div><div class="kv"><span>Скидань</span><b>'+q.hist.length+'</b></div></div>'+
+  '<div class="pv"><div class="big">'+n+' дн.</div><div class="kv"><span>Почато</span><b>'+esc(fd(q.start))+'</b></div><div class="kv"><span>Найдовше</span><b>'+best+' дн.</b></div><div class="kv"><span>Скидань</span><b>'+q.hist.length+'</b></div><div class="kv"><span>Зекономлено ('+QRATE[QV]+' zł/день)</span><b style="color:var(--gr)">'+esc(money(quitSaved(QV)))+'</b></div></div>'+
   '<div class="mh2">Історія</div>'+(q.hist.length?q.hist.slice().reverse().map(function(x,i){return'<div class="row'+(i?'':' first')+'"><div class="rc"><b>'+x.days+' дн.</b><span>'+esc(fd(x.from))+' → скинуто '+esc(fd(x.to))+'</span></div></div>';}).join(''):'<div class="empty">Скидань ще не було.</div>')+'<button class="btnw" data-s="cancel">Закрити</button>';}
 var MN_UA=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 function calHtml(){var now=new Date();if(!CAL.y){CAL.y=now.getFullYear();CAL.m=now.getMonth();CAL.s=now.getDate();}
